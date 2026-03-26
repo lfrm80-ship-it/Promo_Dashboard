@@ -199,4 +199,4 @@ with tab_registro:
 
             if guardar:
                 st.success("Formulario enviado correctamente ✅")
-``
+

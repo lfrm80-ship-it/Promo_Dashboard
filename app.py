@@ -52,16 +52,20 @@ def cargar_datos():
     ])
 
 # ======================================
-# HEADER CON LOGO CENTRADO
+# HEADER CONTROLADO (LOGO A LA DERECHA + TÍTULO CENTRADO)
 # ======================================
-col_left, col_center, col_right = st.columns([1, 3, 1])
+col_left, col_center, col_right = st.columns([2, 3, 1])
 
 with col_center:
-    if os.path.exists("HIC.png"):
-        st.image("HIC.png", width=160)
+    st.markdown("## Administrador de Promociones")
+    st.markdown(
+        "<span style='color: #6b6b6b;'>Playa Mujeres Complex — Dreams & Secrets</span>",
+        unsafe_allow_html=True
+    )
 
-st.title("Administrador de Promociones")
-st.caption("Playa Mujeres Complex — Dreams & Secrets")
+with col_right:
+    if os.path.exists("HIC.png"):
+        st.image("HIC.png", width=120)
 
 # ======================================
 # TABS PRINCIPALES

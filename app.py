@@ -25,10 +25,10 @@ with st.sidebar:
 
     # 2. GUÍA RÁPIDA
     st.subheader("Guía Rápida")
-    st.write("🆕 **Nuevo**: Limpia el formulario actual.")
-    st.write("💾 **Guardar**: Crea una nueva promoción.")
-    st.write("🔄 **Actualizar**: Sobreescribe datos existentes.")
-    st.write("📥 **Excel**: Descarga el reporte actual.")
+    st.write("🆕 **Nuevo**: Limpia formulario")
+    st.write("💾 **Guardar**: Crea nueva promoción")
+    st.write("🔄 **Actualizar**: Sobreescribe datos existentes")
+    st.write("📥 **Excel**: Descarga reporte")
 
     # Espacio visual
     for _ in range(5):

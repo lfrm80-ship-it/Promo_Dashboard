@@ -4,9 +4,9 @@ import os
 import io
 from datetime import date
 
-# =========================================================
-# CONFIGURACIÓN GENERAL (UNA SOLA VEZ)
-# =========================================================
+# =====================================================
+# CONFIGURACIÓN GENERAL
+# =====================================================
 st.set_page_config(
     page_title="Administrador de Promociones",
     layout="wide"
@@ -19,9 +19,9 @@ PASSWORD_MAESTRA = "PlayaMujeres2026"
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
-# =========================================================
-# CSS GLOBAL (TABS + FONDO SUAVE)  ✅ SIN ERRORES
-# =========================================================
+# =====================================================
+# CSS GLOBAL (FONDO + TABS)
+# =====================================================
 st.markdown("""
 <style>
 body {
@@ -54,14 +54,14 @@ header {
 </style>
 """, unsafe_allow_html=True)
 
-# =========================================================
+# =====================================================
 # FUNCIONES
-# =========================================================
+# =====================================================
 def cargar_datos():
     if os.path.exists(CSV_FILE):
         df = pd.read_csv(CSV_FILE)
-        for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
-            df[col] = pd.to_datetime(df[col]).dt.date
+        for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
+            df[c] = pd.to_datetime(df[c]).dt.date
         return df
 
     return pd.DataFrame(columns=[
@@ -77,9 +77,9 @@ def cargar_datos():
         "Archivo_Path"
     ])
 
-# =========================================================
-# HEADER (LOGO + TÍTULO)
-# =========================================================
+# =====================================================
+# HEADER
+# =====================================================
 col_l, col_logo, col_t, col_r = st.columns([1, 1, 2, 1])
 
 with col_logo:
@@ -89,20 +89,20 @@ with col_logo:
 with col_t:
     st.markdown("## Administrador de Promociones")
     st.markdown(
-        "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
+        "<span style='color:#6b6b6b;'>Playa Mujeres – DREPM & SECPM</span>",
         unsafe_allow_html=True
     )
 
-# =========================================================
+# =====================================================
 # TABS
-# =========================================================
+# =====================================================
 tab_promos, tab_registro, tab_admin = st.tabs(
     ["Promociones", "Registrar / Modificar", "Administración"]
 )
 
-# =========================================================
+# =====================================================
 # TAB 1 — PROMOCIONES
-# =========================================================
+# =====================================================
 with tab_promos:
     cl, cc, cr = st.columns([1, 3, 1])
 
@@ -123,6 +123,7 @@ with tab_promos:
 
             st.dataframe(df, use_container_width=True)
 
+            # Excel
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 df.to_excel(writer, index=False)
@@ -133,19 +134,22 @@ with tab_promos:
                 file_name="Promociones_Playa_Mujeres.xlsx"
             )
 
+            # Archivos
             st.markdown("#### Archivos de respaldo")
             for _, r in df.iterrows():
-                if r["Archivo_Path"] and os.path.exists(r["Archivo_Path"]):
-                    with open(r["Archivo_Path"], "rb") as f:
+                archivo_path = r["Archivo_Path"]
+
+                if isinstance(archivo_path, str) and archivo_path and os.path.exists(archivo_path):
+                    with open(archivo_path, "rb") as f:
                         st.download_button(
-                            f"Descargar – {r['Rate_Plan']}",
-                            f,
-                            file_name=os.path.basename(r["Archivo_Path"])
+                            label=f"Descargar – {r['Rate_Plan']}",
+                            data=f,
+                            file_name=os.path.basename(archivo_path)
                         )
 
-# =========================================================
+# =====================================================
 # TAB 2 — REGISTRAR / MODIFICAR
-# =========================================================
+# =====================================================
 with tab_registro:
     cl, cc, cr = st.columns([1, 3, 1])
 
@@ -176,7 +180,9 @@ with tab_registro:
 
             descuento = st.number_input(
                 "Descuento (%)",
-                0, 100, step=5,
+                min_value=0,
+                max_value=100,
+                step=5,
                 value=int(existente["Descuento"].iloc[0]) if editando else 0
             )
 
@@ -185,7 +191,7 @@ with tab_registro:
             notas = st.text_area("Notas / Restricciones")
 
             archivo = st.file_uploader(
-                "Archivo de respaldo (PDF / Imagen)",
+                "Archivo de respaldo (PDF o Imagen)",
                 type=["pdf", "png", "jpg", "jpeg"]
             )
 
@@ -195,12 +201,13 @@ with tab_registro:
 
             if guardar:
                 if not rate or not hoteles:
-                    st.error("Rate Plan y propiedad son obligatorios.")
+                    st.error("Rate Plan y al menos una propiedad son obligatorios.")
                 else:
                     archivo_path = ""
                     if archivo:
                         archivo_path = os.path.join(
-                            MEDIA_DIR, f"{rate}_{archivo.name}"
+                            MEDIA_DIR,
+                            f"{rate}_{archivo.name}"
                         )
                         with open(archivo_path, "wb") as f:
                             f.write(archivo.getbuffer())
@@ -225,7 +232,7 @@ with tab_registro:
                     df = pd.concat([df, pd.DataFrame(registros)], ignore_index=True)
                     df.to_csv(CSV_FILE, index=False)
 
-                    st.success("Promoción guardada.")
+                    st.success("Promoción guardada correctamente.")
                     st.rerun()
 
             if eliminar:
@@ -234,22 +241,24 @@ with tab_registro:
                 st.warning("Promoción eliminada.")
                 st.rerun()
 
-# =========================================================
+# =====================================================
 # TAB 3 — ADMINISTRACIÓN
-# =========================================================
+# =====================================================
 with tab_admin:
     cl, cc, cr = st.columns([1, 2, 1])
 
     with cc:
         st.markdown("### Zona Administrativa")
+
         clave = st.text_input("Clave de administrador", type="password")
 
         if clave == PASSWORD_MAESTRA:
             st.success("Acceso autorizado")
+
             if st.button("Borrar toda la base de datos"):
                 if os.path.exists(CSV_FILE):
                     os.remove(CSV_FILE)
-                    st.warning("Base eliminada.")
+                    st.warning("Base de datos eliminada.")
                     st.rerun()
         elif clave:
             st.error("Clave incorrecta")

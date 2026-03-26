@@ -98,9 +98,12 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 # PROMOCIONES
 # =====================================================
 with tab_promos:
-    df = cargar_datos()
-    if df.empty:
-        st.info("No hay promociones.")
+    col_l, col_c, col_r = st.columns([1, 3, 1])
+
+    with col_c:
+        st.markdown("### Promociones")
+        ...
+``
     else:
         df_view = df.copy()
         df_view["Market"] = df_view["Market"].apply(lambda x: ", ".join(x))

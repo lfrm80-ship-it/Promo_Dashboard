@@ -21,17 +21,34 @@ MARKETS = ["US", "Canada", "Mexico", "LATAM", "Europe", "Asia / ROW"]
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
-# =====================================================
-# CSS BÁSICO
-# =====================================================
+# ===============================
+# CSS BÁSICO (CORREGIDO)
+# ===============================
 st.markdown("""
 <style>
-body { background-color: #f7f8fa; }
-.block-container { padding-top: 1.5rem; }
-div[data-baseweb="tab-list"] { justify-content: center; }
-header { background-color: white; border-bottom: 1px solid #e6e6e6; }
+body { 
+    background-color: #f7f8fa; 
+}
+
+.block-container { 
+    padding-top: 1.5rem; 
+}
+
+div[data-baseweb="tab-list"] { 
+    justify-content: center; 
+}
+
+/* ✅ HEADER CORREGIDO */
+header { 
+    background-color: white; 
+    border-bottom: 1px solid #e6e6e6; 
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+}
 </style>
 """, unsafe_allow_html=True)
+
 
 # =====================================================
 # FUNCIONES

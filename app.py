@@ -20,7 +20,7 @@ st.set_page_config(
     """,
     unsafe_allow_html=True
 )
-``
+
 )
 
 CSV_FILE = "promociones_data.csv"

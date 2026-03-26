@@ -130,4 +130,4 @@ with tab_admin:
                 st.rerun()
     elif clave:
         st.error("Clave incorrecta")
-``
+

@@ -17,12 +17,16 @@ MEDIA_DIR = "media"
 PASSWORD_MAESTRA = "PlayaMujeres2026"
 
 MARKETS = ["US", "Canada", "Mexico", "LATAM", "Europe", "Asia / ROW"]
+PROPERTIES = [
+    "DREPM - Dreams Playa Mujeres",
+    "SECPM - Secrets Playa Mujeres"
+]
 
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
 # =====================================================
-# CSS BÁSICO
+# CSS
 # =====================================================
 st.markdown("""
 <style>
@@ -40,18 +44,17 @@ def cargar_datos():
     if os.path.exists(CSV_FILE):
         df = pd.read_csv(CSV_FILE)
 
-        for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
+        for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
             if c in df.columns:
                 df[c] = pd.to_datetime(df[c]).dt.date
 
-        if "Market" not in df.columns:
-            df["Market"] = ""
+        for col in ["Market", "Archivo_Path"]:
+            if col not in df.columns:
+                df[col] = ""
+
         df["Market"] = df["Market"].apply(
             lambda x: x.split("|") if isinstance(x, str) and x else []
         )
-
-        if "Archivo_Path" not in df.columns:
-            df["Archivo_Path"] = ""
 
         return df
 
@@ -61,139 +64,123 @@ def cargar_datos():
         "Notas","Archivo_Path"
     ])
 
-def exportar_excel_con_logo(df):
-    output = io.BytesIO()
-    fecha = datetime.now().strftime("%Y-%m-%d")
-
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        workbook = writer.book
-        ws = workbook.add_worksheet("Promociones")
-        writer.sheets["Promociones"] = ws
-
-        if os.path.exists("HIC.png"):
-            ws.insert_image("A1", "HIC.png", {"x_scale": 0.4, "y_scale": 0.4})
-
-        ws.write("E2", "Fecha de generación:")
-        ws.write("F2", fecha)
-
+def exportar_excel(df):
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         df_x = df.copy()
         df_x["Market"] = df_x["Market"].apply(lambda x: ", ".join(x))
-        df_x["Archivo_Respaldo"] = df_x["Archivo_Path"].apply(
-            lambda x: os.path.basename(x) if isinstance(x, str) and x else ""
-        )
-        df_x = df_x.drop(columns=["Archivo_Path"])
-
-        df_x.to_excel(writer, index=False, startrow=4)
-        for i, col in enumerate(df_x.columns):
-            ws.set_column(i, i, 18)
-
-    output.seek(0)
-    return output
+        df_x.to_excel(writer, index=False)
+    buffer.seek(0)
+    return buffer
 
 # =====================================================
-# BLOQUE DE BRANDING
+# BRANDING
 # =====================================================
 st.markdown("<div style='margin-top:20px'></div>", unsafe_allow_html=True)
-
 col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
 with col_logo:
     st.image("HIC.png", width=95)
 with col_title:
     st.markdown("## Administrador de Promociones")
-    st.markdown(
-        "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
-        unsafe_allow_html=True
-    )
-
-st.markdown("<hr style='margin-top:12px; margin-bottom:18px;'>", unsafe_allow_html=True)
+    st.markdown("<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>", unsafe_allow_html=True)
+st.markdown("<hr>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS
 # =====================================================
 tab_promos, tab_registro, tab_admin = st.tabs(
-    ["Promociones","Registrar / Modificar","Administración"]
+    ["Promociones", "Registrar / Modificar", "Administración"]
 )
 
 # =====================================================
-# TAB PROMOCIONES
+# PROMOCIONES
 # =====================================================
 with tab_promos:
-    l, c, r = st.columns([1,3,1])
-    with c:
-        df = cargar_datos()
-        if df.empty:
-            st.info("No hay promociones registradas.")
-        else:
-            df_view = df.copy()
-            df_view["Market"] = df_view["Market"].apply(lambda x: ", ".join(x))
-            st.dataframe(df_view, use_container_width=True)
+    df = cargar_datos()
+    if df.empty:
+        st.info("No hay promociones registradas.")
+    else:
+        view = df.copy()
+        view["Market"] = view["Market"].apply(lambda x: ", ".join(x))
+        st.dataframe(view, use_container_width=True)
 
-            excel = exportar_excel_con_logo(df)
-            st.download_button(
-                "Descargar Excel",
-                excel,
-                file_name="Promociones_Playa_Mujeres.xlsx"
-            )
+        excel = exportar_excel(view)
+        st.download_button(
+            "Descargar Excel",
+            excel,
+            file_name="Promociones.xlsx"
+        )
 
 # =====================================================
-# TAB REGISTRAR / MODIFICAR
+# REGISTRAR / MODIFICAR
 # =====================================================
 with tab_registro:
-    l, c, r = st.columns([1,3,1])
-    with c:
-        df = cargar_datos()
+    df = cargar_datos()
 
-        with st.form("form_registro"):
+    with st.form("form_registro"):
 
-            # Nombre de promo + Descuento
-            col_promo, col_desc = st.columns([3,1])
-            with col_promo:
-                promo = st.text_input("Nombre de la promoción")
-            with col_desc:
-                descuento = st.number_input("Descuento (%)", 0, 100, 5)
+        # Promo + Descuento
+        col_promo, col_desc = st.columns([3,1])
+        promo = col_promo.text_input("Nombre de la promoción")
+        descuento = col_desc.number_input("Descuento (%)", 0, 100, 5)
 
-            # Booking / Travel Window
-            col_bw, col_tw = st.columns(2)
-            with col_bw:
-                bw = st.date_input("Booking Window", (date.today(), date.today()))
-            with col_tw:
-                tw = st.date_input("Travel Window", (date.today(), date.today()))
+        # Fechas
+        col_bw, col_tw = st.columns(2)
+        bw = col_bw.date_input("Booking Window", (date.today(), date.today()))
+        tw = col_tw.date_input("Travel Window", (date.today(), date.today()))
 
-            # Rate Plan
-            rate = st.text_input("Rate Plan")
+        # ✅ MÚLTIPLES RATE PLANS
+        rate_raw = st.text_area(
+            "Rate Plan(s)",
+            help="Uno o varios códigos. Separados por coma o línea nueva",
+            placeholder="BAR\nPROMO2026\nCORP_PM"
+        )
 
-            # Propiedad + Market
-            col_prop, col_market = st.columns(2)
-            with col_prop:
-                hoteles = st.multiselect(
-                    "Propiedad(es)",
-                    ["DREPM - Dreams Playa Mujeres","SECPM - Secrets Playa Mujeres"]
-                )
-            with col_market:
-                markets = st.multiselect("Market(s)", MARKETS)
+        # Propiedades + Market
+        col_prop, col_market = st.columns(2)
+        hoteles = col_prop.multiselect("Propiedad(es)", PROPERTIES)
+        markets = col_market.multiselect("Market(s)", MARKETS)
 
-            notas = st.text_area("Notas / Restricciones")
+        notas = st.text_area("Notas / Restricciones")
 
-            archivo = st.file_uploader(
-                "Archivo de respaldo (PDF / Imagen)",
-                type=["pdf","png","jpg","jpeg"]
-            )
+        archivo = st.file_uploader(
+            "Archivo de respaldo (PDF / Imagen)",
+            type=["pdf","png","jpg","jpeg"]
+        )
 
-            guardar = st.form_submit_button("Guardar")
+        # BOTONES
+        col_g, col_l, col_m = st.columns(3)
+        guardar = col_g.form_submit_button("💾 Guardar")
+        limpiar = col_l.form_submit_button("🧹 Limpiar")
+        modificar = col_m.form_submit_button("✏️ Modificar")
 
-            if guardar:
-                if not rate or not hoteles or not markets:
-                    st.error("Rate Plan, Market y Propiedad son obligatorios.")
-                else:
-                    archivo_path = ""
-                    if archivo:
-                        archivo_path = os.path.join(
-                            MEDIA_DIR, f"{rate}_{archivo.name}"
-                        )
-                        with open(archivo_path, "wb") as f:
-                            f.write(archivo.getbuffer())
+        # =============================
+        # LÓGICA
+        # =============================
+        if limpiar:
+            st.rerun()
 
-                    rows = []
+        if guardar or modificar:
+            rate_plans = [
+                r.strip()
+                for r in rate_raw.replace(",", "\n").split("\n")
+                if r.strip()
+            ]
+
+            if not rate_plans or not hoteles or not markets:
+                st.error("Rate Plan, Market y Propiedad son obligatorios.")
+            else:
+                archivo_path = ""
+                if archivo:
+                    archivo_path = os.path.join(MEDIA_DIR, archivo.name)
+                    with open(archivo_path, "wb") as f:
+                        f.write(archivo.getbuffer())
+
+                if modificar:
+                    df = df[~df["Rate_Plan"].isin(rate_plans)]
+
+                rows = []
+                for rate in rate_plans:
                     for h in hoteles:
                         rows.append({
                             "Hotel": h,
@@ -209,53 +196,21 @@ with tab_registro:
                             "Archivo_Path": archivo_path
                         })
 
-                    df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
-                    df.to_csv(CSV_FILE, index=False)
+                df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+                df.to_csv(CSV_FILE, index=False)
 
-                    st.success("✅ Promoción guardada correctamente")
-                    st.rerun()
+                st.success("✅ Promoción guardada correctamente")
+                st.rerun()
 
 # =====================================================
-# TAB ADMINISTRACIÓN ✅ CORREGIDO
+# ADMINISTRACIÓN
 # =====================================================
 with tab_admin:
-    l, c, r = st.columns([1, 2, 1])
-    with c:
-        st.subheader("Zona Administrativa")
-
-        clave = st.text_input("Clave Administrador", type="password")
-
-        if clave == PASSWORD_MAESTRA:
-            st.success("Acceso autorizado")
-
-            confirmar = st.checkbox("Confirmo que deseo borrar toda la base de datos")
-
-            if confirmar:
-                if st.button("🗑️ Borrar toda la base"):
-                    if os.path.exists(CSV_FILE):
-                        os.remove(CSV_FILE)
-                        st.warning("Base de datos eliminada correctamente")
-                        st.rerun()   # ✅ FUNCIÓN CORRECTA
-        elif clave:
-            st.error("Clave incorrecta")
-# =============================
-# BOTONES DE ACCIÓN
-# =============================
-col_g, col_l, col_m = st.columns(3)
-
-guardar = col_g.form_submit_button(
-    "💾 Guardar",
-    use_container_width=True
-)
-
-limpiar = col_l.form_submit_button(
-    "🧹 Limpiar",
-    use_container_width=True
-)
-
-modificar = col_m.form_submit_button(
-    "✏️ Modificar",
-    use_container_width=True,
-    disabled=not editando
-)
-
+    clave = st.text_input("Clave Administrador", type="password")
+    if clave == PASSWORD_MAESTRA:
+        confirmar = st.checkbox("Confirmo borrar toda la base")
+        if confirmar and st.button("🗑️ Borrar toda la base"):
+            if os.path.exists(CSV_FILE):
+                os.remove(CSV_FILE)
+            st.warning("Base eliminada")
+            st.rerun()

@@ -54,7 +54,7 @@ def cargar_datos():
 # ======================================
 # HEADER CONTROLADO (LOGO A LA DERECHA + TÍTULO CENTRADO)
 # ======================================
-col_left, col_center, col_right = st.columns([2, 3, 1])
+col_left, col_center, col_right = st.columns([2, 2, 1])
 
 with col_center:
     st.markdown("## Administrador de Promociones")
@@ -65,7 +65,7 @@ with col_center:
 
 with col_right:
     if os.path.exists("HIC.png"):
-        st.image("HIC.png", width=120)
+        st.image("HIC.png", width=110)
 
 # ======================================
 # TABS PRINCIPALES

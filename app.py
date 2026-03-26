@@ -213,7 +213,7 @@ with tab_registro:
                     df.to_csv(CSV_FILE, index=False)
 
                     st.success("✅ Promoción guardada correctamente")
-                    st.experimental_rerun()
+                    st.rerun()
 
 # =====================================================
 # TAB ADMINISTRACIÓN ✅ CORREGIDO

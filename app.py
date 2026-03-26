@@ -16,14 +16,7 @@ CSV_FILE = "promociones_data.csv"
 MEDIA_DIR = "media"
 PASSWORD_MAESTRA = "PlayaMujeres2026"
 
-MARKETS = [
-    "US",
-    "Canada",
-    "Mexico",
-    "LATAM",
-    "Europe",
-    "Asia / ROW"
-]
+MARKETS = ["US", "Canada", "Mexico", "LATAM", "Europe", "Asia / ROW"]
 
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
@@ -33,24 +26,12 @@ if not os.path.exists(MEDIA_DIR):
 # =====================================================
 st.markdown("""
 <style>
-body {
-    background-color: #f7f8fa;
-}
-.block-container {
-    padding-top: 1.5rem;
-    background-color: #f7f8fa;
-}
-div[data-baseweb="tab-list"] {
-    justify-content: center;
-}
-button[data-baseweb="tab"] {
-    font-size: 0.85rem;
-    padding: 6px 14px;
-}
-header {
-    background-color: white;
-    border-bottom: 1px solid #e6e6e6;
-}
+body { background-color: #f7f8fa; }
+.block-container { padding-top: 1.5rem; }
+div[data-baseweb="tab-list"] { justify-content: center; }
+button[data-baseweb="tab"] { font-size: 0.85rem; padding: 6px 14px; }
+button[data-baseweb="tab"][aria-selected="true"] { font-weight: 500; }
+header { background-color: white; border-bottom: 1px solid #e6e6e6; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -61,10 +42,15 @@ def cargar_datos():
     if os.path.exists(CSV_FILE):
         df = pd.read_csv(CSV_FILE)
 
+        # ✅ FECHAS
         for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
-            df[c] = pd.to_datetime(df[c]).dt.date
+            if c in df.columns:
+                df[c] = pd.to_datetime(df[c]).dt.date
 
-        # Convertir markets guardados como string ➜ lista
+        # ✅ MARKET (backward compatible)
+        if "Market" not in df.columns:
+            df["Market"] = ""
+
         df["Market"] = df["Market"].apply(
             lambda x: x.split("|") if isinstance(x, str) and x else []
         )
@@ -88,18 +74,13 @@ def cargar_datos():
 # =====================================================
 # HEADER
 # =====================================================
-col_l, col_logo, col_t, col_r = st.columns([1, 1, 2, 1])
-
+col_logo, col_t = st.columns([1, 3])
 with col_logo:
     if os.path.exists("HIC.png"):
         st.image("HIC.png", width=95)
-
 with col_t:
     st.markdown("## Administrador de Promociones")
-    st.markdown(
-        "<span style='color:#6b6b6b;'>Playa Mujeres – DREPM & SECPM</span>",
-        unsafe_allow_html=True
-    )
+    st.caption("Playa Mujeres – DREPM & SECPM")
 
 # =====================================================
 # TABS
@@ -109,157 +90,108 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 )
 
 # =====================================================
-# TAB PROMOCIONES
+# PROMOCIONES
 # =====================================================
 with tab_promos:
-    cl, cc, cr = st.columns([1, 3, 1])
+    df = cargar_datos()
+    if df.empty:
+        st.info("No hay promociones.")
+    else:
+        df_view = df.copy()
+        df_view["Market"] = df_view["Market"].apply(lambda x: ", ".join(x))
+        st.dataframe(df_view, use_container_width=True)
 
-    with cc:
-        st.markdown("### Promociones")
-        df = cargar_datos()
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+            df_view.to_excel(writer, index=False)
 
-        if df.empty:
-            st.info("No hay promociones registradas.")
-        else:
-            filtro = st.text_input("Buscar")
-
-            if filtro:
-                df = df[df.astype(str).apply(
-                    lambda x: x.str.contains(filtro, case=False)
-                ).any(axis=1)]
-
-            # Mostrar markets como texto
-            df_view = df.copy()
-            df_view["Market"] = df_view["Market"].apply(lambda x: ", ".join(x))
-
-            st.dataframe(df_view, use_container_width=True)
-
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-                df_export = df_view.copy()
-                df_export.to_excel(writer, index=False)
-
-            st.download_button(
-                "Descargar Excel",
-                buffer.getvalue(),
-                file_name="Promociones_Playa_Mujeres.xlsx"
-            )
+        st.download_button(
+            "Descargar Excel",
+            buffer.getvalue(),
+            file_name="Promociones.xlsx"
+        )
 
 # =====================================================
-# TAB REGISTRAR / MODIFICAR
+# REGISTRAR / MODIFICAR
 # =====================================================
 with tab_registro:
-    cl, cc, cr = st.columns([1, 3, 1])
+    df = cargar_datos()
+    rate = st.text_input("Rate Plan")
 
-    with cc:
-        df = cargar_datos()
-        rate = st.text_input("Rate Plan")
+    existente = df[df["Rate_Plan"] == rate]
+    editando = not existente.empty
 
-        existente = df[df["Rate_Plan"] == rate]
-        editando = not existente.empty
+    with st.form("form"):
+        hoteles = st.multiselect(
+            "Propiedad(es)",
+            ["DREPM - Dreams Playa Mujeres", "SECPM - Secrets Playa Mujeres"],
+            default=existente["Hotel"].tolist() if editando else []
+        )
 
-        if editando:
-            st.info("Editando promoción existente")
+        markets = st.multiselect(
+            "Market(s)",
+            MARKETS,
+            default=existente["Market"].iloc[0] if editando else []
+        )
 
-        with st.form("form_registro"):
-            hoteles = st.multiselect(
-                "Propiedad(es)",
-                [
-                    "DREPM - Dreams Playa Mujeres",
-                    "SECPM - Secrets Playa Mujeres"
-                ],
-                default=existente["Hotel"].tolist() if editando else []
-            )
+        promo = st.text_input(
+            "Nombre de la promoción",
+            value=existente["Promo"].iloc[0] if editando else ""
+        )
 
-            # ✅ MARKET
-            markets = st.multiselect(
-                "Market(s)",
-                MARKETS,
-                default=existente["Market"].iloc[0] if editando else []
-            )
+        descuento = st.number_input("Descuento (%)", 0, 100, 5)
+        bw = st.date_input("Booking Window", (date.today(), date.today()))
+        tw = st.date_input("Travel Window", (date.today(), date.today()))
+        notas = st.text_area("Notas")
 
-            promo = st.text_input(
-                "Nombre de la promoción",
-                value=existente["Promo"].iloc[0] if editando else ""
-            )
+        archivo = st.file_uploader(
+            "Archivo respaldo (PDF / Imagen)",
+            type=["pdf", "png", "jpg", "jpeg"]
+        )
 
-            descuento = st.number_input(
-                "Descuento (%)",
-                0, 100, step=5,
-                value=int(existente["Descuento"].iloc[0]) if editando else 0
-            )
+        guardar = st.form_submit_button("Guardar")
 
-            bw = st.date_input("Booking Window", (date.today(), date.today()))
-            tw = st.date_input("Travel Window", (date.today(), date.today()))
-            notas = st.text_area("Notas / Restricciones")
+        if guardar:
+            if not rate or not hoteles or not markets:
+                st.error("Rate Plan, Market y Propiedad son obligatorios.")
+            else:
+                archivo_path = ""
+                if archivo:
+                    archivo_path = os.path.join(MEDIA_DIR, f"{rate}_{archivo.name}")
+                    with open(archivo_path, "wb") as f:
+                        f.write(archivo.getbuffer())
 
-            archivo = st.file_uploader(
-                "Archivo de respaldo (PDF o Imagen)",
-                type=["pdf", "png", "jpg", "jpeg"]
-            )
-
-            g_col, d_col = st.columns(2)
-            guardar = g_col.form_submit_button("Guardar")
-            eliminar = d_col.form_submit_button("Eliminar") if editando else False
-
-            if guardar:
-                if not rate or not hoteles or not markets:
-                    st.error("Rate Plan, Propiedad y Market son obligatorios.")
-                else:
-                    archivo_path = ""
-                    if archivo:
-                        archivo_path = os.path.join(
-                            MEDIA_DIR, f"{rate}_{archivo.name}"
-                        )
-                        with open(archivo_path, "wb") as f:
-                            f.write(archivo.getbuffer())
-
-                    df = df[df["Rate_Plan"] != rate]
-
-                    registros = []
-                    for h in hoteles:
-                        registros.append({
-                            "Hotel": h,
-                            "Market": "|".join(markets),
-                            "Promo": promo,
-                            "Rate_Plan": rate,
-                            "Descuento": descuento,
-                            "BW_Inicio": bw[0],
-                            "BW_Fin": bw[1],
-                            "TW_Inicio": tw[0],
-                            "TW_Fin": tw[1],
-                            "Notas": notas,
-                            "Archivo_Path": archivo_path
-                        })
-
-                    df = pd.concat([df, pd.DataFrame(registros)], ignore_index=True)
-                    df.to_csv(CSV_FILE, index=False)
-
-                    st.success("Promoción guardada correctamente.")
-                    st.rerun()
-
-            if eliminar:
                 df = df[df["Rate_Plan"] != rate]
+
+                rows = []
+                for h in hoteles:
+                    rows.append({
+                        "Hotel": h,
+                        "Market": "|".join(markets),
+                        "Promo": promo,
+                        "Rate_Plan": rate,
+                        "Descuento": descuento,
+                        "BW_Inicio": bw[0],
+                        "BW_Fin": bw[1],
+                        "TW_Inicio": tw[0],
+                        "TW_Fin": tw[1],
+                        "Notas": notas,
+                        "Archivo_Path": archivo_path
+                    })
+
+                df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
                 df.to_csv(CSV_FILE, index=False)
-                st.warning("Promoción eliminada.")
+                st.success("Promoción guardada.")
                 st.rerun()
 
 # =====================================================
-# TAB ADMIN
+# ADMIN
 # =====================================================
 with tab_admin:
-    cl, cc, cr = st.columns([1, 2, 1])
-
-    with cc:
-        st.markdown("### Zona Administrativa")
-        clave = st.text_input("Clave de administrador", type="password")
-
-        if clave == PASSWORD_MAESTRA:
-            st.success("Acceso autorizado")
-            if st.button("Borrar toda la base de datos"):
-                if os.path.exists(CSV_FILE):
-                    os.remove(CSV_FILE)
-                    st.warning("Base eliminada.")
-                    st.rerun()
-        elif clave:
-            st.error("Clave incorrecta")
+    clave = st.text_input("Clave Admin", type="password")
+    if clave == PASSWORD_MAESTRA:
+        st.success("Acceso autorizado")
+        if st.button("Borrar BD"):
+            os.remove(CSV_FILE)
+            st.warning("Base eliminada")
+            st.rerun()

@@ -4,9 +4,9 @@ import os
 import io
 from datetime import date, datetime
 
-# =====================================================
+# ==============================
 # CONFIGURACIÓN GENERAL
-# =====================================================
+# ==============================
 st.set_page_config(
     page_title="Administrador de Promociones",
     layout="wide"
@@ -25,9 +25,9 @@ PROPERTIES = [
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
-# =====================================================
-# CSS COMPACTO (AJUSTADO PARA NO CORTAR HEADER)
-# =====================================================
+# ==============================
+# CSS COMPACTO (SIN CORTE)
+# ==============================
 st.markdown("""
 <style>
 body { background-color: #f7f8fa; }
@@ -38,18 +38,23 @@ div[data-testid="stVerticalBlock"] { gap: 0.4rem; }
 </style>
 """, unsafe_allow_html=True)
 
-# =====================================================
+# ==============================
+# ✅ SPACER REAL (CLAVE)
+# ==============================
+st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+
+# ==============================
 # FUNCIONES
-# =====================================================
+# ==============================
 def cargar_datos():
     if os.path.exists(CSV_FILE):
         df = pd.read_csv(CSV_FILE)
 
-        for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
+        for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
             if c in df.columns:
                 df[c] = pd.to_datetime(df[c]).dt.date
 
-        for col in ["Market","Archivo_Path"]:
+        for col in ["Market", "Archivo_Path"]:
             if col not in df.columns:
                 df[col] = ""
 
@@ -94,13 +99,12 @@ def exportar_excel(df):
     buffer.seek(0)
     return buffer
 
-# =====================================================
-# HEADER (CORREGIDO, SIN CORTES)
-# =====================================================
+# ==============================
+# HEADER (YA NO SE CORTA)
+# ==============================
 col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
 
 with col_logo:
-    st.markdown("<div style='padding-top:4px'></div>", unsafe_allow_html=True)
     st.image("HIC.png", width=80)
 
 with col_title:
@@ -112,16 +116,16 @@ with col_title:
 
 st.markdown("<hr style='margin-top:6px; margin-bottom:8px;'>", unsafe_allow_html=True)
 
-# =====================================================
+# ==============================
 # TABS
-# =====================================================
+# ==============================
 tab_promos, tab_registro, tab_admin = st.tabs(
     ["Promociones", "Registrar / Modificar", "Administración"]
 )
 
-# =====================================================
+# ==============================
 # PROMOCIONES
-# =====================================================
+# ==============================
 with tab_promos:
     df = cargar_datos()
     if df.empty:
@@ -138,9 +142,9 @@ with tab_promos:
             file_name="Promociones_Playa_Mujeres.xlsx"
         )
 
-# =====================================================
-# REGISTRAR / MODIFICAR (FORM COMPACTO, SIN SCROLL)
-# =====================================================
+# ==============================
+# REGISTRAR / MODIFICAR
+# ==============================
 with tab_registro:
     df = cargar_datos()
 
@@ -225,9 +229,9 @@ with tab_registro:
                 st.success("✅ Promoción guardada correctamente")
                 st.rerun()
 
-# =====================================================
+# ==============================
 # ADMINISTRACIÓN
-# =====================================================
+# ==============================
 with tab_admin:
     clave = st.text_input("Clave Administrador", type="password")
     if clave == PASSWORD_MAESTRA:
@@ -235,6 +239,6 @@ with tab_admin:
         if confirmar and st.button("🗑️ Borrar toda la base"):
             if os.path.exists(CSV_FILE):
                 os.remove(CSV_FILE)
-            st.warning("Base eliminada")
+            st.warning("Base de datos eliminada")
             st.rerun()
-
+``

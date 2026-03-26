@@ -16,37 +16,37 @@ CSV_FILE = "promociones_data.csv"
 MEDIA_DIR = "media"
 PASSWORD_MAESTRA = "PlayaMujeres2026"
 
+MARKETS = [
+    "US",
+    "Canada",
+    "Mexico",
+    "LATAM",
+    "Europe",
+    "Asia / ROW"
+]
+
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
 # =====================================================
-# CSS GLOBAL (FONDO + TABS)
+# CSS GLOBAL
 # =====================================================
 st.markdown("""
 <style>
 body {
     background-color: #f7f8fa;
 }
-
 .block-container {
     padding-top: 1.5rem;
     background-color: #f7f8fa;
 }
-
 div[data-baseweb="tab-list"] {
     justify-content: center;
 }
-
 button[data-baseweb="tab"] {
     font-size: 0.85rem;
     padding: 6px 14px;
-    font-weight: 400;
 }
-
-button[data-baseweb="tab"][aria-selected="true"] {
-    font-weight: 500;
-}
-
 header {
     background-color: white;
     border-bottom: 1px solid #e6e6e6;
@@ -60,12 +60,20 @@ header {
 def cargar_datos():
     if os.path.exists(CSV_FILE):
         df = pd.read_csv(CSV_FILE)
+
         for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
             df[c] = pd.to_datetime(df[c]).dt.date
+
+        # Convertir markets guardados como string ➜ lista
+        df["Market"] = df["Market"].apply(
+            lambda x: x.split("|") if isinstance(x, str) and x else []
+        )
+
         return df
 
     return pd.DataFrame(columns=[
         "Hotel",
+        "Market",
         "Promo",
         "Rate_Plan",
         "Descuento",
@@ -101,32 +109,35 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 )
 
 # =====================================================
-# TAB 1 — PROMOCIONES
+# TAB PROMOCIONES
 # =====================================================
 with tab_promos:
     cl, cc, cr = st.columns([1, 3, 1])
 
     with cc:
         st.markdown("### Promociones")
-
         df = cargar_datos()
 
         if df.empty:
             st.info("No hay promociones registradas.")
         else:
-            filtro = st.text_input("Buscar promoción")
+            filtro = st.text_input("Buscar")
 
             if filtro:
                 df = df[df.astype(str).apply(
                     lambda x: x.str.contains(filtro, case=False)
                 ).any(axis=1)]
 
-            st.dataframe(df, use_container_width=True)
+            # Mostrar markets como texto
+            df_view = df.copy()
+            df_view["Market"] = df_view["Market"].apply(lambda x: ", ".join(x))
 
-            # Excel
+            st.dataframe(df_view, use_container_width=True)
+
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-                df.to_excel(writer, index=False)
+                df_export = df_view.copy()
+                df_export.to_excel(writer, index=False)
 
             st.download_button(
                 "Descargar Excel",
@@ -134,21 +145,8 @@ with tab_promos:
                 file_name="Promociones_Playa_Mujeres.xlsx"
             )
 
-            # Archivos
-            st.markdown("#### Archivos de respaldo")
-            for _, r in df.iterrows():
-                archivo_path = r["Archivo_Path"]
-
-                if isinstance(archivo_path, str) and archivo_path and os.path.exists(archivo_path):
-                    with open(archivo_path, "rb") as f:
-                        st.download_button(
-                            label=f"Descargar – {r['Rate_Plan']}",
-                            data=f,
-                            file_name=os.path.basename(archivo_path)
-                        )
-
 # =====================================================
-# TAB 2 — REGISTRAR / MODIFICAR
+# TAB REGISTRAR / MODIFICAR
 # =====================================================
 with tab_registro:
     cl, cc, cr = st.columns([1, 3, 1])
@@ -173,6 +171,13 @@ with tab_registro:
                 default=existente["Hotel"].tolist() if editando else []
             )
 
+            # ✅ MARKET
+            markets = st.multiselect(
+                "Market(s)",
+                MARKETS,
+                default=existente["Market"].iloc[0] if editando else []
+            )
+
             promo = st.text_input(
                 "Nombre de la promoción",
                 value=existente["Promo"].iloc[0] if editando else ""
@@ -180,9 +185,7 @@ with tab_registro:
 
             descuento = st.number_input(
                 "Descuento (%)",
-                min_value=0,
-                max_value=100,
-                step=5,
+                0, 100, step=5,
                 value=int(existente["Descuento"].iloc[0]) if editando else 0
             )
 
@@ -200,14 +203,13 @@ with tab_registro:
             eliminar = d_col.form_submit_button("Eliminar") if editando else False
 
             if guardar:
-                if not rate or not hoteles:
-                    st.error("Rate Plan y al menos una propiedad son obligatorios.")
+                if not rate or not hoteles or not markets:
+                    st.error("Rate Plan, Propiedad y Market son obligatorios.")
                 else:
                     archivo_path = ""
                     if archivo:
                         archivo_path = os.path.join(
-                            MEDIA_DIR,
-                            f"{rate}_{archivo.name}"
+                            MEDIA_DIR, f"{rate}_{archivo.name}"
                         )
                         with open(archivo_path, "wb") as f:
                             f.write(archivo.getbuffer())
@@ -218,6 +220,7 @@ with tab_registro:
                     for h in hoteles:
                         registros.append({
                             "Hotel": h,
+                            "Market": "|".join(markets),
                             "Promo": promo,
                             "Rate_Plan": rate,
                             "Descuento": descuento,
@@ -242,23 +245,21 @@ with tab_registro:
                 st.rerun()
 
 # =====================================================
-# TAB 3 — ADMINISTRACIÓN
+# TAB ADMIN
 # =====================================================
 with tab_admin:
     cl, cc, cr = st.columns([1, 2, 1])
 
     with cc:
         st.markdown("### Zona Administrativa")
-
         clave = st.text_input("Clave de administrador", type="password")
 
         if clave == PASSWORD_MAESTRA:
             st.success("Acceso autorizado")
-
             if st.button("Borrar toda la base de datos"):
                 if os.path.exists(CSV_FILE):
                     os.remove(CSV_FILE)
-                    st.warning("Base de datos eliminada.")
+                    st.warning("Base eliminada.")
                     st.rerun()
         elif clave:
             st.error("Clave incorrecta")

@@ -1,0 +1,7 @@
+Hotel,Promo,Rate_Plan,Descuento,BW_Inicio,BW_Fin,TW_Inicio,TW_Fin,Notas,Archivo_Path
+DREPM - Dreams Playa Mujeres,,DESCBARC,10,2026-03-25,2026-03-31,2026-04-01,2026-04-30,,
+SECPM - Secrets Playa Mujeres,TEST1,UVCPRO,15,2026-03-25,2026-03-30,2026-04-01,2026-04-30,UVCPRO,
+DREPM - Dreams Playa Mujeres,BYY,SUNWINGPRO,15,2026-04-01,2026-04-30,2026-05-01,2026-05-31,,
+DREPM - Dreams Playa Mujeres,BEST YEAR YET,MEXPKG,10,2026-03-25,2026-03-25,2026-05-01,2026-05-31,Test,media\MEXPKG_TEC.png
+DREPM - Dreams Playa Mujeres,Best Year Yet,BAR,10,2026-03-25,2026-03-31,2026-03-25,2026-04-30,Test,media\BAR_TEC.png
+DREPM - Dreams Playa Mujeres,Best Year Yet,LATAMPKG,10,2026-03-25,2026-03-31,2026-03-25,2026-12-20,Extra info,media\LATAMPKG_LOGO UNADM.jpg

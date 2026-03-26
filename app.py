@@ -177,9 +177,23 @@ with tab_registro:
                 default=existente["Market"].iloc[0] if editando else []
             )
 
-            promo = st.text_input(
-                "Nombre de la promoción",
-                value=existente["Promo"].iloc[0] if editando else ""
+           col_promo, col_desc = st.columns([3, 1])
+
+with col_promo:
+    promo = st.text_input(
+        "Nombre de la promoción",
+        value=existente["Promo"].iloc[0] if editando else ""
+    )
+
+with col_desc:
+    descuento = st.number_input(
+        "Descuento (%)",
+        min_value=0,
+        max_value=100,
+        step=5,
+        value=int(existente["Descuento"].iloc[0]) if editando else 0
+    )
+``
             )
 
             descuento = st.number_input("Descuento (%)", 0, 100, 5)

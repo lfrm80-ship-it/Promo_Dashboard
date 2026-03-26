@@ -7,10 +7,12 @@ from datetime import date
 # ======================================
 # CONFIGURACIÓN GENERAL
 # ======================================
-st.set_page_config(
+
+t.set_page_config(
     page_title="Administrador de Promociones",
     layout="wide"
 )
+
     st.markdown(
     """
     <style>

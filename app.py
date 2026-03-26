@@ -5,62 +5,15 @@ import io
 from datetime import date
 
 # ======================================
-# CONFIGURACIÓN
+# CONFIGURACIÓN GENERAL (UNA SOLA VEZ)
 # ======================================
 st.set_page_config(
-    page_title="Promociones DREPM & SECPM | Hyatt AI",
+    page_title="Administrador de Promociones | Playa Mujeres",
     layout="wide"
 )
 
 PASSWORD_MAESTRA = "PlayaMujeres2026"
 CSV_FILE = "promociones_data.csv"
-MEDIA_DIR = "media"
-
-if not os.path.exists(MEDIA_DIR):
-    os.makedirs(MEDIA_DIR)
-
-# ======================================
-# CSS SEGURO (SIN TRIPLE COMILLAS)
-# ======================================
-st.markdown(
-    "<style>"
-    ".block-container { padding-top: 2rem; }"
-    ".sidebar-divider { margin: 1rem 0; border-bottom: 1px solid #e0e0e0; }"
-    "</style>",
-    unsafe_allow_html=True
-)
-
-# ======================================
-# SIDEBAR
-# ======================================
-with st.sidebar:
-    if os.path.exists("HIC.png"):
-        st.image("HIC.png", width=140)
-    else:
-        st.markdown("### 🏨 Hyatt Inclusive Collection")
-        st.caption("Playa Mujeres Complex")
-
-    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
-
-    st.markdown("#### Guía rápida")
-    st.markdown("- 🆕 Limpiar formulario")
-    st.markdown("- 💾 Guardar promoción")
-    st.markdown("- 🔄 Actualizar existente")
-    st.markdown("- 📥 Descargar reporte")
-
-    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
-
-    with st.expander("🔐 Zona Administrador"):
-        pass_input = st.text_input("Clave maestra", type="password")
-        if pass_input == PASSWORD_MAESTRA:
-            st.success("Acceso autorizado")
-            if st.button("⚠️ Borrar toda la base"):
-                if os.path.exists(CSV_FILE):
-                    os.remove(CSV_FILE)
-                    st.warning("Base eliminada")
-                    st.rerun()
-        elif pass_input != "":
-            st.error("Contraseña incorrecta")
 
 # ======================================
 # FUNCIONES
@@ -76,38 +29,69 @@ def cargar_datos():
         "Hotel", "Promo", "Rate_Plan", "Descuento",
         "BW_Inicio", "BW_Fin",
         "TW_Inicio", "TW_Fin",
-        "Notas", "Archivo_Path"
+        "Notas"
     ])
 
 # ======================================
-# HEADER
+# HEADER PRINCIPAL
 # ======================================
-st.title("🏨 Dashboard Maestro de Promociones")
-st.caption("Administración centralizada de promociones – DREPM & SECPM")
+st.title("Administrador de Promociones")
+st.caption("Playa Mujeres Complex — Dreams & Secrets")
 
-tab_buscar, tab_registrar = st.tabs([
-    "🔍 Buscador & Reportes",
-    "➕ Registrar / Modificar"
+tabs = st.tabs([
+    "Promociones",
+    "Registrar / Modificar",
+    "Administración"
 ])
 
 # ======================================
-# TAB REGISTRAR
+# TAB 1 — PROMOCIONES
 # ======================================
-with tab_registrar:
+with tabs[0]:
     df = cargar_datos()
 
-    if st.button("🧹 Limpiar formulario"):
-        st.rerun()
+    if df.empty:
+        st.info("No hay promociones registradas.")
+    else:
+        filtro = st.text_input("Buscar promoción")
+        if filtro:
+            df = df[df.astype(str).apply(
+                lambda x: x.str.contains(filtro, case=False)
+            ).any(axis=1)]
 
-    rate = st.text_input("🔑 Rate Plan")
+        st.dataframe(df, use_container_width=True)
+
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine="xlsxwriter") as w:
+            df.to_excel(w, index=False)
+
+        st.download_button(
+            "Descargar Excel",
+            buffer.getvalue(),
+            file_name="Promociones_Playa_Mujeres.xlsx"
+        )
+
+# ======================================
+# TAB 2 — REGISTRAR / MODIFICAR
+# ======================================
+with tabs[1]:
+    df = cargar_datos()
+
+    rate = st.text_input("Rate Plan")
 
     existente = df[df["Rate_Plan"] == rate]
     editando = not existente.empty
 
+    if editando:
+        st.info("Editando promoción existente")
+
     with st.form("form_registro"):
         hoteles = st.multiselect(
             "Propiedad",
-            ["DREPM - Dreams Playa Mujeres", "SECPM - Secrets Playa Mujeres"],
+            [
+                "DREPM - Dreams Playa Mujeres",
+                "SECPM - Secrets Playa Mujeres"
+            ],
             default=existente["Hotel"].tolist() if editando else []
         )
 
@@ -117,7 +101,7 @@ with tab_registrar:
         )
 
         descuento = st.number_input(
-            "% Descuento",
+            "Descuento (%)",
             0, 100, step=5,
             value=int(existente["Descuento"].iloc[0]) if editando else 0
         )
@@ -126,22 +110,23 @@ with tab_registrar:
         tw = st.date_input("Travel Window", (date.today(), date.today()))
 
         notas = st.text_area(
-            "Notas",
+            "Notas / Restricciones",
             value=existente["Notas"].iloc[0] if editando else ""
         )
 
-        guardar = st.form_submit_button("💾 Guardar / Actualizar")
-        eliminar = st.form_submit_button("🗑️ Eliminar") if editando else False
+        col1, col2 = st.columns(2)
+        guardar = col1.form_submit_button("Guardar cambios")
+        eliminar = col2.form_submit_button("Eliminar promoción") if editando else False
 
         if guardar:
             if not rate or not hoteles:
-                st.error("Falta Rate Plan o Propiedad")
+                st.error("Rate Plan y Propiedad son obligatorios")
             else:
                 df = df[df["Rate_Plan"] != rate]
 
-                nuevos = []
+                registros = []
                 for h in hoteles:
-                    nuevos.append({
+                    registros.append({
                         "Hotel": h,
                         "Promo": promo,
                         "Rate_Plan": rate,
@@ -150,62 +135,36 @@ with tab_registrar:
                         "BW_Fin": bw[1],
                         "TW_Inicio": tw[0],
                         "TW_Fin": tw[1],
-                        "Notas": notas,
-                        "Archivo_Path": ""
+                        "Notas": notas
                     })
 
-                df = pd.concat([df, pd.DataFrame(nuevos)])
+                df = pd.concat([df, pd.DataFrame(registros)])
                 df.to_csv(CSV_FILE, index=False)
-                st.success("✅ Guardado")
+                st.success("Promoción guardada")
                 st.rerun()
 
         if eliminar:
             df = df[df["Rate_Plan"] != rate]
             df.to_csv(CSV_FILE, index=False)
-            st.warning("❌ Eliminado")
+            st.warning("Promoción eliminada")
             st.rerun()
 
 # ======================================
-# TAB BUSCADOR
+# TAB 3 — ADMINISTRACIÓN
 # ======================================
-with tab_buscar:
-    df = cargar_datos()
+with tabs[2]:
+    st.subheader("Zona Administrativa")
 
-    if df.empty:
-        st.info("No hay promociones registradas.")
-    else:
-        filtro = st.text_input("🔎 Buscar")
-        if filtro:
-            df = df[df.astype(str).apply(
-                lambda x: x.str.contains(filtro, case=False)
-            ).any(axis=1)]
+    clave = st.text_input("Clave de administrador", type="password")
 
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine="xlsxwriter") as w:
-            df.to_excel(w, index=False)
+    if clave == PASSWORD_MAESTRA:
+        st.success("Acceso autorizado")
 
-        st.download_button(
-            "📥 Descargar Excel",
-            buffer.getvalue(),
-            file_name="Promociones.xlsx"
-        )
-
-        for _, r in df.iterrows():
-            with st.container(border=True):
-                st.markdown(f"**{r['Hotel']} | {r['Promo']}**")
-                st.markdown(f"Rate: `{r['Rate_Plan']}`")
-                st.markdown(
-                    f"Viaje: {r['TW_Inicio']} → {r['TW_Fin']} | "
-                    f"{r['Descuento']}% OFF"
-                )
-
-import streamlit as st
-
-st.set_page_config(page_title="Test App", layout="wide")
-
-st.title("Aplicación de prueba")
-st.write("Si ves esto, tu entorno Streamlit está bien.")
-
-if st.button("Probar"):
-    st.success("Todo OK")
-
+        if st.button("Borrar toda la base de datos"):
+            if os.path.exists(CSV_FILE):
+                os.remove(CSV_FILE)
+                st.warning("Base de datos eliminada")
+                st.rerun()
+    elif clave:
+        st.error("Clave incorrecta")
+``

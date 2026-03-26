@@ -210,17 +210,21 @@ with tab_registro:
 # TAB 3 — ADMINISTRACIÓN
 # ======================================
 with tab_admin:
-    st.subheader("Zona Administrativa")
+    col_left, col_center, col_right = st.columns([1, 2, 1])
 
-    clave = st.text_input("Clave de administrador", type="password")
+    with col_center:
+        st.subheader("Zona Administrativa")
 
-    if clave == PASSWORD_MAESTRA:
-        st.success("Acceso autorizado")
+        clave = st.text_input("Clave de administrador", type="password")
 
-        if st.button("Borrar toda la base de datos"):
-            if os.path.exists(CSV_FILE):
-                os.remove(CSV_FILE)
-                st.warning("Base de datos eliminada.")
-                st.rerun()
-    elif clave:
-        st.error("Clave incorrecta")
+        if clave == PASSWORD_MAESTRA:
+            st.success("Acceso autorizado")
+
+            if st.button("Borrar toda la base de datos"):
+                if os.path.exists(CSV_FILE):
+                    os.remove(CSV_FILE)
+                    st.warning("Base de datos eliminada.")
+                    st.rerun()
+        elif clave:
+            st.error("Clave incorrecta")
+

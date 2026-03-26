@@ -75,11 +75,13 @@ def cargar_datos():
 # =====================================================
 # HEADER CENTRADO
 # =====================================================
-cl, c_logo, c_title, cr = st.columns([1,1,2,1])
+cl, c_logo, c_title, cr = st.columns([1, 1, 2, 1])
 
 with c_logo:
+    st.markdown("<div style='padding-top: 8px;'>", unsafe_allow_html=True)
     if os.path.exists("HIC.png"):
-        st.image("HIC.png", width=90)
+        st.image("HIC.png", width=85)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 with c_title:
     st.markdown("## Administrador de Promociones")

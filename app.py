@@ -46,6 +46,7 @@ def cargar_datos():
 
         if "Market" not in df.columns:
             df["Market"] = ""
+
         df["Market"] = df["Market"].apply(
             lambda x: x.split("|") if isinstance(x, str) and x else []
         )
@@ -67,14 +68,14 @@ def exportar_excel_con_logo(df):
 
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         workbook = writer.book
-        worksheet = workbook.add_worksheet("Promociones")
-        writer.sheets["Promociones"] = worksheet
+        ws = workbook.add_worksheet("Promociones")
+        writer.sheets["Promociones"] = ws
 
         if os.path.exists("HIC.png"):
-            worksheet.insert_image("A1", "HIC.png", {"x_scale": 0.4, "y_scale": 0.4})
+            ws.insert_image("A1", "HIC.png", {"x_scale": 0.4, "y_scale": 0.4})
 
-        worksheet.write("E2", "Fecha de generación:")
-        worksheet.write("F2", fecha)
+        ws.write("E2", "Fecha de generación:")
+        ws.write("F2", fecha)
 
         df_x = df.copy()
         df_x["Market"] = df_x["Market"].apply(lambda x: ", ".join(x))
@@ -85,7 +86,7 @@ def exportar_excel_con_logo(df):
 
         df_x.to_excel(writer, index=False, startrow=4)
         for i, col in enumerate(df_x.columns):
-            worksheet.set_column(i, i, 18)
+            ws.set_column(i, i, 18)
 
     output.seek(0)
     return output
@@ -94,11 +95,10 @@ def exportar_excel_con_logo(df):
 # BLOQUE DE BRANDING
 # =====================================================
 st.markdown("<div style='margin-top:20px'></div>", unsafe_allow_html=True)
-col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
 
+col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
 with col_logo:
     st.image("HIC.png", width=95)
-
 with col_title:
     st.markdown("## Administrador de Promociones")
     st.markdown(
@@ -112,14 +112,14 @@ st.markdown("<hr style='margin-top:12px; margin-bottom:18px;'>", unsafe_allow_ht
 # TABS
 # =====================================================
 tab_promos, tab_registro, tab_admin = st.tabs(
-    ["Promociones","Registrar / Modificar","Administración"]
+    ["Promociones", "Registrar / Modificar", "Administración"]
 )
 
 # =====================================================
 # TAB PROMOCIONES
 # =====================================================
 with tab_promos:
-    l,c,r = st.columns([1,3,1])
+    l, c, r = st.columns([1,3,1])
     with c:
         df = cargar_datos()
         if df.empty:
@@ -128,6 +128,7 @@ with tab_promos:
             df_view = df.copy()
             df_view["Market"] = df_view["Market"].apply(lambda x: ", ".join(x))
             st.dataframe(df_view, use_container_width=True)
+
             excel = exportar_excel_con_logo(df)
             st.download_button(
                 "Descargar Excel",
@@ -136,34 +137,20 @@ with tab_promos:
             )
 
 # =====================================================
-# TAB REGISTRAR / MODIFICAR (FORM PRO ✅)
+# TAB REGISTRAR / MODIFICAR (FORM DEFINITIVO ✅)
 # =====================================================
 with tab_registro:
-    l,c,r = st.columns([1,3,1])
+    l, c, r = st.columns([1,3,1])
     with c:
         df = cargar_datos()
 
         with st.form("form_registro"):
 
-            # Nombre promo + Descuento
+            # ✅ Nombre de la promoción + Descuento (ÚNICO)
             col_promo, col_desc = st.columns([3,1])
             with col_promo:
                 promo = st.text_input("Nombre de la promoción")
             with col_desc:
-                descuento = st.number_input("Descuento (%)", 0, 100, 5)
-
-            # Booking / Travel Window
-            col_bw, col_tw = st.columns(2)
-            with col_bw:
-                bw = st.date_input("Booking Window", (date.today(), date.today()))
-            with col_tw:
-                tw = st.date_input("Travel Window", (date.today(), date.today()))
-
-            # Rate Plan + Descuento MISMA LINEA
-            col_rate, col_desc2 = st.columns([3,1])
-            with col_rate:
-                rate = st.text_input("Rate Plan")
-            with col_desc2:
                 descuento = st.number_input(
                     "Descuento (%)",
                     min_value=0,
@@ -171,12 +158,25 @@ with tab_registro:
                     step=5
                 )
 
-            # Propiedad + Market
+            # ✅ Booking / Travel Window
+            col_bw, col_tw = st.columns(2)
+            with col_bw:
+                bw = st.date_input("Booking Window", (date.today(), date.today()))
+            with col_tw:
+                tw = st.date_input("Travel Window", (date.today(), date.today()))
+
+            # ✅ Rate Plan (solo)
+            rate = st.text_input("Rate Plan")
+
+            # ✅ Propiedades + Markets
             col_prop, col_market = st.columns(2)
             with col_prop:
                 hoteles = st.multiselect(
                     "Propiedad(es)",
-                    ["DREPM - Dreams Playa Mujeres","SECPM - Secrets Playa Mujeres"]
+                    [
+                        "DREPM - Dreams Playa Mujeres",
+                        "SECPM - Secrets Playa Mujeres"
+                    ]
                 )
             with col_market:
                 markets = st.multiselect("Market(s)", MARKETS)
@@ -199,7 +199,7 @@ with tab_registro:
                         archivo_path = os.path.join(
                             MEDIA_DIR, f"{rate}_{archivo.name}"
                         )
-                        with open(archivo_path,"wb") as f:
+                        with open(archivo_path, "wb") as f:
                             f.write(archivo.getbuffer())
 
                     rows = []
@@ -220,11 +220,12 @@ with tab_registro:
 
                     df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
                     df.to_csv(CSV_FILE, index=False)
+
                     st.success("✅ Promoción guardada correctamente")
                     st.experimental_rerun()
 
 # =====================================================
-# ADMINISTRACIÓN
+# TAB ADMINISTRACIÓN
 # =====================================================
 with tab_admin:
     clave = st.text_input("Clave Admin", type="password")

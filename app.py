@@ -7,18 +7,41 @@ from datetime import date, datetime
 # 1. CONFIGURACIÓN E IDENTIDAD HYATT
 st.set_page_config(page_title="Promociones DREPM & SECPM | Hyatt AI", layout="wide")
 
-# --- MENÚ LATERAL ---
+# --- SEGURIDAD: CONFIGURA TU CONTRASEÑA AQUÍ ---
+PASSWORD_MAESTRA = "PlayaMujeres2026" # <--- Puedes cambiarla por la que tú quieras
+
+# --- MENÚ LATERAL CON LOGO ---
 with st.sidebar:
+    # URL de un logo de Hyatt All-Inclusive Collection
+    # Usaremos una URL directa de GitHub que suele funcionar mejor.
     logo_url = "https://raw.githubusercontent.com/tomasb-ai/imagenes/main/logo_hyatt_aic.png"
+    
+    # Intentamos mostrar la imagen. Si falla, mostramos texto de respaldo.
     try:
         st.image(logo_url, use_container_width=True)
     except:
-        st.info("Hyatt All-Inclusive Collection")
+        # Texto de respaldo si la imagen falla (para que no salga el icono roto)
+        st.write("🏨 **Hyatt All-Inclusive Collection**")
+        st.write("Dreams & Secrets Playa Mujeres")
+        
     st.write("---")
-    st.subheader("Guía de Usuario")
-    st.write("🆕 **Nuevo**: Limpia  formulario.")
-    st.write("💾 **Guardar**: Registra DREPM/SECPM.")
-    st.write("📊 **Excel**: Descarga lo que ves en pantalla.")
+    st.subheader("🔐 Zona de Administrador")
+    pass_input = st.text_input("Contraseña para limpieza:", type="password")
+    
+    if pass_input == PASSWORD_MAESTRA:
+        st.success("Acceso Autorizado")
+        if st.button("⚠️ BORRAR TODA LA BASE DE DATOS"):
+            if os.path.exists("promociones_data.csv"):
+                os.remove("promociones_data.csv")
+                st.warning("Base de datos eliminada. Reiniciando...")
+                st.rerun()
+    elif pass_input != "":
+        st.error("Contraseña Incorrecta")
+
+    st.write("---")
+    st.subheader("Guía Rápida")
+    st.write("🆕 **Nuevo**: Limpia el formulario.")
+    st.write("💾 **Guardar**: Crea o actualiza promos.")
 
 st.title("🏨 Dashboard Maestro de Promociones")
 
@@ -43,7 +66,7 @@ tab_buscar, tab_registrar = st.tabs(["🔍 BUSCADOR & REPORTES", "➕ REGISTRAR 
 with tab_registrar:
     df_actual = cargar_datos()
     
-    if st.button("🆕 Iniciar Nueva Captura (Limpiar Todo)"):
+    if st.button("🆕 Iniciar Nueva Captura"):
         st.rerun()
 
     st.write("---")
@@ -65,7 +88,7 @@ with tab_registrar:
         
         c1, c2 = st.columns(2)
         desc = c1.number_input("% Descuento", min_value=0, max_value=100, step=5, value=int(promo_existente['Descuento'].values[0]) if es_modificacion else 0)
-        archivo_subido = st.file_uploader("📁 Backup (Opcional)", type=["png", "jpg", "pdf"])
+        archivo_subido = st.file_uploader("📁 Backup (Imagen/PDF)", type=["png", "jpg", "pdf"])
         
         st.write("---")
         col_bw, col_tw = st.columns(2)
@@ -80,11 +103,11 @@ with tab_registrar:
         
         eliminar = False
         if es_modificacion:
-            eliminar = b_col2.form_submit_button("🗑️ Eliminar de Base de Datos", use_container_width=True)
+            eliminar = b_col2.form_submit_button("🗑️ Eliminar esta Promo", use_container_width=True)
 
         if submit:
             if not rate_a_buscar or not hoteles_seleccionados:
-                st.error("Error: Falta el Rate Plan o seleccionar al menos un Hotel.")
+                st.error("Error: Falta el Rate Plan o el Hotel.")
             else:
                 path_destino = promo_existente['Archivo_Path'].values[0] if es_modificacion else ""
                 if archivo_subido:
@@ -108,7 +131,7 @@ with tab_registrar:
                 
                 df_actual = pd.concat([df_actual, pd.DataFrame(nuevos_registros)], ignore_index=True)
                 df_actual.to_csv(CSV_FILE, index=False)
-                st.success(f"✅ ¡Guardado exitoso!")
+                st.success(f"✅ ¡Guardado con éxito!")
                 st.rerun()
 
         if eliminar:
@@ -122,42 +145,24 @@ with tab_buscar:
     df = cargar_datos()
     if not df.empty:
         col_filtro, col_excel = st.columns([3, 1])
-        
         with col_filtro:
-            busqueda = st.text_input("🔎 Filtrar (Hotel, Rate o Nombre):")
-            
-        # Filtrar DataFrame
+            busqueda = st.text_input("🔎 Filtrar búsqueda:")
+        
         df_f = df[df.astype(str).apply(lambda x: x.str.contains(busqueda, case=False)).any(axis=1)] if busqueda else df
         
-        # --- LÓGICA DE EXCEL ---
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df_f.drop(columns=['Archivo_Path']).to_excel(writer, index=False, sheet_name='Promociones')
         
         with col_excel:
-            st.write(" ") # Espaciador
-            st.download_button(
-                label="📥 Descargar Excel",
-                data=output.getvalue(),
-                file_name=f"Reporte_Promos_{date.today()}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
-            )
+            st.write(" ")
+            st.download_button(label="📥 Excel", data=output.getvalue(), file_name=f"Reporte_{date.today()}.xlsx", use_container_width=True)
 
-        st.write("---")
-        
         for i, r in df_f.iterrows():
             with st.container(border=True):
                 c1, c2 = st.columns([3, 1])
                 c1.subheader(f"{r['Hotel']} | {r['Promo']}")
                 c2.metric("Desc.", f"{r['Descuento']}%")
                 st.write(f"**Rate:** `{r['Rate_Plan']}` | **Viaje:** {r['TW_Inicio']} al {r['TW_Fin']}")
-                
-                dias = (r['BW_Fin'] - date.today()).days
-                if dias > 0:
-                    st.progress(max(0, min(dias / 30, 1.0)))
-                    st.caption(f"⏳ Quedan {dias} días de reserva.")
-                else:
-                    st.error("Vencida")
     else:
-        st.info("Sin promociones en el Récord.")
+        st.info("La base de datos está vacía. Lista para empezar.")

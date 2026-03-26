@@ -7,23 +7,22 @@ from datetime import date, datetime
 # 1. CONFIGURACIÓN E IDENTIDAD HYATT
 st.set_page_config(page_title="Promociones DREPM & SECPM | Hyatt AI", layout="wide")
 
-# --- SEGURIDAD: CONFIGURA TU CONTRASEÑA AQUÍ ---
-PASSWORD_MAESTRA = "PlayaMujeres2026" # <--- Puedes cambiarla por la que tú quieras
+# --- SEGURIDAD: TU CONTRASEÑA ---
+PASSWORD_MAESTRA = "PlayaMujeres2026" 
 
-# --- MENÚ LATERAL CON LOGO ---
+# --- MENÚ LATERAL CON LOGO HIC ---
 with st.sidebar:
-    # URL de un logo de Hyatt All-Inclusive Collection
-    # Usaremos una URL directa de GitHub que suele funcionar mejor.
-    logo_url = "https://raw.githubusercontent.com/tomasb-ai/imagenes/main/logo_hyatt_aic.png"
-    
-    # Intentamos mostrar la imagen. Si falla, mostramos texto de respaldo.
+    # --- CAMBIO IMPORTANTE PARA LA IMAGEN ---
+    # Simplificamos la carga para asegurar compatibilidad en la nube.
+    # Asegúrate de que tu archivo en GitHub se llame exactamente HIC.png
     try:
-        st.image(logo_url, use_container_width=True)
-    except:
+        st.image("HIC.png", use_container_width=True)
+    except Exception as e:
         # Texto de respaldo si la imagen falla (para que no salga el icono roto)
-        st.write("🏨 **Hyatt All-Inclusive Collection**")
-        st.write("Dreams & Secrets Playa Mujeres")
-        
+        st.write("🏨 **Hyatt Inclusive Collection**")
+        st.caption("Playa Mujeres Complex")
+        # st.error(f"Error de imagen: {e}") # Descomenta para depurar
+
     st.write("---")
     st.subheader("🔐 Zona de Administrador")
     pass_input = st.text_input("Contraseña para limpieza:", type="password")

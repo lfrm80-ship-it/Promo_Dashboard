@@ -22,7 +22,7 @@ if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
 # =====================================================
-# CSS BÁSICO (SIN HEADER NATIVO)
+# CSS BÁSICO
 # =====================================================
 st.markdown("""
 <style>
@@ -93,7 +93,7 @@ def exportar_excel_con_logo(df):
     return output
 
 # =====================================================
-# BLOQUE DE BRANDING (ÚNICO, SIN RECORTES)
+# BLOQUE DE BRANDING (ÚNICO)
 # =====================================================
 st.markdown("<div style='margin-top:20px'></div>", unsafe_allow_html=True)
 
@@ -119,7 +119,7 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 )
 
 # =====================================================
-# PROMOCIONES
+# TAB PROMOCIONES
 # =====================================================
 with tab_promos:
     l, c, r = st.columns([1,3,1])
@@ -149,7 +149,7 @@ with tab_promos:
             )
 
 # =====================================================
-# REGISTRAR / MODIFICAR
+# TAB REGISTRAR / MODIFICAR
 # =====================================================
 with tab_registro:
     l, c, r = st.columns([1,3,1])
@@ -160,7 +160,11 @@ with tab_registro:
         existente = df[df["Rate_Plan"] == rate]
         editando = not existente.empty
 
+        if editando:
+            st.info("Editando promoción existente")
+
         with st.form("form_registro"):
+
             hoteles = st.multiselect(
                 "Propiedad(es)",
                 ["DREPM - Dreams Playa Mujeres", "SECPM - Secrets Playa Mujeres"],
@@ -179,8 +183,23 @@ with tab_registro:
             )
 
             descuento = st.number_input("Descuento (%)", 0, 100, 5)
-            bw = st.date_input("Booking Window", (date.today(), date.today()))
-            tw = st.date_input("Travel Window", (date.today(), date.today()))
+
+            # ✅ BW – TW EN UNA SOLA LÍNEA
+            st.markdown("**Ventanas de fechas**")
+            col_bw, col_tw = st.columns(2)
+
+            with col_bw:
+                bw = st.date_input(
+                    "Booking Window",
+                    value=(date.today(), date.today())
+                )
+
+            with col_tw:
+                tw = st.date_input(
+                    "Travel Window",
+                    value=(date.today(), date.today())
+                )
+
             notas = st.text_area("Notas / Restricciones")
 
             archivo = st.file_uploader(
@@ -225,7 +244,7 @@ with tab_registro:
                     st.rerun()
 
 # =====================================================
-# ADMINISTRACIÓN
+# TAB ADMINISTRACIÓN
 # =====================================================
 with tab_admin:
     l, c, r = st.columns([1,2,1])

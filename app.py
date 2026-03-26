@@ -23,31 +23,15 @@ if not os.path.exists(MEDIA_DIR):
 # ✅ CSS – TODO DENTRO DEL STRING (FIX DEL ERROR)
 # ======================================================
 st.markdown(
-    """
-    <style>
-    .block-container {
-        padding-top: 2rem;
-    }
-
-    .sidebar-divider {
-        margin: 1rem 0;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    .card-title {
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-
-    .small-muted {
-        color: #6b6b6b;
-        font-size: 0.9rem;
-    }
-    </style>
-    """,
+    "<style>"
+    ".block-container { padding-top: 2rem; }"
+    ".sidebar-divider { margin: 1rem 0; border-bottom: 1px solid #e0e0e0; }"
+    ".card-title { font-weight: 600; font-size: 1.1rem; }"
+    ".small-muted { color: #6b6b6b; font-size: 0.9rem; }"
+    "</style>",
     unsafe_allow_html=True
 )
-
+``
 
 # ======================================================
 # SIDEBAR

@@ -52,15 +52,16 @@ def cargar_datos():
     ])
 
 # ======================================
-# HEADER FINAL (LOGO IZQUIERDA + TÍTULO CENTRADO)
+# HEADER FINAL REFINADO
+# (LOGO IZQUIERDA + TÍTULO CENTRADO, TODO MÁS A LA DERECHA)
 # ======================================
-col_left, col_center, col_right = st.columns([1, 2, 1])
+col_left, col_logo, col_title, col_right = st.columns([1, 1, 2, 1])
 
-with col_left:
+with col_logo:
     if os.path.exists("HIC.png"):
-        st.image("HIC.png", width=120)
+        st.image("HIC.png", width=115)
 
-with col_center:
+with col_title:
     st.markdown("## Administrador de Promociones")
     st.markdown(
         "<span style='color: #6b6b6b;'>Playa Mujeres Complex — Dreams & Secrets</span>",

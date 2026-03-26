@@ -231,4 +231,4 @@ with tab_admin:
     clave = st.text_input("Clave Admin", type="password")
     if clave == PASSWORD_MAESTRA:
         st.success("Acceso autorizado")
-``
+

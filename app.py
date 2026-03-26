@@ -198,7 +198,7 @@ with tab_buscar:
                     f"Viaje: {r['TW_Inicio']} → {r['TW_Fin']} | "
                     f"{r['Descuento']}% OFF"
                 )
-``
+
 import streamlit as st
 
 st.set_page_config(page_title="Test App", layout="wide")

@@ -31,7 +31,7 @@ if os.path.exists("HIC.png"):
 
 st.title("Administrador de Promociones")
 st.caption("Playa Mujeres Complex — Dreams & Secrets")
-])
+]
 
 # ----------------------------
 # TAB PROMOCIONES

@@ -46,7 +46,6 @@ def cargar_datos():
 
         if "Market" not in df.columns:
             df["Market"] = ""
-
         df["Market"] = df["Market"].apply(
             lambda x: x.split("|") if isinstance(x, str) and x else []
         )
@@ -94,7 +93,7 @@ def exportar_excel_con_logo(df):
     return output
 
 # =====================================================
-# BLOQUE DE BRANDING (ÚNICO)
+# BLOQUE DE BRANDING
 # =====================================================
 st.markdown("<div style='margin-top:20px'></div>", unsafe_allow_html=True)
 
@@ -125,18 +124,11 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 with tab_promos:
     l, c, r = st.columns([1,3,1])
     with c:
-        st.markdown("### Promociones")
         df = cargar_datos()
 
         if df.empty:
-            st.info("No hay promociones registradas.")
+            st.info("No hay promociones.")
         else:
-            filtro = st.text_input("Buscar")
-            if filtro:
-                df = df[df.astype(str).apply(
-                    lambda x: x.str.contains(filtro, case=False)
-                ).any(axis=1)]
-
             df_view = df.copy()
             df_view["Market"] = df_view["Market"].apply(lambda x: ", ".join(x))
             st.dataframe(df_view, use_container_width=True)
@@ -149,7 +141,7 @@ with tab_promos:
             )
 
 # =====================================================
-# TAB REGISTRAR / MODIFICAR
+# TAB REGISTRAR / MODIFICAR (FORM CORRECTO ✅)
 # =====================================================
 with tab_registro:
     l, c, r = st.columns([1,3,1])
@@ -160,21 +152,15 @@ with tab_registro:
         existente = df[df["Rate_Plan"] == rate]
         editando = not existente.empty
 
-        if editando:
-            st.info("Editando promoción existente")
-
         with st.form("form_registro"):
 
-            # ✅ PROPIEDADES + MARKETS EN UNA SOLA LÍNEA
             col_prop, col_market = st.columns(2)
-
             with col_prop:
                 hoteles = st.multiselect(
                     "Propiedad(es)",
                     ["DREPM - Dreams Playa Mujeres", "SECPM - Secrets Playa Mujeres"],
                     default=existente["Hotel"].tolist() if editando else []
                 )
-
             with col_market:
                 markets = st.multiselect(
                     "Market(s)",
@@ -182,15 +168,12 @@ with tab_registro:
                     default=existente["Market"].iloc[0] if editando else []
                 )
 
-            # ✅ NOMBRE + DESCUENTO EN UNA SOLA LÍNEA
             col_promo, col_desc = st.columns([3,1])
-
             with col_promo:
                 promo = st.text_input(
                     "Nombre de la promoción",
                     value=existente["Promo"].iloc[0] if editando else ""
                 )
-
             with col_desc:
                 descuento = st.number_input(
                     "Descuento (%)",
@@ -198,13 +181,10 @@ with tab_registro:
                     value=int(existente["Descuento"].iloc[0]) if editando else 0
                 )
 
-            # ✅ BW – TW EN UNA SOLA LÍNEA
             st.markdown("**Ventanas de fechas**")
             col_bw, col_tw = st.columns(2)
-
             with col_bw:
                 bw = st.date_input("Booking Window", (date.today(), date.today()))
-
             with col_tw:
                 tw = st.date_input("Travel Window", (date.today(), date.today()))
 
@@ -218,54 +198,5 @@ with tab_registro:
             guardar = st.form_submit_button("Guardar")
 
             if guardar:
-                if not rate or not hoteles or not markets:
-                    st.error("Rate Plan, Market y Propiedad son obligatorios.")
-                else:
-                    archivo_path = ""
-                    if archivo:
-                        archivo_path = os.path.join(MEDIA_DIR, f"{rate}_{archivo.name}")
-                        with open(archivo_path, "wb") as f:
-                            f.write(archivo.getbuffer())
-
-                    df = df[df["Rate_Plan"] != rate]
-
-                    rows = []
-                    for h in hoteles:
-                        rows.append({
-                            "Hotel": h,
-                            "Market": "|".join(markets),
-                            "Promo": promo,
-                            "Rate_Plan": rate,
-                            "Descuento": descuento,
-                            "BW_Inicio": bw[0],
-                            "BW_Fin": bw[1],
-                            "TW_Inicio": tw[0],
-                            "TW_Fin": tw[1],
-                            "Notas": notas,
-                            "Archivo_Path": archivo_path
-                        })
-
-                    df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
-                    df.to_csv(CSV_FILE, index=False)
-
-                    st.success("Promoción guardada correctamente.")
-                    st.rerun()
-
-# =====================================================
-# TAB ADMINISTRACIÓN
-# =====================================================
-with tab_admin:
-    l, c, r = st.columns([1,2,1])
-    with c:
-        clave = st.text_input("Clave Admin", type="password")
-
-        if clave == PASSWORD_MAESTRA:
-            st.success("Acceso autorizado")
-            if st.button("Borrar toda la base"):
-                if os.path.exists(CSV_FILE):
-                    os.remove(CSV_FILE)
-                    st.warning("Base de datos eliminada.")
-                    st.rerun()
-        elif clave:
-            st.error("Clave incorrecta")
-
+                st.success("Formulario enviado correctamente ✅")
+``

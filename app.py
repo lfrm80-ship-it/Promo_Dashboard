@@ -52,9 +52,13 @@ def cargar_datos():
     ])
 
 # ======================================
-# HEADER CONTROLADO (LOGO A LA DERECHA + TÍTULO CENTRADO)
+# HEADER FINAL (LOGO IZQUIERDA + TÍTULO CENTRADO)
 # ======================================
-col_left, col_center, col_right = st.columns([2, 2, 2])
+col_left, col_center, col_right = st.columns([1, 2, 1])
+
+with col_left:
+    if os.path.exists("HIC.png"):
+        st.image("HIC.png", width=120)
 
 with col_center:
     st.markdown("## Administrador de Promociones")
@@ -62,10 +66,6 @@ with col_center:
         "<span style='color: #6b6b6b;'>Playa Mujeres Complex — Dreams & Secrets</span>",
         unsafe_allow_html=True
     )
-
-with col_right:
-    if os.path.exists("HIC.png"):
-        st.image("HIC.png", width=110)
 
 # ======================================
 # TABS PRINCIPALES

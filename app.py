@@ -58,7 +58,7 @@ col_left, col_center, col_right = st.columns([1, 1, 1])
 
 with col_center:
     if os.path.exists("HIC.png"):
-        st.image("HIC.png", width=140)
+        st.image("HIC.png", width=130)
 
 st.title("Administrador de Promociones")
 st.caption("Playa Mujeres Complex — Dreams & Secrets")

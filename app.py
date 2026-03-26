@@ -216,10 +216,10 @@ with tab_registro:
                     st.experimental_rerun()
 
 # =====================================================
-# TAB ADMINISTRACIÓN ✅ RESTAURADO
+# TAB ADMINISTRACIÓN ✅ CORREGIDO
 # =====================================================
 with tab_admin:
-    l, c, r = st.columns([1,2,1])
+    l, c, r = st.columns([1, 2, 1])
     with c:
         st.subheader("Zona Administrativa")
 
@@ -235,6 +235,7 @@ with tab_admin:
                     if os.path.exists(CSV_FILE):
                         os.remove(CSV_FILE)
                         st.warning("Base de datos eliminada correctamente")
-                        st.experimental_rerun()
+                        st.rerun()   # ✅ FUNCIÓN CORRECTA
         elif clave:
             st.error("Clave incorrecta")
+

@@ -87,92 +87,47 @@ with tab_promos:
 # TAB 2 — REGISTRAR / MODIFICAR
 # ======================================
 with tab_registro:
-    df = cargar_datos()
+    col_left, col_center, col_right = st.columns([1, 3, 1])
 
-    rate = st.text_input("Rate Plan")
+    with col_center:
+        df = cargar_datos()
 
-    existente = df[df["Rate_Plan"] == rate]
-    editando = not existente.empty
+        rate = st.text_input("Rate Plan")
 
-    if editando:
-        st.info("Editando promoción existente")
+        existente = df[df["Rate_Plan"] == rate]
+        editando = not existente.empty
 
-    with st.form("form_registro"):
-        # ✅ MULTI‑PROPIEDAD
-        hoteles = st.multiselect(
-            "Propiedad(es)",
-            [
-                "DREPM - Dreams Playa Mujeres",
-                "SECPM - Secrets Playa Mujeres"
-            ],
-            default=existente["Hotel"].tolist() if editando else []
-        )
+        if editando:
+            st.info("Editando promoción existente")
 
-        promo = st.text_input(
-            "Nombre de la promoción",
-            value=existente["Promo"].iloc[0] if editando else ""
-        )
+        with st.form("form_registro"):
+            hoteles = st.multiselect(
+                "Propiedad(es)",
+                [
+                    "DREPM - Dreams Playa Mujeres",
+                    "SECPM - Secrets Playa Mujeres"
+                ],
+                default=existente["Hotel"].tolist() if editando else []
+            )
 
-        descuento = st.number_input(
-            "Descuento (%)",
-            min_value=0,
-            max_value=100,
-            step=5,
-            value=int(existente["Descuento"].iloc[0]) if editando else 0
-        )
+            promo = st.text_input(
+                "Nombre de la promoción",
+                value=existente["Promo"].iloc[0] if editando else ""
+            )
 
-        bw = st.date_input(
-            "Booking Window",
-            value=(date.today(), date.today())
-        )
+            descuento = st.number_input(
+                "Descuento (%)",
+                0, 100, step=5,
+                value=int(existente["Descuento"].iloc[0]) if editando else 0
+            )
 
-        tw = st.date_input(
-            "Travel Window",
-            value=(date.today(), date.today())
-        )
+            bw = st.date_input("Booking Window", (date.today(), date.today()))
+            tw = st.date_input("Travel Window", (date.today(), date.today()))
+            notas = st.text_area("Notas / Restricciones")
 
-        notas = st.text_area(
-            "Notas / Restricciones",
-            value=existente["Notas"].iloc[0] if editando else ""
-        )
-
-        col_a, col_b = st.columns(2)
-        guardar = col_a.form_submit_button("Guardar")
-        eliminar = col_b.form_submit_button("Eliminar") if editando else False
-
-        if guardar:
-            if not rate or not hoteles:
-                st.error("El Rate Plan y al menos una propiedad son obligatorios.")
-            else:
-                # Eliminar registros previos del mismo Rate Plan
-                df = df[df["Rate_Plan"] != rate]
-
-                # ✅ Crear un registro por cada hotel seleccionado
-                registros = []
-                for h in hoteles:
-                    registros.append({
-                        "Hotel": h,
-                        "Promo": promo,
-                        "Rate_Plan": rate,
-                        "Descuento": descuento,
-                        "BW_Inicio": bw[0],
-                        "BW_Fin": bw[1],
-                        "TW_Inicio": tw[0],
-                        "TW_Fin": tw[1],
-                        "Notas": notas
-                    })
-
-                df = pd.concat([df, pd.DataFrame(registros)], ignore_index=True)
-                df.to_csv(CSV_FILE, index=False)
-
-                st.success("Promoción guardada correctamente.")
-                st.rerun()
-
-        if eliminar:
-            df = df[df["Rate_Plan"] != rate]
-            df.to_csv(CSV_FILE, index=False)
-            st.warning("Promoción eliminada.")
-            st.rerun()
+            col_a, col_b = st.columns(2)
+            guardar = col_a.form_submit_button("Guardar")
+            eliminar = col_b.form_submit_button("Eliminar") if editando else False
 
 # ======================================
 # TAB 3 — ADMINISTRACIÓN

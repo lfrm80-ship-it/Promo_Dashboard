@@ -46,7 +46,6 @@ def cargar_datos():
 
         if "Market" not in df.columns:
             df["Market"] = ""
-
         df["Market"] = df["Market"].apply(
             lambda x: x.split("|") if isinstance(x, str) and x else []
         )
@@ -112,7 +111,7 @@ st.markdown("<hr style='margin-top:12px; margin-bottom:18px;'>", unsafe_allow_ht
 # TABS
 # =====================================================
 tab_promos, tab_registro, tab_admin = st.tabs(
-    ["Promociones", "Registrar / Modificar", "Administración"]
+    ["Promociones","Registrar / Modificar","Administración"]
 )
 
 # =====================================================
@@ -137,7 +136,7 @@ with tab_promos:
             )
 
 # =====================================================
-# TAB REGISTRAR / MODIFICAR (FORM DEFINITIVO ✅)
+# TAB REGISTRAR / MODIFICAR
 # =====================================================
 with tab_registro:
     l, c, r = st.columns([1,3,1])
@@ -146,37 +145,29 @@ with tab_registro:
 
         with st.form("form_registro"):
 
-            # ✅ Nombre de la promoción + Descuento (ÚNICO)
+            # Nombre de promo + Descuento
             col_promo, col_desc = st.columns([3,1])
             with col_promo:
                 promo = st.text_input("Nombre de la promoción")
             with col_desc:
-                descuento = st.number_input(
-                    "Descuento (%)",
-                    min_value=0,
-                    max_value=100,
-                    step=5
-                )
+                descuento = st.number_input("Descuento (%)", 0, 100, 5)
 
-            # ✅ Booking / Travel Window
+            # Booking / Travel Window
             col_bw, col_tw = st.columns(2)
             with col_bw:
                 bw = st.date_input("Booking Window", (date.today(), date.today()))
             with col_tw:
                 tw = st.date_input("Travel Window", (date.today(), date.today()))
 
-            # ✅ Rate Plan (solo)
+            # Rate Plan
             rate = st.text_input("Rate Plan")
 
-            # ✅ Propiedades + Markets
+            # Propiedad + Market
             col_prop, col_market = st.columns(2)
             with col_prop:
                 hoteles = st.multiselect(
                     "Propiedad(es)",
-                    [
-                        "DREPM - Dreams Playa Mujeres",
-                        "SECPM - Secrets Playa Mujeres"
-                    ]
+                    ["DREPM - Dreams Playa Mujeres","SECPM - Secrets Playa Mujeres"]
                 )
             with col_market:
                 markets = st.multiselect("Market(s)", MARKETS)
@@ -225,9 +216,25 @@ with tab_registro:
                     st.experimental_rerun()
 
 # =====================================================
-# TAB ADMINISTRACIÓN
+# TAB ADMINISTRACIÓN ✅ RESTAURADO
 # =====================================================
 with tab_admin:
-    clave = st.text_input("Clave Admin", type="password")
-    if clave == PASSWORD_MAESTRA:
-        st.success("Acceso autorizado")
+    l, c, r = st.columns([1,2,1])
+    with c:
+        st.subheader("Zona Administrativa")
+
+        clave = st.text_input("Clave Administrador", type="password")
+
+        if clave == PASSWORD_MAESTRA:
+            st.success("Acceso autorizado")
+
+            confirmar = st.checkbox("Confirmo que deseo borrar toda la base de datos")
+
+            if confirmar:
+                if st.button("🗑️ Borrar toda la base"):
+                    if os.path.exists(CSV_FILE):
+                        os.remove(CSV_FILE)
+                        st.warning("Base de datos eliminada correctamente")
+                        st.experimental_rerun()
+        elif clave:
+            st.error("Clave incorrecta")

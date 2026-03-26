@@ -54,7 +54,7 @@ def cargar_datos():
 # ======================================
 # HEADER CON LOGO CENTRADO
 # ======================================
-col_left, col_center, col_right = st.columns([1, 2, 1])
+col_left, col_center, col_right = st.columns([1, 3, 1])
 
 with col_center:
     if os.path.exists("HIC.png"):

@@ -10,6 +10,17 @@ from datetime import date
 st.set_page_config(
     page_title="Administrador de Promociones",
     layout="wide"
+    st.markdown(
+    """
+    <style>
+    div[data-baseweb="tab-list"] {
+        justify-content: center;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+``
 )
 
 CSV_FILE = "promociones_data.csv"

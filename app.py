@@ -21,55 +21,17 @@ MARKETS = ["US", "Canada", "Mexico", "LATAM", "Europe", "Asia / ROW"]
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
-# ======================================
-# BLOQUE DE BRANDING (LOGO + TÍTULO)
-# ======================================
-st.markdown("<div style='margin-top: 20px'></div>", unsafe_allow_html=True)
-
-with col_logo:
-    st.image("HIC.png", width=95)
-
-with col_title:
-    st.markdown("## Administrador de Promociones")
-    st.markdown(
-        "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
-        unsafe_allow_html=True
-    )
-
-st.markdown(
-    "<hr style='margin-top:12px; margin-bottom:18px;'>",
-    unsafe_allow_html=True
-)
-
-
-# ===============================
-# CSS BÁSICO (CORREGIDO)
-# ===============================
+# =====================================================
+# CSS BÁSICO (SIN HEADER NATIVO)
+# =====================================================
 st.markdown("""
 <style>
-body { 
-    background-color: #f7f8fa; 
-}
-
-.block-container { 
-    padding-top: 1.5rem; 
-}
-
-div[data-baseweb="tab-list"] { 
-    justify-content: center; 
-}
-
-/* ✅ HEADER CORREGIDO */
-header { 
-    background-color: white; 
-    border-bottom: 1px solid #e6e6e6; 
-    min-height: 90px;
-    display: flex;
-    align-items: center;
-}
+body { background-color: #f7f8fa; }
+.block-container { padding-top: 1.5rem; }
+div[data-baseweb="tab-list"] { justify-content: center; }
+button[data-baseweb="tab"][aria-selected="true"] { font-weight: 600; }
 </style>
 """, unsafe_allow_html=True)
-
 
 # =====================================================
 # FUNCIONES
@@ -84,7 +46,6 @@ def cargar_datos():
 
         if "Market" not in df.columns:
             df["Market"] = ""
-
         df["Market"] = df["Market"].apply(
             lambda x: x.split("|") if isinstance(x, str) and x else []
         )
@@ -102,22 +63,19 @@ def cargar_datos():
 
 def exportar_excel_con_logo(df):
     output = io.BytesIO()
-    fecha_hoy = datetime.now().strftime("%Y-%m-%d")
+    fecha = datetime.now().strftime("%Y-%m-%d")
 
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         workbook = writer.book
         worksheet = workbook.add_worksheet("Promociones")
         writer.sheets["Promociones"] = worksheet
 
-        # Logo
         if os.path.exists("HIC.png"):
             worksheet.insert_image("A1", "HIC.png", {"x_scale": 0.4, "y_scale": 0.4})
 
-        # Fecha
-        worksheet.write("E2", f"Fecha de generación:")
-        worksheet.write("F2", fecha_hoy)
+        worksheet.write("E2", "Fecha de generación:")
+        worksheet.write("F2", fecha)
 
-        # Preparar dataframe
         df_x = df.copy()
         df_x["Market"] = df_x["Market"].apply(lambda x: ", ".join(x))
         df_x["Archivo_Respaldo"] = df_x["Archivo_Path"].apply(
@@ -128,7 +86,6 @@ def exportar_excel_con_logo(df):
         start_row = 4
         df_x.to_excel(writer, index=False, startrow=start_row)
 
-        # Ajustar ancho de columnas
         for i, col in enumerate(df_x.columns):
             worksheet.set_column(i, i, max(18, len(col) + 2))
 
@@ -136,17 +93,23 @@ def exportar_excel_con_logo(df):
     return output
 
 # =====================================================
-# HEADER
+# BLOQUE DE BRANDING (ÚNICO, SIN RECORTES)
 # =====================================================
-cl, c_logo, c_title, cr = st.columns([1,1,2,1])
+st.markdown("<div style='margin-top:20px'></div>", unsafe_allow_html=True)
 
-with c_logo:
-    if os.path.exists("HIC.png"):
-        st.image("HIC.png", width=90)
+col_l, col_logo, col_title, col_r = st.columns([1, 1, 2, 1])
 
-with c_title:
+with col_logo:
+    st.image("HIC.png", width=95)
+
+with col_title:
     st.markdown("## Administrador de Promociones")
-    st.caption("Playa Mujeres – DREPM & SECPM")
+    st.markdown(
+        "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
+        unsafe_allow_html=True
+    )
+
+st.markdown("<hr style='margin-top:12px; margin-bottom:18px;'>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS
@@ -160,7 +123,6 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 # =====================================================
 with tab_promos:
     l, c, r = st.columns([1,3,1])
-
     with c:
         st.markdown("### Promociones")
         df = cargar_datos()
@@ -178,11 +140,11 @@ with tab_promos:
             df_view["Market"] = df_view["Market"].apply(lambda x: ", ".join(x))
             st.dataframe(df_view, use_container_width=True)
 
-            excel_buffer = exportar_excel_con_logo(df)
+            excel = exportar_excel_con_logo(df)
 
             st.download_button(
                 "Descargar Excel",
-                excel_buffer,
+                excel,
                 file_name="Promociones_Playa_Mujeres.xlsx"
             )
 
@@ -191,7 +153,6 @@ with tab_promos:
 # =====================================================
 with tab_registro:
     l, c, r = st.columns([1,3,1])
-
     with c:
         df = cargar_datos()
         rate = st.text_input("Rate Plan")
@@ -199,7 +160,7 @@ with tab_registro:
         existente = df[df["Rate_Plan"] == rate]
         editando = not existente.empty
 
-        with st.form("form"):
+        with st.form("form_registro"):
             hoteles = st.multiselect(
                 "Propiedad(es)",
                 ["DREPM - Dreams Playa Mujeres", "SECPM - Secrets Playa Mujeres"],
@@ -207,7 +168,8 @@ with tab_registro:
             )
 
             markets = st.multiselect(
-                "Market(s)", MARKETS,
+                "Market(s)",
+                MARKETS,
                 default=existente["Market"].iloc[0] if editando else []
             )
 
@@ -259,14 +221,23 @@ with tab_registro:
                     df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
                     df.to_csv(CSV_FILE, index=False)
 
-                    st.success("Promoción guardada.")
+                    st.success("Promoción guardada correctamente.")
                     st.rerun()
 
 # =====================================================
-# ADMIN
+# ADMINISTRACIÓN
 # =====================================================
 with tab_admin:
-    clave = st.text_input("Clave Admin", type="password")
-    if clave == PASSWORD_MAESTRA:
-        st.success("Acceso autorizado")
+    l, c, r = st.columns([1,2,1])
+    with c:
+        clave = st.text_input("Clave Admin", type="password")
 
+        if clave == PASSWORD_MAESTRA:
+            st.success("Acceso autorizado")
+            if st.button("Borrar toda la base"):
+                if os.path.exists(CSV_FILE):
+                    os.remove(CSV_FILE)
+                    st.warning("Base de datos eliminada.")
+                    st.rerun()
+        elif clave:
+            st.error("Clave incorrecta")

@@ -7,10 +7,7 @@ from datetime import date, datetime
 # =====================================================
 # CONFIGURACIÓN GENERAL
 # =====================================================
-st.set_page_config(
-    page_title="Administrador de Promociones",
-    layout="wide"
-)
+st.set_page_config(page_title="Administrador de Promociones", layout="wide")
 
 CSV_FILE = "promociones_data.csv"
 MEDIA_DIR = "media"
@@ -26,14 +23,15 @@ if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
 # =====================================================
-# CSS BÁSICO
+# CSS COMPACTO (CLAVE PARA NO SCROLL)
 # =====================================================
 st.markdown("""
 <style>
 body { background-color: #f7f8fa; }
-.block-container { padding-top: 1.5rem; }
+.block-container { padding-top: 0.4rem; }
 div[data-baseweb="tab-list"] { justify-content: center; }
 button[data-baseweb="tab"][aria-selected="true"] { font-weight: 600; }
+div[data-testid="stVerticalBlock"] { gap: 0.4rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -65,15 +63,35 @@ def cargar_datos():
 
 def exportar_excel(df):
     buffer = io.BytesIO()
+    fecha = datetime.now().strftime("%Y-%m-%d")
+
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        workbook = writer.book
+        ws = workbook.add_worksheet("Promociones")
+        writer.sheets["Promociones"] = ws
+
+        if os.path.exists("HIC.png"):
+            ws.insert_image("A1", "HIC.png", {"x_scale": 0.4, "y_scale": 0.4})
+
+        ws.write("E2", "Fecha de generación:")
+        ws.write("F2", fecha)
+
         df_x = df.copy()
         df_x["Market"] = df_x["Market"].apply(lambda x: ", ".join(x))
-        df_x.to_excel(writer, index=False)
+        df_x["Archivo_Respaldo"] = df_x["Archivo_Path"].apply(
+            lambda x: os.path.basename(x) if isinstance(x, str) and x else ""
+        )
+        df_x = df_x.drop(columns=["Archivo_Path"])
+
+        df_x.to_excel(writer, index=False, startrow=4)
+        for i, col in enumerate(df_x.columns):
+            ws.set_column(i, i, 18)
+
     buffer.seek(0)
     return buffer
 
 # =====================================================
-# BRANDING
+# HEADER COMPACTO
 # =====================================================
 col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
 
@@ -87,10 +105,7 @@ with col_title:
         unsafe_allow_html=True
     )
 
-st.markdown(
-    "<hr style='margin-top:6px; margin-bottom:8px;'>",
-    unsafe_allow_html=True
-)
+st.markdown("<hr style='margin-top:6px; margin-bottom:8px;'>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS
@@ -111,11 +126,15 @@ with tab_promos:
         view["Market"] = view["Market"].apply(lambda x: ", ".join(x))
         st.dataframe(view, use_container_width=True)
 
-        excel = exportar_excel(view)
-        st.download_button("Descargar Excel", excel, "Promociones.xlsx")
+        excel = exportar_excel(df)
+        st.download_button(
+            "Descargar Excel",
+            excel,
+            file_name="Promociones_Playa_Mujeres.xlsx"
+        )
 
 # =====================================================
-# REGISTRAR / MODIFICAR
+# REGISTRAR / MODIFICAR (SIN SCROLL ✅)
 # =====================================================
 with tab_registro:
     df = cargar_datos()
@@ -132,34 +151,37 @@ with tab_registro:
         bw = col_bw.date_input("Booking Window", (date.today(), date.today()))
         tw = col_tw.date_input("Travel Window", (date.today(), date.today()))
 
-        # ✅ RATE PLANS LIBRES
+        # Rate Plans compactos
         rate_raw = st.text_area(
             "Rate Plan(s) – uno por línea",
             placeholder="BAR\nPROMO2026\nCORP_PM",
-            help="Puedes escribir uno o varios códigos. Uno por línea o separados por coma."
+            height=90
         )
 
-        # Propiedad + Market
+        # Propiedades + Market
         col_prop, col_market = st.columns(2)
         hoteles = col_prop.multiselect("Propiedad(es)", PROPERTIES)
         markets = col_market.multiselect("Market(s)", MARKETS)
 
-        notas = st.text_area("Notas / Restricciones")
+        # Notas compactas
+        notas = st.text_area(
+            "Notas / Restricciones",
+            height=80,
+            placeholder="Blackouts, restricciones, combinabilidad…"
+        )
 
         archivo = st.file_uploader(
             "Archivo de respaldo (PDF / Imagen)",
             type=["pdf","png","jpg","jpeg"]
         )
 
-        # BOTONES
+        # Botones
         col_g, col_l, col_m = st.columns(3)
         guardar = col_g.form_submit_button("💾 Guardar")
         limpiar = col_l.form_submit_button("🧹 Limpiar")
         modificar = col_m.form_submit_button("✏️ Modificar")
 
-        # =============================
-        # LÓGICA
-        # =============================
+        # Lógica
         if limpiar:
             st.rerun()
 
@@ -211,9 +233,9 @@ with tab_registro:
 with tab_admin:
     clave = st.text_input("Clave Administrador", type="password")
     if clave == PASSWORD_MAESTRA:
-        confirmar = st.checkbox("Confirmo borrar toda la base de datos")
+        confirmar = st.checkbox("Confirmo borrar toda la base")
         if confirmar and st.button("🗑️ Borrar toda la base"):
             if os.path.exists(CSV_FILE):
                 os.remove(CSV_FILE)
-            st.warning("Base eliminada correctamente")
+            st.warning("Base eliminada")
             st.rerun()

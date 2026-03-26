@@ -3,9 +3,6 @@ import pandas as pd
 import os
 import io
 from datetime import date
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
 
 # =====================================================
 # CONFIGURACIÓN GENERAL
@@ -75,23 +72,6 @@ def cargar_datos():
         "Archivo_Path"
     ])
 
-def generar_pdf(df):
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-
-    data = [df.columns.tolist()] + df.values.tolist()
-    table = Table(data, repeatRows=1)
-
-    table.setStyle(TableStyle([
-        ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
-        ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
-        ("FONT", (0,0), (-1,0), "Helvetica-Bold")
-    ]))
-
-    doc.build([table])
-    buffer.seek(0)
-    return buffer
-
 # =====================================================
 # HEADER CENTRADO
 # =====================================================
@@ -141,23 +121,14 @@ with tab_promos:
 
             st.dataframe(df_view, use_container_width=True)
 
-            # ---- Excel ----
-            excel_buffer = io.BytesIO()
-            with pd.ExcelWriter(excel_buffer, engine="xlsxwriter") as writer:
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 df_view.to_excel(writer, index=False)
 
             st.download_button(
                 "Descargar Excel",
-                excel_buffer.getvalue(),
-                file_name="Promociones.xlsx"
-            )
-
-            # ---- PDF ----
-            pdf_buffer = generar_pdf(df_view)
-            st.download_button(
-                "Descargar PDF",
-                pdf_buffer,
-                file_name="Promociones.pdf"
+                buffer.getvalue(),
+                file_name="Promociones_Playa_Mujeres.xlsx"
             )
 
 # =====================================================
@@ -250,6 +221,7 @@ with tab_admin:
 
     with c:
         st.markdown("### Zona Administrativa")
+
         clave = st.text_input("Clave de administrador", type="password")
 
         if clave == PASSWORD_MAESTRA:
@@ -262,4 +234,3 @@ with tab_admin:
                     st.rerun()
         elif clave:
             st.error("Clave incorrecta")
-

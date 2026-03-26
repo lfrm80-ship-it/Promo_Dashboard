@@ -26,7 +26,7 @@ if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
 # =====================================================
-# CSS
+# CSS BÁSICO
 # =====================================================
 st.markdown("""
 <style>
@@ -44,18 +44,17 @@ def cargar_datos():
     if os.path.exists(CSV_FILE):
         df = pd.read_csv(CSV_FILE)
 
-        for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
+        for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
             if c in df.columns:
                 df[c] = pd.to_datetime(df[c]).dt.date
 
-        for col in ["Market", "Archivo_Path"]:
+        for col in ["Market","Archivo_Path"]:
             if col not in df.columns:
                 df[col] = ""
 
         df["Market"] = df["Market"].apply(
             lambda x: x.split("|") if isinstance(x, str) and x else []
         )
-
         return df
 
     return pd.DataFrame(columns=[
@@ -82,7 +81,10 @@ with col_logo:
     st.image("HIC.png", width=95)
 with col_title:
     st.markdown("## Administrador de Promociones")
-    st.markdown("<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>", unsafe_allow_html=True)
+    st.markdown(
+        "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
+        unsafe_allow_html=True
+    )
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # =====================================================
@@ -105,11 +107,7 @@ with tab_promos:
         st.dataframe(view, use_container_width=True)
 
         excel = exportar_excel(view)
-        st.download_button(
-            "Descargar Excel",
-            excel,
-            file_name="Promociones.xlsx"
-        )
+        st.download_button("Descargar Excel", excel, "Promociones.xlsx")
 
 # =====================================================
 # REGISTRAR / MODIFICAR
@@ -119,7 +117,7 @@ with tab_registro:
 
     with st.form("form_registro"):
 
-        # Promo + Descuento
+        # Nombre + Descuento
         col_promo, col_desc = st.columns([3,1])
         promo = col_promo.text_input("Nombre de la promoción")
         descuento = col_desc.number_input("Descuento (%)", 0, 100, 5)
@@ -129,14 +127,14 @@ with tab_registro:
         bw = col_bw.date_input("Booking Window", (date.today(), date.today()))
         tw = col_tw.date_input("Travel Window", (date.today(), date.today()))
 
-        # ✅ MÚLTIPLES RATE PLANS
+        # ✅ RATE PLANS LIBRES
         rate_raw = st.text_area(
-            "Rate Plan(s)",
-            help="Uno o varios códigos. Separados por coma o línea nueva",
-            placeholder="BAR\nPROMO2026\nCORP_PM"
+            "Rate Plan(s) – uno por línea",
+            placeholder="BAR\nPROMO2026\nCORP_PM",
+            help="Puedes escribir uno o varios códigos. Uno por línea o separados por coma."
         )
 
-        # Propiedades + Market
+        # Propiedad + Market
         col_prop, col_market = st.columns(2)
         hoteles = col_prop.multiselect("Propiedad(es)", PROPERTIES)
         markets = col_market.multiselect("Market(s)", MARKETS)
@@ -208,9 +206,9 @@ with tab_registro:
 with tab_admin:
     clave = st.text_input("Clave Administrador", type="password")
     if clave == PASSWORD_MAESTRA:
-        confirmar = st.checkbox("Confirmo borrar toda la base")
+        confirmar = st.checkbox("Confirmo borrar toda la base de datos")
         if confirmar and st.button("🗑️ Borrar toda la base"):
             if os.path.exists(CSV_FILE):
                 os.remove(CSV_FILE)
-            st.warning("Base eliminada")
+            st.warning("Base eliminada correctamente")
             st.rerun()

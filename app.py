@@ -10,6 +10,7 @@ from datetime import date
 st.set_page_config(
     page_title="Administrador de Promociones",
     layout="wide"
+)
     st.markdown(
     """
     <style>

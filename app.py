@@ -75,17 +75,22 @@ def exportar_excel(df):
 # =====================================================
 # BRANDING
 # =====================================================
-st.markdown("<div style='margin-top:20px'></div>", unsafe_allow_html=True)
 col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
+
 with col_logo:
-    st.image("HIC.png", width=95)
+    st.image("HIC.png", width=80)
+
 with col_title:
     st.markdown("## Administrador de Promociones")
     st.markdown(
         "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
         unsafe_allow_html=True
     )
-st.markdown("<hr>", unsafe_allow_html=True)
+
+st.markdown(
+    "<hr style='margin-top:6px; margin-bottom:8px;'>",
+    unsafe_allow_html=True
+)
 
 # =====================================================
 # TABS

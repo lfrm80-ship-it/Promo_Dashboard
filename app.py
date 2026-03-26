@@ -16,7 +16,7 @@ CSV_FILE = "promociones_data.csv"
 PASSWORD_MAESTRA = "PlayaMujeres2026"
 
 # ======================================
-# CSS MINIMO PARA CENTRAR TABS
+# CSS MÍNIMO PARA CENTRAR TABS
 # ======================================
 st.markdown(
     """
@@ -41,6 +41,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 # ======================================
 # FUNCIONES

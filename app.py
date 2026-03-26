@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import io
-from datetime import date
+from datetime import date, datetime
 
 # =====================================================
 # CONFIGURACIÓN GENERAL
@@ -22,15 +22,13 @@ if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
 # =====================================================
-# CSS GLOBAL (CENTRADO + FONDO + TABS)
+# CSS BÁSICO
 # =====================================================
 st.markdown("""
 <style>
 body { background-color: #f7f8fa; }
 .block-container { padding-top: 1.5rem; }
 div[data-baseweb="tab-list"] { justify-content: center; }
-button[data-baseweb="tab"] { font-size: 0.85rem; padding: 6px 14px; }
-button[data-baseweb="tab"][aria-selected="true"] { font-weight: 500; }
 header { background-color: white; border-bottom: 1px solid #e6e6e6; }
 </style>
 """, unsafe_allow_html=True)
@@ -59,36 +57,58 @@ def cargar_datos():
         return df
 
     return pd.DataFrame(columns=[
-        "Hotel",
-        "Market",
-        "Promo",
-        "Rate_Plan",
-        "Descuento",
-        "BW_Inicio",
-        "BW_Fin",
-        "TW_Inicio",
-        "TW_Fin",
-        "Notas",
-        "Archivo_Path"
+        "Hotel","Market","Promo","Rate_Plan","Descuento",
+        "BW_Inicio","BW_Fin","TW_Inicio","TW_Fin",
+        "Notas","Archivo_Path"
     ])
 
+def exportar_excel_con_logo(df):
+    output = io.BytesIO()
+    fecha_hoy = datetime.now().strftime("%Y-%m-%d")
+
+    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        workbook = writer.book
+        worksheet = workbook.add_worksheet("Promociones")
+        writer.sheets["Promociones"] = worksheet
+
+        # Logo
+        if os.path.exists("HIC.png"):
+            worksheet.insert_image("A1", "HIC.png", {"x_scale": 0.4, "y_scale": 0.4})
+
+        # Fecha
+        worksheet.write("E2", f"Fecha de generación:")
+        worksheet.write("F2", fecha_hoy)
+
+        # Preparar dataframe
+        df_x = df.copy()
+        df_x["Market"] = df_x["Market"].apply(lambda x: ", ".join(x))
+        df_x["Archivo_Respaldo"] = df_x["Archivo_Path"].apply(
+            lambda x: os.path.basename(x) if isinstance(x, str) and x else ""
+        )
+        df_x = df_x.drop(columns=["Archivo_Path"])
+
+        start_row = 4
+        df_x.to_excel(writer, index=False, startrow=start_row)
+
+        # Ajustar ancho de columnas
+        for i, col in enumerate(df_x.columns):
+            worksheet.set_column(i, i, max(18, len(col) + 2))
+
+    output.seek(0)
+    return output
+
 # =====================================================
-# HEADER CENTRADO
+# HEADER
 # =====================================================
-cl, c_logo, c_title, cr = st.columns([1, 1, 2, 1])
+cl, c_logo, c_title, cr = st.columns([1,1,2,1])
 
 with c_logo:
-    st.markdown("<div style='padding-top: 8px;'>", unsafe_allow_html=True)
     if os.path.exists("HIC.png"):
-        st.image("HIC.png", width=85)
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.image("HIC.png", width=90)
 
 with c_title:
     st.markdown("## Administrador de Promociones")
-    st.markdown(
-        "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
-        unsafe_allow_html=True
-    )
+    st.caption("Playa Mujeres – DREPM & SECPM")
 
 # =====================================================
 # TABS
@@ -98,21 +118,19 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 )
 
 # =====================================================
-# TAB PROMOCIONES
+# PROMOCIONES
 # =====================================================
 with tab_promos:
     l, c, r = st.columns([1,3,1])
 
     with c:
         st.markdown("### Promociones")
-
         df = cargar_datos()
 
         if df.empty:
             st.info("No hay promociones registradas.")
         else:
             filtro = st.text_input("Buscar")
-
             if filtro:
                 df = df[df.astype(str).apply(
                     lambda x: x.str.contains(filtro, case=False)
@@ -120,21 +138,18 @@ with tab_promos:
 
             df_view = df.copy()
             df_view["Market"] = df_view["Market"].apply(lambda x: ", ".join(x))
-
             st.dataframe(df_view, use_container_width=True)
 
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-                df_view.to_excel(writer, index=False)
+            excel_buffer = exportar_excel_con_logo(df)
 
             st.download_button(
                 "Descargar Excel",
-                buffer.getvalue(),
+                excel_buffer,
                 file_name="Promociones_Playa_Mujeres.xlsx"
             )
 
 # =====================================================
-# TAB REGISTRAR / MODIFICAR
+# REGISTRAR / MODIFICAR
 # =====================================================
 with tab_registro:
     l, c, r = st.columns([1,3,1])
@@ -146,10 +161,7 @@ with tab_registro:
         existente = df[df["Rate_Plan"] == rate]
         editando = not existente.empty
 
-        if editando:
-            st.info("Editando promoción existente")
-
-        with st.form("form_registro"):
+        with st.form("form"):
             hoteles = st.multiselect(
                 "Propiedad(es)",
                 ["DREPM - Dreams Playa Mujeres", "SECPM - Secrets Playa Mujeres"],
@@ -157,8 +169,7 @@ with tab_registro:
             )
 
             markets = st.multiselect(
-                "Market(s)",
-                MARKETS,
+                "Market(s)", MARKETS,
                 default=existente["Market"].iloc[0] if editando else []
             )
 
@@ -174,7 +185,7 @@ with tab_registro:
 
             archivo = st.file_uploader(
                 "Archivo de respaldo (PDF / Imagen)",
-                type=["pdf", "png", "jpg", "jpeg"]
+                type=["pdf","png","jpg","jpeg"]
             )
 
             guardar = st.form_submit_button("Guardar")
@@ -185,9 +196,7 @@ with tab_registro:
                 else:
                     archivo_path = ""
                     if archivo:
-                        archivo_path = os.path.join(
-                            MEDIA_DIR, f"{rate}_{archivo.name}"
-                        )
+                        archivo_path = os.path.join(MEDIA_DIR, f"{rate}_{archivo.name}")
                         with open(archivo_path, "wb") as f:
                             f.write(archivo.getbuffer())
 
@@ -212,27 +221,14 @@ with tab_registro:
                     df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
                     df.to_csv(CSV_FILE, index=False)
 
-                    st.success("Promoción guardada correctamente.")
+                    st.success("Promoción guardada.")
                     st.rerun()
 
 # =====================================================
-# TAB ADMINISTRACIÓN
+# ADMIN
 # =====================================================
 with tab_admin:
-    l, c, r = st.columns([1,2,1])
-
-    with c:
-        st.markdown("### Zona Administrativa")
-
-        clave = st.text_input("Clave de administrador", type="password")
-
-        if clave == PASSWORD_MAESTRA:
-            st.success("Acceso autorizado")
-
-            if st.button("Borrar toda la base"):
-                if os.path.exists(CSV_FILE):
-                    os.remove(CSV_FILE)
-                    st.warning("Base de datos eliminada.")
-                    st.rerun()
-        elif clave:
-            st.error("Clave incorrecta")
+    clave = st.text_input("Clave Admin", type="password")
+    if clave == PASSWORD_MAESTRA:
+        st.success("Acceso autorizado")
+``

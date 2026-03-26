@@ -238,4 +238,24 @@ with tab_admin:
                         st.rerun()   # ✅ FUNCIÓN CORRECTA
         elif clave:
             st.error("Clave incorrecta")
+# =============================
+# BOTONES DE ACCIÓN
+# =============================
+col_g, col_l, col_m = st.columns(3)
+
+guardar = col_g.form_submit_button(
+    "💾 Guardar",
+    use_container_width=True
+)
+
+limpiar = col_l.form_submit_button(
+    "🧹 Limpiar",
+    use_container_width=True
+)
+
+modificar = col_m.form_submit_button(
+    "✏️ Modificar",
+    use_container_width=True,
+    disabled=not editando
+)
 

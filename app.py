@@ -23,13 +23,14 @@ def cargar_datos():
         "BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin", "Notas"
     ])
 
-st.title("Administrador de Promociones")
-st.caption("Playa Mujeres Complex")
+# ======================================
+# HEADER CON LOGO
+# ======================================
+if os.path.exists("HIC.png"):
+    st.image("HIC.png", width=180)
 
-tab_promos, tab_registro, tab_admin = st.tabs([
-    "Promociones",
-    "Registrar / Modificar",
-    "Administración"
+st.title("Administrador de Promociones")
+st.caption("Playa Mujeres Complex — Dreams & Secrets")
 ])
 
 # ----------------------------

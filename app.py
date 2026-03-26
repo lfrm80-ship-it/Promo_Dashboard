@@ -46,7 +46,6 @@ def cargar_datos():
 
         if "Market" not in df.columns:
             df["Market"] = ""
-
         df["Market"] = df["Market"].apply(
             lambda x: x.split("|") if isinstance(x, str) and x else []
         )
@@ -62,12 +61,41 @@ def cargar_datos():
         "Notas","Archivo_Path"
     ])
 
+def exportar_excel_con_logo(df):
+    output = io.BytesIO()
+    fecha = datetime.now().strftime("%Y-%m-%d")
+
+    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        workbook = writer.book
+        worksheet = workbook.add_worksheet("Promociones")
+        writer.sheets["Promociones"] = worksheet
+
+        if os.path.exists("HIC.png"):
+            worksheet.insert_image("A1", "HIC.png", {"x_scale": 0.4, "y_scale": 0.4})
+
+        worksheet.write("E2", "Fecha de generación:")
+        worksheet.write("F2", fecha)
+
+        df_x = df.copy()
+        df_x["Market"] = df_x["Market"].apply(lambda x: ", ".join(x))
+        df_x["Archivo_Respaldo"] = df_x["Archivo_Path"].apply(
+            lambda x: os.path.basename(x) if isinstance(x, str) and x else ""
+        )
+        df_x = df_x.drop(columns=["Archivo_Path"])
+
+        df_x.to_excel(writer, index=False, startrow=4)
+        for i, col in enumerate(df_x.columns):
+            worksheet.set_column(i, i, 18)
+
+    output.seek(0)
+    return output
+
 # =====================================================
-# BRANDING
+# BLOQUE DE BRANDING
 # =====================================================
 st.markdown("<div style='margin-top:20px'></div>", unsafe_allow_html=True)
 
-col_l, col_logo, col_title, col_r = st.columns([1, 1, 2, 1])
+col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
 with col_logo:
     st.image("HIC.png", width=95)
 with col_title:
@@ -87,7 +115,29 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 )
 
 # =====================================================
-# TAB REGISTRAR / MODIFICAR ✅ FORM BIEN DEFINIDO
+# TAB PROMOCIONES
+# =====================================================
+with tab_promos:
+    l, c, r = st.columns([1,3,1])
+    with c:
+        df = cargar_datos()
+
+        if df.empty:
+            st.info("No hay promociones registradas.")
+        else:
+            df_view = df.copy()
+            df_view["Market"] = df_view["Market"].apply(lambda x: ", ".join(x))
+            st.dataframe(df_view, use_container_width=True)
+
+            excel = exportar_excel_con_logo(df)
+            st.download_button(
+                "Descargar Excel",
+                excel,
+                file_name="Promociones_Playa_Mujeres.xlsx"
+            )
+
+# =====================================================
+# TAB REGISTRAR / MODIFICAR
 # =====================================================
 with tab_registro:
     l, c, r = st.columns([1,3,1])
@@ -101,10 +151,33 @@ with tab_registro:
         if editando:
             st.info("Editando promoción existente")
 
-        # ✅ TODO lo del formulario vive AQUÍ
         with st.form("form_registro"):
 
-            # Propiedad + Market
+            # ✅ Nombre + Descuento
+            col_promo, col_desc = st.columns([3,1])
+            with col_promo:
+                promo = st.text_input(
+                    "Nombre de la promoción",
+                    value=existente["Promo"].iloc[0] if editando else ""
+                )
+            with col_desc:
+                descuento = st.number_input(
+                    "Descuento (%)",
+                    0, 100, 5,
+                    value=int(existente["Descuento"].iloc[0]) if editando else 0
+                )
+
+            # ✅ BW – TW MÁS ARRIBA
+            col_bw, col_tw = st.columns(2)
+            with col_bw:
+                bw = st.date_input("Booking Window", (date.today(), date.today()))
+            with col_tw:
+                tw = st.date_input("Travel Window", (date.today(), date.today()))
+
+            # ✅ Rate Plan (debajo)
+            rate = st.text_input("Rate Plan", value=rate)
+
+            # ✅ Propiedades + Markets
             col_prop, col_market = st.columns(2)
             with col_prop:
                 hoteles = st.multiselect(
@@ -119,36 +192,6 @@ with tab_registro:
                     default=existente["Market"].iloc[0] if editando else []
                 )
 
-            # Promo + Descuento
-            col_promo, col_desc = st.columns([3,1])
-            with col_promo:
-                promo = st.text_input(
-                    "Nombre de la promoción",
-                    value=existente["Promo"].iloc[0] if editando else ""
-                )
-            with col_desc:
-                descuento = st.number_input(
-                    "Descuento (%)",
-                    min_value=0,
-                    max_value=100,
-                    step=5,
-                    value=int(existente["Descuento"].iloc[0]) if editando else 0
-                )
-
-            # BW - TW
-            st.markdown("** **")
-            col_bw, col_tw = st.columns(2)
-            with col_bw:
-                bw = st.date_input(
-                    "Booking Window",
-                    value=(date.today(), date.today())
-                )
-            with col_tw:
-                tw = st.date_input(
-                    "Travel Window",
-                    value=(date.today(), date.today())
-                )
-
             notas = st.text_area("Notas / Restricciones")
 
             archivo = st.file_uploader(
@@ -156,19 +199,15 @@ with tab_registro:
                 type=["pdf","png","jpg","jpeg"]
             )
 
-            # ✅ SUBMIT DENTRO DEL FORM (CLAVE)
             guardar = st.form_submit_button("Guardar")
 
-            # ✅ LÓGICA AL SUBMIT
             if guardar:
                 if not rate or not hoteles or not markets:
                     st.error("Rate Plan, Market y Propiedad son obligatorios.")
                 else:
                     archivo_path = ""
                     if archivo:
-                        archivo_path = os.path.join(
-                            MEDIA_DIR, f"{rate}_{archivo.name}"
-                        )
+                        archivo_path = os.path.join(MEDIA_DIR, f"{rate}_{archivo.name}")
                         with open(archivo_path, "wb") as f:
                             f.write(archivo.getbuffer())
 
@@ -195,3 +234,11 @@ with tab_registro:
 
                     st.success("✅ Promoción guardada correctamente")
                     st.experimental_rerun()
+
+# =====================================================
+# TAB ADMINISTRACIÓN
+# =====================================================
+with tab_admin:
+    clave = st.text_input("Clave Admin", type="password")
+    if clave == PASSWORD_MAESTRA:
+        st.success("Acceso autorizado")

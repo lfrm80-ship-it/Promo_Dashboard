@@ -46,6 +46,7 @@ def cargar_datos():
 
         if "Market" not in df.columns:
             df["Market"] = ""
+
         df["Market"] = df["Market"].apply(
             lambda x: x.split("|") if isinstance(x, str) and x else []
         )
@@ -141,7 +142,6 @@ with tab_promos:
             st.dataframe(df_view, use_container_width=True)
 
             excel = exportar_excel_con_logo(df)
-
             st.download_button(
                 "Descargar Excel",
                 excel,
@@ -165,54 +165,48 @@ with tab_registro:
 
         with st.form("form_registro"):
 
-            hoteles = st.multiselect(
-                "Propiedad(es)",
-                ["DREPM - Dreams Playa Mujeres", "SECPM - Secrets Playa Mujeres"],
-                default=existente["Hotel"].tolist() if editando else []
-            )
+            # ✅ PROPIEDADES + MARKETS EN UNA SOLA LÍNEA
+            col_prop, col_market = st.columns(2)
 
-            markets = st.multiselect(
-                "Market(s)",
-                MARKETS,
-                default=existente["Market"].iloc[0] if editando else []
-            )
+            with col_prop:
+                hoteles = st.multiselect(
+                    "Propiedad(es)",
+                    ["DREPM - Dreams Playa Mujeres", "SECPM - Secrets Playa Mujeres"],
+                    default=existente["Hotel"].tolist() if editando else []
+                )
 
-           col_promo, col_desc = st.columns([3, 1])
+            with col_market:
+                markets = st.multiselect(
+                    "Market(s)",
+                    MARKETS,
+                    default=existente["Market"].iloc[0] if editando else []
+                )
 
-with col_promo:
-    promo = st.text_input(
-        "Nombre de la promoción",
-        value=existente["Promo"].iloc[0] if editando else ""
-    )
+            # ✅ NOMBRE + DESCUENTO EN UNA SOLA LÍNEA
+            col_promo, col_desc = st.columns([3,1])
 
-with col_desc:
-    descuento = st.number_input(
-        "Descuento (%)",
-        min_value=0,
-        max_value=100,
-        step=5,
-        value=int(existente["Descuento"].iloc[0]) if editando else 0
-    )
-``
-            )
+            with col_promo:
+                promo = st.text_input(
+                    "Nombre de la promoción",
+                    value=existente["Promo"].iloc[0] if editando else ""
+                )
 
-            descuento = st.number_input("Descuento (%)", 0, 100, 5)
+            with col_desc:
+                descuento = st.number_input(
+                    "Descuento (%)",
+                    0, 100, 5,
+                    value=int(existente["Descuento"].iloc[0]) if editando else 0
+                )
 
             # ✅ BW – TW EN UNA SOLA LÍNEA
             st.markdown("**Ventanas de fechas**")
             col_bw, col_tw = st.columns(2)
 
             with col_bw:
-                bw = st.date_input(
-                    "Booking Window",
-                    value=(date.today(), date.today())
-                )
+                bw = st.date_input("Booking Window", (date.today(), date.today()))
 
             with col_tw:
-                tw = st.date_input(
-                    "Travel Window",
-                    value=(date.today(), date.today())
-                )
+                tw = st.date_input("Travel Window", (date.today(), date.today()))
 
             notas = st.text_area("Notas / Restricciones")
 
@@ -274,3 +268,4 @@ with tab_admin:
                     st.rerun()
         elif clave:
             st.error("Clave incorrecta")
+``

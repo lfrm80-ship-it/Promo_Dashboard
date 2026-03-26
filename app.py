@@ -21,8 +21,21 @@ PASSWORD_MAESTRA = "PlayaMujeres2026"
 st.markdown(
     """
     <style>
+    /* Centrar el menú de tabs */
     div[data-baseweb="tab-list"] {
         justify-content: center;
+    }
+
+    /* Hacer las tabs más pequeñas y ligeras */
+    button[data-baseweb="tab"] {
+        font-size: 0.85rem;
+        padding: 6px 14px;
+        font-weight: 400;
+    }
+
+    /* Tab activa más sutil */
+    button[data-baseweb="tab"][aria-selected="true"] {
+        font-weight: 500;
     }
     </style>
     """,

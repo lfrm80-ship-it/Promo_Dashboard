@@ -7,13 +7,18 @@ from datetime import date
 # ======================================
 # CONFIGURACIÓN GENERAL
 # ======================================
-
-t.set_page_config(
+st.set_page_config(
     page_title="Administrador de Promociones",
     layout="wide"
 )
 
-    st.markdown(
+CSV_FILE = "promociones_data.csv"
+PASSWORD_MAESTRA = "PlayaMujeres2026"
+
+# ======================================
+# CSS MINIMO PARA CENTRAR TABS
+# ======================================
+st.markdown(
     """
     <style>
     div[data-baseweb="tab-list"] {
@@ -23,11 +28,6 @@ t.set_page_config(
     """,
     unsafe_allow_html=True
 )
-
-)
-
-CSV_FILE = "promociones_data.csv"
-PASSWORD_MAESTRA = "PlayaMujeres2026"
 
 # ======================================
 # FUNCIONES
@@ -92,13 +92,13 @@ with tab_promos:
             df.to_excel(writer, index=False)
 
         st.download_button(
-            label="Descargar Excel",
-            data=buffer.getvalue(),
+            "Descargar Excel",
+            buffer.getvalue(),
             file_name="Promociones_Playa_Mujeres.xlsx"
         )
 
 # ======================================
-# TAB 2 — REGISTRAR / MODIFICAR
+# TAB 2 — REGISTRAR / MODIFICAR (CENTRADO)
 # ======================================
 with tab_registro:
     col_left, col_center, col_right = st.columns([1, 3, 1])
@@ -131,17 +131,62 @@ with tab_registro:
 
             descuento = st.number_input(
                 "Descuento (%)",
-                0, 100, step=5,
+                min_value=0,
+                max_value=100,
+                step=5,
                 value=int(existente["Descuento"].iloc[0]) if editando else 0
             )
 
-            bw = st.date_input("Booking Window", (date.today(), date.today()))
-            tw = st.date_input("Travel Window", (date.today(), date.today()))
-            notas = st.text_area("Notas / Restricciones")
+            bw = st.date_input(
+                "Booking Window",
+                value=(date.today(), date.today())
+            )
+
+            tw = st.date_input(
+                "Travel Window",
+                value=(date.today(), date.today())
+            )
+
+            notas = st.text_area(
+                "Notas / Restricciones",
+                value=existente["Notas"].iloc[0] if editando else ""
+            )
 
             col_a, col_b = st.columns(2)
             guardar = col_a.form_submit_button("Guardar")
             eliminar = col_b.form_submit_button("Eliminar") if editando else False
+
+            if guardar:
+                if not rate or not hoteles:
+                    st.error("El Rate Plan y al menos una propiedad son obligatorios.")
+                else:
+                    df = df[df["Rate_Plan"] != rate]
+
+                    registros = []
+                    for h in hoteles:
+                        registros.append({
+                            "Hotel": h,
+                            "Promo": promo,
+                            "Rate_Plan": rate,
+                            "Descuento": descuento,
+                            "BW_Inicio": bw[0],
+                            "BW_Fin": bw[1],
+                            "TW_Inicio": tw[0],
+                            "TW_Fin": tw[1],
+                            "Notas": notas
+                        })
+
+                    df = pd.concat([df, pd.DataFrame(registros)], ignore_index=True)
+                    df.to_csv(CSV_FILE, index=False)
+
+                    st.success("Promoción guardada correctamente.")
+                    st.rerun()
+
+            if eliminar:
+                df = df[df["Rate_Plan"] != rate]
+                df.to_csv(CSV_FILE, index=False)
+                st.warning("Promoción eliminada.")
+                st.rerun()
 
 # ======================================
 # TAB 3 — ADMINISTRACIÓN
@@ -161,4 +206,3 @@ with tab_admin:
                 st.rerun()
     elif clave:
         st.error("Clave incorrecta")
-

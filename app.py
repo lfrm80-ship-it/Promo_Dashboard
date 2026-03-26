@@ -136,7 +136,7 @@ with tab_registro:
                 )
 
             # BW - TW
-            st.markdown("**Ventanas de fechas**")
+            st.markdown("** **")
             col_bw, col_tw = st.columns(2)
             with col_bw:
                 bw = st.date_input(

@@ -88,32 +88,39 @@ tab_promos, tab_registro, tab_admin = st.tabs(
     ["Promociones", "Registrar / Modificar", "Administración"]
 )
 
-# ======================================
+# ===============================
 # TAB 1 — PROMOCIONES
-# ======================================
+# ===============================
 with tab_promos:
-    df = cargar_datos()
+    col_left, col_center, col_right = st.columns([1, 3, 1])
 
-    if df.empty:
-        st.info("No hay promociones registradas.")
-    else:
-        filtro = st.text_input("Buscar promoción")
-        if filtro:
-            df = df[df.astype(str).apply(
-                lambda x: x.str.contains(filtro, case=False)
-            ).any(axis=1)]
+    with col_center:
+        st.markdown("### Promociones")
 
-        st.dataframe(df, use_container_width=True)
+        df = cargar_datos()
 
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-            df.to_excel(writer, index=False)
+        if df.empty:
+            st.info("No hay promociones registradas.")
+        else:
+            filtro = st.text_input("Buscar promoción")
 
-        st.download_button(
-            "Descargar Excel",
-            buffer.getvalue(),
-            file_name="Promociones_Playa_Mujeres.xlsx"
-        )
+            if filtro:
+                df = df[df.astype(str).apply(
+                    lambda x: x.str.contains(filtro, case=False)
+                ).any(axis=1)]
+
+            st.dataframe(df, use_container_width=True)
+
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+                df.to_excel(writer, index=False)
+
+            st.download_button(
+                label="Descargar Excel",
+                data=buffer.getvalue(),
+                file_name="Promociones_Playa_Mujeres.xlsx"
+            )
+
 
 # ======================================
 # TAB 2 — REGISTRAR / MODIFICAR (CENTRADO)

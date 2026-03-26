@@ -7,7 +7,10 @@ from datetime import date, datetime
 # =====================================================
 # CONFIGURACIÓN GENERAL
 # =====================================================
-st.set_page_config(page_title="Administrador de Promociones", layout="wide")
+st.set_page_config(
+    page_title="Administrador de Promociones",
+    layout="wide"
+)
 
 CSV_FILE = "promociones_data.csv"
 MEDIA_DIR = "media"
@@ -23,12 +26,12 @@ if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
 # =====================================================
-# CSS COMPACTO (CLAVE PARA NO SCROLL)
+# CSS COMPACTO (AJUSTADO PARA NO CORTAR HEADER)
 # =====================================================
 st.markdown("""
 <style>
 body { background-color: #f7f8fa; }
-.block-container { padding-top: 0.4rem; }
+.block-container { padding-top: 0.9rem; }
 div[data-baseweb="tab-list"] { justify-content: center; }
 button[data-baseweb="tab"][aria-selected="true"] { font-weight: 600; }
 div[data-testid="stVerticalBlock"] { gap: 0.4rem; }
@@ -53,6 +56,7 @@ def cargar_datos():
         df["Market"] = df["Market"].apply(
             lambda x: x.split("|") if isinstance(x, str) and x else []
         )
+
         return df
 
     return pd.DataFrame(columns=[
@@ -91,11 +95,12 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER COMPACTO
+# HEADER (CORREGIDO, SIN CORTES)
 # =====================================================
 col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
 
 with col_logo:
+    st.markdown("<div style='padding-top:4px'></div>", unsafe_allow_html=True)
     st.image("HIC.png", width=80)
 
 with col_title:
@@ -134,36 +139,31 @@ with tab_promos:
         )
 
 # =====================================================
-# REGISTRAR / MODIFICAR (SIN SCROLL ✅)
+# REGISTRAR / MODIFICAR (FORM COMPACTO, SIN SCROLL)
 # =====================================================
 with tab_registro:
     df = cargar_datos()
 
     with st.form("form_registro"):
 
-        # Nombre + Descuento
         col_promo, col_desc = st.columns([3,1])
         promo = col_promo.text_input("Nombre de la promoción")
         descuento = col_desc.number_input("Descuento (%)", 0, 100, 5)
 
-        # Fechas
         col_bw, col_tw = st.columns(2)
         bw = col_bw.date_input("Booking Window", (date.today(), date.today()))
         tw = col_tw.date_input("Travel Window", (date.today(), date.today()))
 
-        # Rate Plans compactos
         rate_raw = st.text_area(
             "Rate Plan(s) – uno por línea",
             placeholder="BAR\nPROMO2026\nCORP_PM",
             height=90
         )
 
-        # Propiedades + Market
         col_prop, col_market = st.columns(2)
         hoteles = col_prop.multiselect("Propiedad(es)", PROPERTIES)
         markets = col_market.multiselect("Market(s)", MARKETS)
 
-        # Notas compactas
         notas = st.text_area(
             "Notas / Restricciones",
             height=80,
@@ -175,13 +175,11 @@ with tab_registro:
             type=["pdf","png","jpg","jpeg"]
         )
 
-        # Botones
         col_g, col_l, col_m = st.columns(3)
         guardar = col_g.form_submit_button("💾 Guardar")
         limpiar = col_l.form_submit_button("🧹 Limpiar")
         modificar = col_m.form_submit_button("✏️ Modificar")
 
-        # Lógica
         if limpiar:
             st.rerun()
 
@@ -239,3 +237,4 @@ with tab_admin:
                 os.remove(CSV_FILE)
             st.warning("Base eliminada")
             st.rerun()
+``

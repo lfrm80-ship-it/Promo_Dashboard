@@ -74,13 +74,18 @@ def cargar_datos():
 # =====================================================
 # HEADER
 # =====================================================
-col_logo, col_t = st.columns([1, 3])
+col_l, col_logo, col_title, col_r = st.columns([1, 1, 2, 1])
+
 with col_logo:
     if os.path.exists("HIC.png"):
-        st.image("HIC.png", width=95)
-with col_t:
+        st.image("HIC.png", width=90)
+
+with col_title:
     st.markdown("## Administrador de Promociones")
-    st.caption("Playa Mujeres – DREPM & SECPM")
+    st.markdown(
+        "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
+        unsafe_allow_html=True
+    )
 
 # =====================================================
 # TABS

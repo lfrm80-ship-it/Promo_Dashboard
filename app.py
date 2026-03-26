@@ -199,3 +199,13 @@ with tab_buscar:
                     f"{r['Descuento']}% OFF"
                 )
 ``
+import streamlit as st
+
+st.set_page_config(page_title="Test App", layout="wide")
+
+st.title("Aplicación de prueba")
+st.write("Si ves esto, tu entorno Streamlit está bien.")
+
+if st.button("Probar"):
+    st.success("Todo OK")
+

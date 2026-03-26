@@ -21,6 +21,29 @@ MARKETS = ["US", "Canada", "Mexico", "LATAM", "Europe", "Asia / ROW"]
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
+# ======================================
+# BLOQUE DE BRANDING (LOGO + TÍTULO)
+# ======================================
+st.markdown("<div style='margin-top: 20px'></div>", unsafe_allow_html=True)
+
+col_l, col_logo, col_title, col_r = st.columns([1, 1, 2, 1])
+
+with col_logo:
+    st.image("HIC.png", width=95)
+
+with col_title:
+    st.markdown("## Administrador de Promociones")
+    st.markdown(
+        "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
+        unsafe_allow_html=True
+    )
+
+st.markdown(
+    "<hr style='margin-top:12px; margin-bottom:18px;'>",
+    unsafe_allow_html=True
+)
+
+
 # ===============================
 # CSS BÁSICO (CORREGIDO)
 # ===============================

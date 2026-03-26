@@ -49,7 +49,6 @@ with col_center:
 st.title("Administrador de Promociones")
 st.caption("Playa Mujeres Complex — Dreams & Secrets")
 
-
 # ======================================
 # TABS PRINCIPALES
 # ======================================
@@ -99,12 +98,14 @@ with tab_registro:
         st.info("Editando promoción existente")
 
     with st.form("form_registro"):
-        hotel = st.selectbox(
-            "Propiedad",
+        # ✅ MULTI‑PROPIEDAD
+        hoteles = st.multiselect(
+            "Propiedad(es)",
             [
                 "DREPM - Dreams Playa Mujeres",
                 "SECPM - Secrets Playa Mujeres"
-            ]
+            ],
+            default=existente["Hotel"].tolist() if editando else []
         )
 
         promo = st.text_input(
@@ -140,24 +141,28 @@ with tab_registro:
         eliminar = col_b.form_submit_button("Eliminar") if editando else False
 
         if guardar:
-            if not rate:
-                st.error("El Rate Plan es obligatorio.")
+            if not rate or not hoteles:
+                st.error("El Rate Plan y al menos una propiedad son obligatorios.")
             else:
+                # Eliminar registros previos del mismo Rate Plan
                 df = df[df["Rate_Plan"] != rate]
 
-                nuevo = {
-                    "Hotel": hotel,
-                    "Promo": promo,
-                    "Rate_Plan": rate,
-                    "Descuento": descuento,
-                    "BW_Inicio": bw[0],
-                    "BW_Fin": bw[1],
-                    "TW_Inicio": tw[0],
-                    "TW_Fin": tw[1],
-                    "Notas": notas
-                }
+                # ✅ Crear un registro por cada hotel seleccionado
+                registros = []
+                for h in hoteles:
+                    registros.append({
+                        "Hotel": h,
+                        "Promo": promo,
+                        "Rate_Plan": rate,
+                        "Descuento": descuento,
+                        "BW_Inicio": bw[0],
+                        "BW_Fin": bw[1],
+                        "TW_Inicio": tw[0],
+                        "TW_Fin": tw[1],
+                        "Notas": notas
+                    })
 
-                df = pd.concat([df, pd.DataFrame([nuevo])], ignore_index=True)
+                df = pd.concat([df, pd.DataFrame(registros)], ignore_index=True)
                 df.to_csv(CSV_FILE, index=False)
 
                 st.success("Promoción guardada correctamente.")
@@ -166,7 +171,6 @@ with tab_registro:
         if eliminar:
             df = df[df["Rate_Plan"] != rate]
             df.to_csv(CSV_FILE, index=False)
-
             st.warning("Promoción eliminada.")
             st.rerun()
 
@@ -188,3 +192,4 @@ with tab_admin:
                 st.rerun()
     elif clave:
         st.error("Clave incorrecta")
+``

@@ -54,7 +54,7 @@ def cargar_datos():
 # ======================================
 # HEADER CONTROLADO (LOGO A LA DERECHA + TÍTULO CENTRADO)
 # ======================================
-col_left, col_center, col_right = st.columns([2, 2, 1])
+col_left, col_center, col_right = st.columns([1, 2, 1])
 
 with col_center:
     st.markdown("## Administrador de Promociones")

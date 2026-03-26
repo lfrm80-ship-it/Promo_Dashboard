@@ -77,7 +77,7 @@ with col_logo:
 with col_title:
     st.markdown("## Administrador de Promociones")
     st.markdown(
-        "<span style='color: #6b6b6b;'>Playa Mujeres Complex — Dreams & Secrets</span>",
+        "<span style='color: #6b6b6b;'>Playa Mujeres - DREPM & SECPM </span>",
         unsafe_allow_html=True
     )
 

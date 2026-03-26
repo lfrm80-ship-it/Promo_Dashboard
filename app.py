@@ -241,4 +241,4 @@ with tab_admin:
                 os.remove(CSV_FILE)
             st.warning("Base de datos eliminada")
             st.rerun()
-``
+

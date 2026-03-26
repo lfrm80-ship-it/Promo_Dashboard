@@ -26,8 +26,6 @@ if not os.path.exists(MEDIA_DIR):
 # ======================================
 st.markdown("<div style='margin-top: 20px'></div>", unsafe_allow_html=True)
 
-col_l, col_logo, col_title, col_r = st.columns([1, 1, 2, 1])
-
 with col_logo:
     st.image("HIC.png", width=95)
 

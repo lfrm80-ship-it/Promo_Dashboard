@@ -125,7 +125,6 @@ st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
 col_left, col_center, col_right = st.columns([1, 1, 1])
 
 with col_center:
-    # Logo centrado
     st.image("HIC.png", width=90)
 
     # Título centrado

@@ -153,15 +153,18 @@ tab_registro = tabs[1]
 if st.session_state.is_admin:
     tab_admin = tabs[2]
 
-# =====================================================
-# PROMOCIONES
-# =====================================================
 with tab_promos:
+
     df = cargar_datos()
+    df_prod = cargar_produccion()
+    hoy = date.today()
 
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
+        # =========================
+        # BUSCADOR
+        # =========================
         search = st.text_input(
             "🔍 Buscar promoción",
             placeholder="Nombre, Rate Plan, Market, Hotel, Notas…"
@@ -178,120 +181,115 @@ with tab_promos:
             )
             df_f = df_f[mask]
 
+        # =========================
+        # TABLA OPERATIVA
+        # =========================
         view = df_f.copy()
         view["Market"] = view["Market"].apply(lambda x: ", ".join(x))
         view["Descuento"] = view["Descuento"].apply(lambda x: f"{int(x)} %")
+
         st.dataframe(view, use_container_width=True)
 
         st.subheader("Estado y Vigencia de Promociones")
 
+        # =========================
+        # FILTRO DE ESTADO
+        # =========================
         filtro = st.radio(
             "Mostrar:",
             ["Todas", "🟢 Activas", "🟡 Por iniciar", "🔴 Expiradas"],
             horizontal=True
         )
 
-        hoy = date.today()
+        # =========================
+        # LOOP PRINCIPAL
+        # =========================
+        for idx, row in df_f.iterrows():
 
-        for _, row in df_f.iterrows():
-            tw_ini, tw_fin = row["TW_Inicio"], row["TW_Fin"]
+            tw_ini = row["TW_Inicio"]
+            tw_fin = row["TW_Fin"]
 
+            # ---- Calcular estado ----
             if hoy < tw_ini:
-                estado, avance = "🟡 Por iniciar", 0
+                estado = "🟡 Por iniciar"
             elif hoy > tw_fin:
-                estado, avance = "🔴 Expirada", 100
+                estado = "🔴 Expirada"
             else:
                 estado = "🟢 Activa"
-                total = max((tw_fin - tw_ini).days, 1)
-                avance = int((hoy - tw_ini).days / total * 100)
 
-# =========================
-# PRODUCCIÓN – SOLO EXPIRADAS
-# =========================
-df_prod = cargar_produccion()
-
-if hoy > tw_fin:
-    prod = obtener_produccion(
-        df_prod,
-        row["Promo"],
-        row["Hotel"],
-        row["Rate_Plan"]
-    )
-
-    if prod is None:
-        with st.expander("📊 Agregar Producción"):
-            rn = st.number_input(
-                "Room Nights",
-                min_value=0,
-                step=1,
-                key=f"rn_{row.name}"
-            )
-            revenue = st.number_input(
-                "Revenue",
-                min_value=0.0,
-                step=1000.0,
-                key=f"rev_{row.name}"
-            )
-            comentario = st.text_area(
-                "Comentario / Insight",
-                key=f"com_{row.name}"
-            )
-
-            if st.button("Guardar Producción", key=f"save_prod_{row.name}"):
-                nueva_fila = pd.DataFrame([{
-                    "Promo": row["Promo"],
-                    "Hotel": row["Hotel"],
-                    "Rate_Plan": row["Rate_Plan"],
-                    "Room_Nights": rn,
-                    "Revenue": revenue,
-                    "Comentario": comentario
-                }])
-
-                df_prod = pd.concat([df_prod, nueva_fila], ignore_index=True)
-                guardar_produccion(df_prod)
-
-                st.success("✅ Producción guardada correctamente")
-                st.experimental_rerun()
-    else:
-        st.markdown(
-            f"""
-            ✅ **Producción cargada**
-            - RN: **{int(prod['Room_Nights'])}**
-            - Revenue: **${prod['Revenue']:,.0f}**
-            - Insight: {prod['Comentario']}
-            """
-        )
-            
+            # ---- Aplicar filtro (CLAVE: misma indentación) ----
             if filtro != "Todas" and estado != filtro:
                 continue
 
+            # ---- Header de la promo ----
             with st.expander(f"{estado} | {row['Promo']} | {row['Hotel']} | {row['Rate_Plan']}"):
-                st.progress(avance)
-                st.caption(f"Travel Window: {tw_ini} → {tw_fin} ({avance} %)")
+                st.caption(f"Travel Window: {tw_ini} → {tw_fin}")
 
-                path = row["Archivo_Path"]
-                if (
-                    isinstance(path, str)
-                    and path.lower().endswith((".png", ".jpg", ".jpeg"))
-                    and os.path.exists(path)
-                ):
-                    st.image(path, width=400)
+                # =========================
+                # PRODUCCIÓN SOLO EXPIRADAS
+                # =========================
+                if hoy > tw_fin:
+                    prod = obtener_produccion(
+                        df_prod,
+                        row["Promo"],
+                        row["Hotel"],
+                        row["Rate_Plan"]
+                    )
 
+                    if prod is None:
+                        st.markdown("### 📊 Agregar Producción")
+
+                        rn = st.number_input(
+                            "Room Nights",
+                            min_value=0,
+                            step=1,
+                            key=f"rn_{idx}"
+                        )
+                        revenue = st.number_input(
+                            "Revenue",
+                            min_value=0.0,
+                            step=1000.0,
+                            key=f"rev_{idx}"
+                        )
+                        comentario = st.text_area(
+                            "Comentario / Insight",
+                            key=f"com_{idx}"
+                        )
+
+                        if st.button("Guardar Producción", key=f"save_prod_{idx}"):
+                            nueva_fila = pd.DataFrame([{
+                                "Promo": row["Promo"],
+                                "Hotel": row["Hotel"],
+                                "Rate_Plan": row["Rate_Plan"],
+                                "Room_Nights": rn,
+                                "Revenue": revenue,
+                                "Comentario": comentario
+                            }])
+
+                            df_prod = pd.concat([df_prod, nueva_fila], ignore_index=True)
+                            guardar_produccion(df_prod)
+
+                            st.success("✅ Producción guardada correctamente")
+                            st.rerun()
+
+                    else:
+                        st.success("✅ Producción cargada")
+                        st.markdown(
+                            f"""
+                            - **Room Nights:** {int(prod["Room_Nights"])}
+                            - **Revenue:** ${prod["Revenue"]:,.0f}
+                            - **Insight:** {prod["Comentario"]}
+                            """
+                        )
+
+        # =========================
+        # DESCARGA EXCEL
+        # =========================
         st.download_button(
-            "Descargar Excel",
+            "Descargar Excel Operativo",
             exportar_excel(df),
             file_name="Promociones_Playa_Mujeres.xlsx"
         )
-
-        # ACCESO ADMIN SOLO AQUÍ
-        if not st.session_state.is_admin:
-            st.markdown("---")
-            with st.expander("🔒 Acceso administrador"):
-                clave = st.text_input("Clave Administrador", type="password")
-                if clave == PASSWORD_MAESTRA:
-                    st.session_state.is_admin = True
-                    st.success("Acceso administrador habilitado")
-                    st.rerun()
 
 # =====================================================
 # REGISTRAR / MODIFICAR

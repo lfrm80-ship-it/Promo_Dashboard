@@ -26,13 +26,26 @@ def safe_read_csv(path):
 # CARGA DE PROMOS
 # =============================
 
-ate_plan = st.text_input("Rate Plan")
-descuento = st.number_input("Descuento (%)", 0, 100, step=1)
+# Rate Plan + Descuento en una sola línea
+col_rp, col_desc = st.columns([2, 1])
+with col_rp:
+    rate_plan = st.text_input("Rate Plan")
+with col_desc:
+    descuento = st.number_input("Descuento (%)", 0, 100, step=1)
 
-bw_ini = st.date_input("Booking Window Inicio")
-bw_fin = st.date_input("Booking Window Fin")
-tw_ini = st.date_input("Travel Window Inicio")
-tw_fin = st.date_input("Travel Window Fin")
+# BW en una línea
+col_bw1, col_bw2 = st.columns(2)
+with col_bw1:
+    bw_ini = st.date_input("BW Inicio")
+with col_bw2:
+    bw_fin = st.date_input("BW Fin")
+
+# TW en una línea
+col_tw1, col_tw2 = st.columns(2)
+with col_tw1:
+    tw_ini = st.date_input("TW Inicio")
+with col_tw2:
+    tw_fin = st.date_input("TW Fin")
 
 
 # =============================

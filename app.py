@@ -96,7 +96,7 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER – AJUSTE ÓPTICO FINAL (CIERRE DEFINITIVO)
+# HEADER – AJUSTE FINAL (≈ 2 cm A LA DERECHA)
 # =====================================================
 
 st.markdown("<div style='height:26px;'></div>", unsafe_allow_html=True)
@@ -105,7 +105,12 @@ st.markdown("<div style='height:26px;'></div>", unsafe_allow_html=True)
 col_left, col_center, col_right = st.columns([1.8, 6, 1])
 
 with col_center:
-    # Bloque logo + texto con compensación óptica
+    # Desplazamiento óptico del bloque completo (≈ 2 cm)
+    st.markdown(
+        "<div style='padding-left:80px;'>",
+        unsafe_allow_html=True
+    )
+
     col_logo, col_text = st.columns([1.4, 4])
 
     with col_logo:
@@ -114,7 +119,7 @@ with col_center:
     with col_text:
         st.markdown(
             """
-            <div style="padding-top:10px; padding-left:18px;">
+            <div style="padding-top:10px;">
                 <div style="font-size:30px; font-weight:600;">
                     Administrador de Promociones
                 </div>
@@ -125,6 +130,9 @@ with col_center:
             """,
             unsafe_allow_html=True
         )
+
+    # Cierre del desplazamiento
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<hr style='margin-top:18px; margin-bottom:14px;'>", unsafe_allow_html=True)
 

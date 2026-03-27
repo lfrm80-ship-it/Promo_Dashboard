@@ -20,11 +20,10 @@ PROPERTIES = [
     "SECPM - Secrets Playa Mujeres"
 ]
 
-if not os.path.exists(MEDIA_DIR):
-    os.makedirs(MEDIA_DIR)
+os.makedirs(MEDIA_DIR, exist_ok=True)
 
 # ==============================
-# CSS COMPACTO
+# CSS
 # ==============================
 st.markdown("""
 <style>
@@ -36,24 +35,27 @@ div[data-testid="stVerticalBlock"] { gap: 0.4rem; }
 </style>
 """, unsafe_allow_html=True)
 
-# Spacer real (evita cortes del header)
 st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
 
 # ==============================
 # SESSION STATE
 # ==============================
-st.session_state.setdefault("promo", "")
-st.session_state.setdefault("descuento", 0)
-st.session_state.setdefault("bw", (date.today(), date.today()))
-st.session_state.setdefault("tw", (date.today(), date.today()))
-st.session_state.setdefault("rate_raw", "")
-st.session_state.setdefault("hoteles", [])
-st.session_state.setdefault("markets", [])
-st.session_state.setdefault("notas", "")
-st.session_state.setdefault("reset_form", False)
+defaults = {
+    "promo": "",
+    "descuento": 0,
+    "bw": (date.today(), date.today()),
+    "tw": (date.today(), date.today()),
+    "rate_raw": "",
+    "hoteles": [],
+    "markets": [],
+    "notas": "",
+    "reset_form": False
+}
+for k, v in defaults.items():
+    st.session_state.setdefault(k, v)
 
 # ==============================
-# NORMALIZAR MARKET
+# HELPERS
 # ==============================
 def normalizar_market(x):
     if isinstance(x, list):
@@ -63,55 +65,42 @@ def normalizar_market(x):
         return [m.strip() for m in x.split("|") if m.strip()]
     return []
 
-# ==============================
-# CARGAR DATOS
-# ==============================
 def cargar_datos():
     if os.path.exists(CSV_FILE):
         df = pd.read_csv(CSV_FILE)
-
         for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
             if c in df.columns:
                 df[c] = pd.to_datetime(df[c]).dt.date
-
         for col in ["Market","Archivo_Path"]:
             if col not in df.columns:
                 df[col] = ""
-
         df["Market"] = df["Market"].apply(normalizar_market)
         return df
-
     return pd.DataFrame(columns=[
         "Hotel","Market","Promo","Rate_Plan","Descuento",
         "BW_Inicio","BW_Fin","TW_Inicio","TW_Fin",
         "Notas","Archivo_Path"
     ])
 
-# ==============================
-# EXCEL
-# ==============================
 def exportar_excel(df):
     buffer = io.BytesIO()
     fecha = datetime.now().strftime("%Y-%m-%d")
-
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         ws = writer.book.add_worksheet("Promociones")
         writer.sheets["Promociones"] = ws
-
         ws.write("E2", "Fecha de generación:")
         ws.write("F2", fecha)
 
         df_x = df.copy()
-        df_x["Market"] = df_x["Market"].apply(lambda x:", ".join(x))
+        df_x["Market"] = df_x["Market"].apply(lambda x: ", ".join(x))
         df_x["Archivo_Respaldo"] = df_x["Archivo_Path"].apply(
             lambda x: os.path.basename(x) if isinstance(x,str) and x else ""
         )
         df_x.drop(columns=["Archivo_Path"], inplace=True)
-
         df_x.to_excel(writer, index=False, startrow=4)
+
         for i in range(len(df_x.columns)):
             ws.set_column(i, i, 18)
-
     buffer.seek(0)
     return buffer
 
@@ -123,7 +112,10 @@ with col_logo:
     st.image("HIC.png", width=80)
 with col_title:
     st.markdown("## Administrador de Promociones")
-    st.markdown("<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>", unsafe_allow_html=True)
+    st.markdown(
+        "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
+        unsafe_allow_html=True
+    )
 st.markdown("<hr style='margin-top:6px; margin-bottom:8px;'>", unsafe_allow_html=True)
 
 # ==============================
@@ -134,7 +126,7 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 )
 
 # ==============================
-# PROMOCIONES — BUSCADOR + VISTA EJECUTIVA ✅
+# PROMOCIONES
 # ==============================
 with tab_promos:
     df = cargar_datos()
@@ -142,29 +134,31 @@ with tab_promos:
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
-        # 🔍 Buscador
         search = st.text_input(
-            "🔍 Buscar promoción (Nombre o Notas)",
-            placeholder="Ej. Spring, Blackout, US, Upgrade..."
+            "🔍 Buscar promoción (Nombre, Notas, Rate Plan, Hotel o Market)",
+            placeholder="Ej. ATFPROMOC, BAR, US, Blackout…"
         )
 
-        # Aplicar filtro de búsqueda
         df_filtrado = df.copy()
         if search:
             mask = (
                 df_filtrado["Promo"].astype(str).str.contains(search, case=False, na=False)
                 | df_filtrado["Notas"].astype(str).str.contains(search, case=False, na=False)
+                | df_filtrado["Rate_Plan"].astype(str).str.contains(search, case=False, na=False)
+                | df_filtrado["Hotel"].astype(str).str.contains(search, case=False, na=False)
+                | df_filtrado["Market"].apply(lambda x: ", ".join(x)).str.contains(search, case=False, na=False)
             )
             df_filtrado = df_filtrado[mask]
 
-        # 📋 Tabla operativa
         view = df_filtrado.copy()
         view["Market"] = view["Market"].apply(lambda x: ", ".join(x))
+        view["Descuento"] = view["Descuento"].apply(
+            lambda x: f"{int(x)} %" if pd.notna(x) else ""
+        )
         st.dataframe(view, use_container_width=True)
 
         st.subheader("Estado y Vigencia de Promociones")
 
-        # 🎛️ Filtro por estado
         filtro = st.radio(
             "Mostrar:",
             ["Todas", "🟢 Activas", "🟡 Por iniciar", "🔴 Expiradas"],
@@ -173,10 +167,8 @@ with tab_promos:
 
         hoy = date.today()
 
-        # ✅ IMPORTANTE: USAR df_filtrado
         for _, row in df_filtrado.iterrows():
-            tw_ini = row["TW_Inicio"]
-            tw_fin = row["TW_Fin"]
+            tw_ini, tw_fin = row["TW_Inicio"], row["TW_Fin"]
 
             if hoy < tw_ini:
                 estado = "🟡 Por iniciar"
@@ -190,7 +182,6 @@ with tab_promos:
                 trans = (hoy - tw_ini).days
                 progreso = int(max(min(trans / total * 100, 100), 0))
 
-            # Aplicar filtro ejecutivo
             if filtro != "Todas" and estado != filtro:
                 continue
 
@@ -198,11 +189,10 @@ with tab_promos:
                 st.progress(progreso)
                 st.caption(f"Travel Window: {tw_ini} → {tw_fin} ({progreso} %)")
 
-                # 🖼️ Vista previa de imagen
                 path = row["Archivo_Path"]
                 if (
                     isinstance(path, str)
-                    and path.lower().endswith((".png", ".jpg", ".jpeg"))
+                    and path.lower().endswith((".png",".jpg",".jpeg"))
                     and os.path.exists(path)
                 ):
                     st.image(path, width=400)
@@ -212,6 +202,7 @@ with tab_promos:
             exportar_excel(df),
             file_name="Promociones_Playa_Mujeres.xlsx"
         )
+
 # ==============================
 # REGISTRAR / MODIFICAR
 # ==============================
@@ -219,14 +210,13 @@ with tab_registro:
     df = cargar_datos()
 
     if st.session_state.reset_form:
-        st.session_state.promo = ""
+        for k in ["promo","rate_raw","notas"]:
+            st.session_state[k] = ""
         st.session_state.descuento = 0
-        st.session_state.bw = (date.today(), date.today())
-        st.session_state.tw = (date.today(), date.today())
-        st.session_state.rate_raw = ""
         st.session_state.hoteles = []
         st.session_state.markets = []
-        st.session_state.notas = ""
+        st.session_state.bw = (date.today(), date.today())
+        st.session_state.tw = (date.today(), date.today())
         st.session_state.reset_form = False
 
     with st.form("form_registro"):
@@ -251,12 +241,11 @@ with tab_registro:
 
         st.text_area("Notas / Restricciones", height=80, key="notas")
 
-        archivo = st.file_uploader("Archivo de respaldo (Imagen o PDF)", type=["png","jpg","jpeg","pdf"])
+        archivo = st.file_uploader("Archivo de respaldo", type=["png","jpg","jpeg","pdf"])
         guardar = st.form_submit_button("💾 Guardar")
 
         if guardar:
             rate_plans = [r.strip() for r in st.session_state.rate_raw.replace(",", "\n").split("\n") if r.strip()]
-
             if not rate_plans or not st.session_state.hoteles or not st.session_state.markets:
                 st.error("Rate Plan, Market y Propiedad son obligatorios.")
             else:
@@ -284,7 +273,6 @@ with tab_registro:
                         })
 
                 pd.concat([df, pd.DataFrame(rows)], ignore_index=True).to_csv(CSV_FILE, index=False)
-
                 st.success("✅ Promoción guardada correctamente")
                 st.session_state.reset_form = True
                 time.sleep(1)

@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import io
+import time
 from datetime import date, datetime
 
 # ==============================
@@ -26,7 +27,7 @@ if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
 # ==============================
-# CSS COMPACTO (SIN CORTE)
+# CSS COMPACTO
 # ==============================
 st.markdown("""
 <style>
@@ -39,7 +40,7 @@ div[data-testid="stVerticalBlock"] { gap: 0.4rem; }
 """, unsafe_allow_html=True)
 
 # ==============================
-# ✅ SPACER REAL (CLAVE)
+# SPACER REAL (evita corte del header)
 # ==============================
 st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
 
@@ -100,7 +101,7 @@ def exportar_excel(df):
     return buffer
 
 # ==============================
-# HEADER (YA NO SE CORTA)
+# HEADER (sin cortes)
 # ==============================
 col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
 
@@ -226,7 +227,9 @@ with tab_registro:
                 df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
                 df.to_csv(CSV_FILE, index=False)
 
-                st.success("✅ Promoción guardada correctamente")
+                # ✅ CONFIRMACIÓN + PAUSA (ANTI DOBLE CLICK)
+                st.success("✅ Promoción guardada correctamente. Limpiando formulario…")
+                time.sleep(1.2)
                 st.rerun()
 
 # ==============================
@@ -241,4 +244,3 @@ with tab_admin:
                 os.remove(CSV_FILE)
             st.warning("Base de datos eliminada")
             st.rerun()
-

@@ -96,32 +96,22 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER (ALINEADO Y LIMPIO)
+# HEADER (ALINEADO, SIN CORTES, PROFESIONAL)
 # =====================================================
-col_logo, col_title, col_spacer = st.columns([1, 4, 1])
+col_logo, col_title = st.columns([1, 5])
 
 with col_logo:
-    st.markdown(
-        "<div style='display:flex; align-items:center; height:100%;'>",
-        unsafe_allow_html=True
-    )
-    st.image("HIC.png", width=100)
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.image("HIC.png", width=90)
 
 with col_title:
+    st.markdown("###")
+    st.markdown("## Administrador de Promociones")
     st.markdown(
-        """
-        <div style='text-align:center;'>
-            <h1 style='margin-bottom:4px;'>Administrador de Promociones</h1>
-            <span style='color:#6b6b6b; font-size:14px;'>
-                Playa Mujeres – DREPM & SECPM
-            </span>
-        </div>
-        """,
+        "<span style='color:#6b6b6b; font-size:14px;'>Playa Mujeres – DREPM & SECPM</span>",
         unsafe_allow_html=True
     )
 
-st.markdown("<hr style='margin-top:18px; margin-bottom:12px;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top:10px; margin-bottom:12px;'>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

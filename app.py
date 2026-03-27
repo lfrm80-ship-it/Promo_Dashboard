@@ -95,38 +95,7 @@ def exportar_excel(df):
     buffer.seek(0)
     return buffer
 
-# =====================================================
-# HEADER FINAL – BLOQUE SIMÉTRICO Y BALANCEADO
-# =====================================================
 
-st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
-
-# Tres columnas iguales para centrar el bloque completo
-col_left, col_center, col_right = st.columns([1, 1.6, 1])
-
-with col_center:
-    # Bloque interno logo + texto
-    logo_col, text_col = st.columns([1, 3])
-
-    with logo_col:
-        st.image("HIC.png", width=90)
-
-    with text_col:
-        st.markdown(
-            """
-            <div style="padding-top:8px;">
-                <div style="font-size:28px; font-weight:600;">
-                    Administrador de Promociones
-                </div>
-                <div style="font-size:14px; color:#6b6b6b;">
-                    Playa Mujeres – DREPM &amp; SECPM
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-st.markdown("<hr style='margin-top:16px; margin-bottom:14px;'>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

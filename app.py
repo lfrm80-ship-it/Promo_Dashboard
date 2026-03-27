@@ -14,89 +14,75 @@ st.set_page_config(
 PROMOS_FILE = "promociones_data.csv"
 PRODUCCION_FILE = "promociones_produccion.csv"
 
-MARKETS = ["US", "LATAM", "EU", "UK", "CA"]
-PROPERTIES = [
-    "DREPM - Dreams Playa Mujeres",
-    "SECPM - Secrets Playa Mujeres"
-]
-
 # =============================
 # UTILIDADES
 # =============================
-
-def normalizar_market(x):
-    if isinstance(x, list):
-        return x
-    if isinstance(x, str):
-        return [m.strip() for m in x.split("|") if m.strip()]
-    return []
-
-# =============================
-# CARGA DE DATA
-# =============================
-
-def cargar_promos():
-    if os.path.exists(PROMOS_FILE):
-        df = pd.read_csv(PROMOS_FILE)
-
-        # Convertir fechas
-        for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
-            if c in df.columns:
-                df[c] = pd.to_datetime(df[c]).dt.date
-
-        # ✅ Asegurar columna Market
-        if "Market" not in df.columns:
-            df["Market"] = [[] for _ in range(len(df))]
-        else:
-            df["Market"] = df["Market"].apply(normalizar_market)
-
-        return df
-
+def safe_read_csv(path):
+    if os.path.exists(path):
+        return pd.read_csv(path)
     return pd.DataFrame()
 
 # =============================
-# HEADER EJECUTIVO (SIMPLE Y ESTABLE)
+# CARGAR PROMOS
 # =============================
+def cargar_promos():
+    df = safe_read_csv(PROMOS_FILE)
+    if df.empty:
+        return df
 
+    # Fechas
+    for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
+        if c in df.columns:
+            df[c] = pd.to_datetime(df[c]).dt.date
+
+    # Market (si existe)
+    if "Market" not in df.columns:
+        df["Market"] = ""
+
+    # Notas
+    if "Notas" not in df.columns:
+        df["Notas"] = ""
+
+    return df
+
+# =============================
+# PRODUCCIÓN
+# =============================
+def cargar_produccion():
+    df = safe_read_csv(PRODUCCION_FILE)
+    if df.empty:
+        return pd.DataFrame(columns=[
+            "Promo","Hotel","Rate_Plan",
+            "Room_Nights","Revenue","Comentario"
+        ])
+    return df
+
+def guardar_produccion(df):
+    df.to_csv(PRODUCCION_FILE, index=False)
+
+def obtener_produccion(df, promo, hotel, rate):
+    f = df[
+        (df["Promo"] == promo) &
+        (df["Hotel"] == hotel) &
+        (df["Rate_Plan"] == rate)
+    ]
+    return f.iloc[0] if not f.empty else None
+
+# =============================
+# HEADER (ESTABLE)
+# =============================
 st.markdown(
     "<h1 style='text-align:center;'>Administrador de Promociones</h1>",
     unsafe_allow_html=True
 )
 st.markdown(
-    "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
+    "<div style='text-align:center;color:#6b6b6b;font-size:14px;'>"
     "Playa Mujeres – DREPM &amp; SECPM"
     "</div>",
     unsafe_allow_html=True
 )
 st.divider()
-# =============================
-# PRODUCCIÓN - FUNCIONES
-# =============================
 
-PRODUCCION_FILE = "promociones_produccion.csv"
-
-def cargar_produccion():
-    if os.path.exists(PRODUCCION_FILE):
-        return pd.read_csv(PRODUCCION_FILE)
-    return pd.DataFrame(columns=[
-        "Promo",
-        "Hotel",
-        "Rate_Plan",
-        "Room_Nights",
-        "Revenue",
-        "Comentario"
-    ])
-
-def guardar_produccion(df_prod):
-    df_prod.to_csv(PRODUCCION_FILE, index=False)
-
-def obtener_produccion(df_prod, promo, hotel, rate_plan):
-    fila = df_prod[
-        (df_prod["Promo"] == promo) &
-        (df_prod["Hotel"] == hotel) &
-        (df_prod["Rate_Plan"] == rate_plan)
-    ]
-    return fila.iloc[0] if not fila.empty else None
 # =============================
 # TABS
 # =============================
@@ -114,15 +100,10 @@ with tab_promos:
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
-        # -------------------------
-        # BUSCADOR
-        # -------------------------
-        search = st.text_input(
-            "🔍 Buscar promoción",
-            placeholder="Nombre, Rate Plan, Market, Hotel, Notas…"
-        )
-
+        # Buscador
+        search = st.text_input("🔍 Buscar promoción")
         df_f = df.copy()
+
         if search:
             mask = (
                 df_f["Promo"].astype(str).str.contains(search, case=False, na=False)
@@ -132,12 +113,10 @@ with tab_promos:
             )
             df_f = df_f[mask]
 
-        # -------------------------
-        # TABLA OPERATIVA
-        # -------------------------
+        # Tabla
         vista = df_f.copy()
-        vista["Market"] = vista["Market"].apply(lambda x: ", ".join(x))
-        vista["Descuento"] = vista["Descuento"].astype(int).astype(str) + " %"
+        if "Descuento" in vista.columns:
+            vista["Descuento"] = vista["Descuento"].astype(str) + " %"
         st.dataframe(vista, use_container_width=True)
 
         st.subheader("Estado y Vigencia de Promociones")
@@ -148,10 +127,8 @@ with tab_promos:
             horizontal=True
         )
 
-        # -------------------------
-        # LOOP DE PROMOS
-        # -------------------------
         for idx, row in df_f.iterrows():
+
             tw_ini = row["TW_Inicio"]
             tw_fin = row["TW_Fin"]
 
@@ -165,14 +142,9 @@ with tab_promos:
             if filtro != "Todas" and estado != filtro:
                 continue
 
-            with st.expander(
-                f"{estado} | {row['Promo']} | {row['Hotel']} | {row['Rate_Plan']}"
-            ):
+            with st.expander(f"{estado} | {row['Promo']} | {row['Hotel']} | {row['Rate_Plan']}"):
                 st.caption(f"Travel Window: {tw_ini} → {tw_fin}")
 
-                # -------------------------
-                # PRODUCCIÓN (FINAL DE CICLO)
-                # -------------------------
                 if hoy > tw_fin:
                     prod = obtener_produccion(
                         df_prod,
@@ -183,23 +155,9 @@ with tab_promos:
 
                     if prod is None:
                         st.markdown("### 📊 Agregar Producción")
-
-                        rn = st.number_input(
-                            "Room Nights",
-                            min_value=0,
-                            step=1,
-                            key=f"rn_{idx}"
-                        )
-                        revenue = st.number_input(
-                            "Revenue",
-                            min_value=0.0,
-                            step=1000.0,
-                            key=f"rev_{idx}"
-                        )
-                        comentario = st.text_area(
-                            "Comentario / Insight",
-                            key=f"com_{idx}"
-                        )
+                        rn = st.number_input("Room Nights", 0, step=1, key=f"rn_{idx}")
+                        revenue = st.number_input("Revenue", 0.0, step=1000.0, key=f"rev_{idx}")
+                        comentario = st.text_area("Comentario / Insight", key=f"com_{idx}")
 
                         if st.button("Guardar Producción", key=f"save_{idx}"):
                             nueva = pd.DataFrame([{
@@ -210,20 +168,17 @@ with tab_promos:
                                 "Revenue": revenue,
                                 "Comentario": comentario
                             }])
-
                             df_prod = pd.concat([df_prod, nueva], ignore_index=True)
                             guardar_produccion(df_prod)
-
-                            st.success("✅ Producción guardada correctamente")
+                            st.success("✅ Producción guardada")
                             st.rerun()
-
                     else:
                         st.success("✅ Producción cargada")
                         st.markdown(
                             f"""
-                            - **Room Nights:** {int(prod["Room_Nights"])}
-                            - **Revenue:** ${prod["Revenue"]:,.0f}
-                            - **Insight:** {prod["Comentario"]}
+                            - **Room Nights:** {int(prod['Room_Nights'])}
+                            - **Revenue:** ${prod['Revenue']:,.0f}
+                            - **Insight:** {prod['Comentario']}
                             """
                         )
 
@@ -231,4 +186,37 @@ with tab_promos:
 # TAB REGISTRAR / MODIFICAR
 # =============================
 with tab_registro:
-    st.info("Formulario de registro sin cambios (usa tu versión existente).")
+
+    st.subheader("Registrar nueva promoción")
+
+    promo = st.text_input("Nombre de la Promoción")
+    hotel = st.text_input("Hotel")
+    rate_plan = st.text_input("Rate Plan")
+    descuento = st.number_input("Descuento (%)", 0, 100, step=1)
+
+    bw_ini = st.date_input("Booking Window Inicio")
+    bw_fin = st.date_input("Booking Window Fin")
+    tw_ini = st.date_input("Travel Window Inicio")
+    tw_fin = st.date_input("Travel Window Fin")
+
+    notas = st.text_area("Notas")
+
+    if st.button("Guardar Promoción"):
+        nueva = pd.DataFrame([{
+            "Hotel": hotel,
+            "Promo": promo,
+            "Rate_Plan": rate_plan,
+            "Descuento": descuento,
+            "BW_Inicio": bw_ini,
+            "BW_Fin": bw_fin,
+            "TW_Inicio": tw_ini,
+            "TW_Fin": tw_fin,
+            "Notas": notas
+        }])
+
+        df_existente = cargar_promos()
+        df_final = pd.concat([df_existente, nueva], ignore_index=True)
+        df_final.to_csv(PROMOS_FILE, index=False)
+
+        st.success("✅ Promoción guardada correctamente")
+``

@@ -145,7 +145,6 @@ with st.container():
 
     # Línea divisoria estable
     st.divider()
-``
 # =====================================================
 # TABS (ADMIN CONDICIONAL)
 # =====================================================

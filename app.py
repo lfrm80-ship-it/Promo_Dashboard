@@ -115,24 +115,38 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL – ESTABLE (SIN HTML QUE ROMPA STREAMLIT)
+# HEADER FINAL DEFINITIVO (CENTRADO ABSOLUTO Y ESTABLE)
 # =====================================================
 
-# Espacio superior controlado por Streamlit
-st.markdown("")
+# Espacio superior controlado
+st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
 
-col_left, col_center, col_right = st.columns([1.5, 3, 1.5])
-
-with col_left:
-    st.image("HIC.png", width=90)
+# Tres columnas IGUALES → eje central real
+col_left, col_center, col_right = st.columns([1, 1, 1])
 
 with col_center:
-    st.header("Administrador de Promociones")
-    st.caption("Playa Mujeres – DREPM & SECPM")
+    # Logo centrado
+    st.image("HIC.png", width=90)
 
-# Línea divisoria REAL (fuera de columnas)
-st.divider()
+    # Título centrado
+    st.markdown(
+        "<div style='text-align:center; font-size:30px; font-weight:600;'>"
+        "Administrador de Promociones"
+        "</div>",
+        unsafe_allow_html=True
+    )
 
+    # Subtítulo centrado
+    st.markdown(
+        "<div style='text-align:center; font-size:14px; color:#6b6b6b;'>"
+        "Playa Mujeres – DREPM & SECPM"
+        "</div>",
+        unsafe_allow_html=True
+    )
+
+# Línea divisoria (fuera del header)
+st.markdown("<div style='border-top:1px solid #d0d0d0; margin:16px 0 12px 0;'></div>",
+            unsafe_allow_html=True)
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

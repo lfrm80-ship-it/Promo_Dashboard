@@ -115,34 +115,34 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL – AJUSTE VERTICAL FINO (LOGO MÁS ABAJO)
+# HEADER FINAL – LOGO Y TEXTO CENTRADOS IGUAL
 # =====================================================
 
-# Espacio superior general
-st.markdown(" ")
+# Espacio superior
+st.markdown("")
 
-# Tres columnas iguales → eje central real
-col_left, col_center, col_right = st.columns([1, 1, 1])
+# Columna central única → mismo eje visual
+col_left, col_center, col_right = st.columns([1, 2, 1])
 
 with col_center:
-    # ✅ Espaciador DENTRO de la columna (clave)
-    st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
+    # Baja un poco el logo
+    st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
 
-    # Logo ahora sí baja
+    # Logo centrado
     st.image("HIC.png", width=90)
 
     # Título centrado
     st.markdown("## Administrador de Promociones")
 
-    # Subtítulo
+    # Subtítulo centrado
     st.markdown(
         "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
-        "Playa Mujeres – DREPM &amp; SECPM"
+        "Playa Mujeres – DREPM & SECPM"
         "</div>",
         unsafe_allow_html=True
     )
 
-# Línea divisoria real
+# Línea divisoria
 st.divider()
 
 

@@ -132,7 +132,11 @@ with st.container():
     logo_left, logo_center, logo_right = st.columns([1, 1, 1])
 
 with logo_center:
+    # ✅ Espaciador real para bajar el logo
+    st.write("")
+    st.write("")  # ← este es el truco correcto en Streamlit
     st.image("HIC.png", width=65)
+
 
     st.markdown(
         "<h1 style='text-align:center; margin-bottom:4px;'>"

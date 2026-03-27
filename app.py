@@ -5,9 +5,9 @@ import io
 import time
 from datetime import date, datetime
 
-# ==============================
+# =====================================================
 # CONFIGURACIÓN GENERAL
-# ==============================
+# =====================================================
 st.set_page_config(
     page_title="Administrador de Promociones",
     layout="wide"
@@ -26,9 +26,9 @@ PROPERTIES = [
 if not os.path.exists(MEDIA_DIR):
     os.makedirs(MEDIA_DIR)
 
-# ==============================
+# =====================================================
 # CSS COMPACTO
-# ==============================
+# =====================================================
 st.markdown("""
 <style>
 body { background-color: #f7f8fa; }
@@ -39,14 +39,14 @@ div[data-testid="stVerticalBlock"] { gap: 0.4rem; }
 </style>
 """, unsafe_allow_html=True)
 
-# ==============================
-# SPACER REAL (evita cortes)
-# ==============================
+# =====================================================
+# SPACER REAL (evita cortes del header)
+# =====================================================
 st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
 
-# ==============================
-# ESTADO DEL FORMULARIO (INIT)
-# ==============================
+# =====================================================
+# SESSION STATE – INIT
+# =====================================================
 st.session_state.setdefault("promo", "")
 st.session_state.setdefault("descuento", 0)
 st.session_state.setdefault("bw", (date.today(), date.today()))
@@ -55,26 +55,26 @@ st.session_state.setdefault("rate_raw", "")
 st.session_state.setdefault("hoteles", [])
 st.session_state.setdefault("markets", [])
 st.session_state.setdefault("notas", "")
+st.session_state.setdefault("reset_form", False)
 
-# ==============================
-# FUNCIONES
-# ==============================
+# =====================================================
+# FUNCIÓN PARA CARGAR DATOS
+# =====================================================
 def cargar_datos():
     if os.path.exists(CSV_FILE):
         df = pd.read_csv(CSV_FILE)
 
-        for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
+        for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
             if c in df.columns:
                 df[c] = pd.to_datetime(df[c]).dt.date
 
-        for col in ["Market","Archivo_Path"]:
+        for col in ["Market", "Archivo_Path"]:
             if col not in df.columns:
                 df[col] = ""
 
         df["Market"] = df["Market"].apply(
             lambda x: x.split("|") if isinstance(x, str) and x else []
         )
-
         return df
 
     return pd.DataFrame(columns=[
@@ -83,6 +83,9 @@ def cargar_datos():
         "Notas","Archivo_Path"
     ])
 
+# =====================================================
+# FUNCIÓN EXCEL
+# =====================================================
 def exportar_excel(df):
     buffer = io.BytesIO()
     fecha = datetime.now().strftime("%Y-%m-%d")
@@ -111,33 +114,30 @@ def exportar_excel(df):
     buffer.seek(0)
     return buffer
 
-# ==============================
+# =====================================================
 # HEADER
-# ==============================
+# =====================================================
 col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
-
 with col_logo:
     st.image("HIC.png", width=80)
-
 with col_title:
     st.markdown("## Administrador de Promociones")
     st.markdown(
         "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
         unsafe_allow_html=True
     )
-
 st.markdown("<hr style='margin-top:6px; margin-bottom:8px;'>", unsafe_allow_html=True)
 
-# ==============================
+# =====================================================
 # TABS
-# ==============================
+# =====================================================
 tab_promos, tab_registro, tab_admin = st.tabs(
-    ["Promociones", "Registrar / Modificar", "Administración"]
+    ["Promociones","Registrar / Modificar","Administración"]
 )
 
-# ==============================
+# =====================================================
 # PROMOCIONES
-# ==============================
+# =====================================================
 with tab_promos:
     df = cargar_datos()
     if df.empty:
@@ -153,14 +153,25 @@ with tab_promos:
             file_name="Promociones_Playa_Mujeres.xlsx"
         )
 
-# ==============================
+# =====================================================
 # REGISTRAR / MODIFICAR
-# ==============================
+# =====================================================
 with tab_registro:
     df = cargar_datos()
 
-    with st.form("form_registro"):
+    # ✅ RESET SEGURO ANTES DE CREAR WIDGETS
+    if st.session_state.reset_form:
+        st.session_state.promo = ""
+        st.session_state.descuento = 0
+        st.session_state.bw = (date.today(), date.today())
+        st.session_state.tw = (date.today(), date.today())
+        st.session_state.rate_raw = ""
+        st.session_state.hoteles = []
+        st.session_state.markets = []
+        st.session_state.notas = ""
+        st.session_state.reset_form = False
 
+    with st.form("form_registro"):
         col_promo, col_desc = st.columns([3,1])
         col_promo.text_input("Nombre de la promoción", key="promo")
         col_desc.number_input("Descuento (%)", 0, 100, 5, key="descuento")
@@ -186,25 +197,7 @@ with tab_registro:
             key="notas"
         )
 
-        archivo = st.file_uploader(
-            "Archivo de respaldo (PDF / Imagen)",
-            type=["pdf","png","jpg","jpeg"]
-        )
-
-        col_g, col_l = st.columns(2)
-        guardar = col_g.form_submit_button("💾 Guardar")
-        limpiar = col_l.form_submit_button("🧹 Limpiar")
-
-        if limpiar:
-            st.session_state.promo = ""
-            st.session_state.descuento = 0
-            st.session_state.bw = (date.today(), date.today())
-            st.session_state.tw = (date.today(), date.today())
-            st.session_state.rate_raw = ""
-            st.session_state.hoteles = []
-            st.session_state.markets = []
-            st.session_state.notas = ""
-            st.rerun()
+        guardar = st.form_submit_button("💾 Guardar")
 
         if guardar:
             rate_plans = [
@@ -236,23 +229,13 @@ with tab_registro:
                 pd.concat([df, pd.DataFrame(rows)], ignore_index=True).to_csv(CSV_FILE, index=False)
 
                 st.success("✅ Promoción guardada correctamente. Limpiando formulario…")
+                st.session_state.reset_form = True
                 time.sleep(1.2)
-
-                # ✅ LIMPIEZA SEGURA
-                st.session_state.promo = ""
-                st.session_state.descuento = 0
-                st.session_state.bw = (date.today(), date.today())
-                st.session_state.tw = (date.today(), date.today())
-                st.session_state.rate_raw = ""
-                st.session_state.hoteles = []
-                st.session_state.markets = []
-                st.session_state.notas = ""
-
                 st.rerun()
 
-# ==============================
+# =====================================================
 # ADMINISTRACIÓN
-# ==============================
+# =====================================================
 with tab_admin:
     clave = st.text_input("Clave Administrador", type="password")
     if clave == PASSWORD_MAESTRA:
@@ -260,5 +243,5 @@ with tab_admin:
         if confirmar and st.button("🗑️ Borrar toda la base"):
             if os.path.exists(CSV_FILE):
                 os.remove(CSV_FILE)
-            st.warning("Base eliminada")
+            st.warning("Base de datos eliminada")
             st.rerun()

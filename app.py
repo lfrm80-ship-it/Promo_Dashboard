@@ -23,7 +23,7 @@ def safe_read_csv(path):
     return pd.DataFrame()
 
 # =============================
-# CARGAR PROMOS
+# CARGA DE PROMOS
 # =============================
 def cargar_promos():
     df = safe_read_csv(PROMOS_FILE)
@@ -31,15 +31,13 @@ def cargar_promos():
         return df
 
     # Fechas
-    for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
+    for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
         if c in df.columns:
             df[c] = pd.to_datetime(df[c]).dt.date
 
-    # Market (si existe)
+    # Columnas opcionales seguras
     if "Market" not in df.columns:
         df["Market"] = ""
-
-    # Notas
     if "Notas" not in df.columns:
         df["Notas"] = ""
 
@@ -69,7 +67,15 @@ def obtener_produccion(df, promo, hotel, rate):
     return f.iloc[0] if not f.empty else None
 
 # =============================
-# HEADER (ESTABLE)
+# EXPORTAR EXCEL
+# =============================
+def exportar_excel(df):
+    export_df = df.copy()
+    export_df.to_excel("promociones_export.xlsx", index=False)
+    return "promociones_export.xlsx"
+
+# =============================
+# HEADER
 # =============================
 st.markdown(
     "<h1 style='text-align:center;'>Administrador de Promociones</h1>",
@@ -86,7 +92,9 @@ st.divider()
 # =============================
 # TABS
 # =============================
-tab_promos, tab_registro = st.tabs(["Promociones", "Registrar / Modificar"])
+tab_promos, tab_registro, tab_admin = st.tabs(
+    ["Promociones", "Registrar / Modificar", "Administración"]
+)
 
 # =============================
 # TAB PROMOCIONES
@@ -142,8 +150,16 @@ with tab_promos:
             if filtro != "Todas" and estado != filtro:
                 continue
 
-            with st.expander(f"{estado} | {row['Promo']} | {row['Hotel']} | {row['Rate_Plan']}"):
-                st.caption(f"Travel Window: {tw_ini} → {tw_fin}")
+            header = (
+                f"{estado} | {row['Promo']} | {row['Hotel']} | "
+                f"{row['Rate_Plan']} ({row['Descuento']}%)"
+            )
+
+            with st.expander(header):
+                st.caption(
+                    f"BW: {row['BW_Inicio']} → {row['BW_Fin']}  |  "
+                    f"TW: {row['TW_Inicio']} → {row['TW_Fin']}"
+                )
 
                 if hoy > tw_fin:
                     prod = obtener_produccion(
@@ -182,6 +198,13 @@ with tab_promos:
                             """
                         )
 
+        # Botón Excel
+        st.download_button(
+            "📥 Descargar Excel Operativo",
+            data=open(exportar_excel(df), "rb"),
+            file_name="Promociones_Playa_Mujeres.xlsx"
+        )
+
 # =============================
 # TAB REGISTRAR / MODIFICAR
 # =============================
@@ -217,6 +240,16 @@ with tab_registro:
         df_existente = cargar_promos()
         df_final = pd.concat([df_existente, nueva], ignore_index=True)
         df_final.to_csv(PROMOS_FILE, index=False)
-
         st.success("✅ Promoción guardada correctamente")
 
+# =============================
+# TAB ADMINISTRACIÓN
+# =============================
+with tab_admin:
+    st.warning("⚠️ Zona Administrativa")
+    if st.button("🗑️ Borrar todas las promociones"):
+        if os.path.exists(PROMOS_FILE):
+            os.remove(PROMOS_FILE)
+        if os.path.exists(PRODUCCION_FILE):
+            os.remove(PRODUCCION_FILE)
+        st.success("Base eliminada. Recarga la app.")

@@ -115,26 +115,17 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL – ESTABLE, PROFESIONAL, SIN ERRORES
+# HEADER FINAL – ESTABLE, SIN MOVIMIENTOS
 # =====================================================
 
-# Espacio superior para que Streamlit no recorte el texto
-st.markdown("")
-
-# Tres columnas iguales → eje central estable
-col_left, col_center, col_right = st.columns([1, 1, 1])
+col_left, col_center, col_right = st.columns([1, 2, 1])
 
 with col_center:
-    # Espaciador interno para bajar ligeramente el logo
-    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+    st.image("HIC.png", width=65, output_format="PNG")
+    st.markdown("<div style='margin-top:-8px;'></div>", unsafe_allow_html=True)
 
-    # Logo (tamaño reducido y profesional)
-    st.image("HIC.png", width=80, use_container_width=False)
-
-    # Título (Markdown nativo — NO se corta)
     st.markdown("## Administrador de Promociones")
 
-    # Subtítulo centrado, discreto
     st.markdown(
         "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
         "Playa Mujeres – DREPM &amp; SECPM"
@@ -142,7 +133,6 @@ with col_center:
         unsafe_allow_html=True
     )
 
-# Línea divisoria nativa (siempre visible)
 st.divider()
 
 # =====================================================

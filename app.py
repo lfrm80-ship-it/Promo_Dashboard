@@ -96,22 +96,19 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER (ALINEADO, SIN CORTES, PROFESIONAL)
+# HEADER (CENTRADO COMO BLOQUE ÚNICO)
 # =====================================================
-col_logo, col_title = st.columns([1, 5])
+col_left, col_center, col_right = st.columns([1, 2, 1])
 
-with col_logo:
-    st.image("HIC.png", width=90)
-
-with col_title:
-    st.markdown("###")
+with col_center:
+    st.image("HIC.png", width=110)
     st.markdown("## Administrador de Promociones")
     st.markdown(
         "<span style='color:#6b6b6b; font-size:14px;'>Playa Mujeres – DREPM & SECPM</span>",
         unsafe_allow_html=True
-    )
+        )
 
-st.markdown("<hr style='margin-top:10px; margin-bottom:12px;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top:12px; margin-bottom:14px;'>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

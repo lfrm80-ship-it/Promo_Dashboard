@@ -253,3 +253,15 @@ with tab_admin:
         if os.path.exists(PRODUCCION_FILE):
             os.remove(PRODUCCION_FILE)
         st.success("Base eliminada. Recarga la app.")
+
+# =============================
+# ADMINISTRACIÓN (DISCRETA)
+# =============================
+with st.expander("⚙️ Administración"):
+    st.warning("Zona administrativa")
+    if st.button("🗑️ Borrar todas las promociones"):
+        if os.path.exists(PROMOS_FILE):
+            os.remove(PROMOS_FILE)
+        if os.path.exists(PRODUCCION_FILE):
+            os.remove(PRODUCCION_FILE)
+        st.success("Base eliminada. Recarga la app.")

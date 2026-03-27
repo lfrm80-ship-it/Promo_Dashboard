@@ -1,0 +1,14 @@
+def cargar_produccion():
+    if os.path.exists(PRODUCCION_FILE):
+        return pd.read_csv(PRODUCCION_FILE)
+    return pd.DataFrame(columns=[
+        "Promo",
+        "Hotel",
+        "Rate_Plan",
+        "Room_Nights",
+        "Revenue",
+        "Comentario"
+    ])
+
+def guardar_produccion(df_prod):
+    df_prod.to_csv(PRODUCCION_FILE, index=False)

@@ -188,6 +188,23 @@ with tab_promos:
         )
 
 # =====================================================
+# ACCESO ADMINISTRADOR (SOLO EN PROMOCIONES – AL FINAL)
+# =====================================================
+if not st.session_state.is_admin:
+    st.markdown("---")
+    with st.expander("🔒 Acceso administrador"):
+        clave = st.text_input(
+            "Clave Administrador",
+            type="password",
+            key="admin_password"
+        )
+
+        if clave == PASSWORD_MAESTRA:
+            st.session_state.is_admin = True
+            st.success("Acceso administrador habilitado")
+            st.rerun()
+
+# =====================================================
 # REGISTRAR / MODIFICAR
 # =====================================================
 with tab_registro:

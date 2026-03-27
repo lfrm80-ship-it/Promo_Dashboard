@@ -129,7 +129,7 @@ with col_center:
     st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
 
     # Logo (tamaño reducido y profesional)
-    st.image("HIC.png", width=65)
+    st.image("HIC.png", width=80, use_container_width=False)
 
     # Título (Markdown nativo — NO se corta)
     st.markdown("## Administrador de Promociones")

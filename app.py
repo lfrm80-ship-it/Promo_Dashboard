@@ -36,9 +36,7 @@ div[data-testid="stVerticalBlock"] { gap: 0.4rem; }
 </style>
 """, unsafe_allow_html=True)
 
-# ==============================
-# SPACER REAL
-# ==============================
+# Spacer real (evita cortes del header)
 st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
 
 # ==============================
@@ -90,7 +88,7 @@ def cargar_datos():
     ])
 
 # ==============================
-# EXPORTAR EXCEL
+# EXCEL
 # ==============================
 def exportar_excel(df):
     buffer = io.BytesIO()
@@ -104,9 +102,9 @@ def exportar_excel(df):
         ws.write("F2", fecha)
 
         df_x = df.copy()
-        df_x["Market"] = df_x["Market"].apply(lambda x: ", ".join(x))
+        df_x["Market"] = df_x["Market"].apply(lambda x:", ".join(x))
         df_x["Archivo_Respaldo"] = df_x["Archivo_Path"].apply(
-            lambda x: os.path.basename(x) if isinstance(x, str) and x else ""
+            lambda x: os.path.basename(x) if isinstance(x,str) and x else ""
         )
         df_x.drop(columns=["Archivo_Path"], inplace=True)
 
@@ -136,7 +134,7 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 )
 
 # ==============================
-# PROMOCIONES (CON VISTA DE IMÁGEN)
+# PROMOCIONES — VISTA EJECUTIVA ✅
 # ==============================
 with tab_promos:
     df = cargar_datos()
@@ -144,19 +142,39 @@ with tab_promos:
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
+        # Tabla normal
         view = df.copy()
-        view["Market"] = view["Market"].apply(lambda x: ", ".join(x))
+        view["Market"] = view["Market"].apply(lambda x:", ".join(x))
         st.dataframe(view, use_container_width=True)
 
-        st.markdown("### Vista previa de archivos")
+        st.subheader("Estado y Vigencia de Promociones")
+
+        hoy = date.today()
 
         for _, row in df.iterrows():
-            path = row["Archivo_Path"]
+            tw_ini = row["TW_Inicio"]
+            tw_fin = row["TW_Fin"]
 
-            if isinstance(path, str) and path:
-                if path.lower().endswith((".png", ".jpg", ".jpeg")) and os.path.exists(path):
-                    with st.expander(f"📸 {row['Promo']} | {row['Hotel']} | {row['Rate_Plan']}"):
-                        st.image(path, width=400)
+            if hoy < tw_ini:
+                estado = "🟡 Por iniciar"
+                progreso = 0
+            elif hoy > tw_fin:
+                estado = "🔴 Expirada"
+                progreso = 100
+            else:
+                estado = "🟢 Activa"
+                total = (tw_fin - tw_ini).days or 1
+                trans = (hoy - tw_ini).days
+                progreso = int(max(min(trans / total * 100, 100), 0))
+
+            with st.expander(f"{estado} | {row['Promo']} | {row['Hotel']} | {row['Rate_Plan']}"):
+                st.progress(progreso)
+                st.caption(f"Travel Window: {tw_ini} → {tw_fin} ({progreso} %)")
+
+                # Vista previa de imagen si existe
+                path = row["Archivo_Path"]
+                if isinstance(path, str) and path.lower().endswith((".png",".jpg",".jpeg")) and os.path.exists(path):
+                    st.image(path, width=400)
 
         st.download_button(
             "Descargar Excel",
@@ -203,11 +221,7 @@ with tab_registro:
 
         st.text_area("Notas / Restricciones", height=80, key="notas")
 
-        archivo = st.file_uploader(
-            "Archivo de respaldo (Imagen o PDF)",
-            type=["png","jpg","jpeg","pdf"]
-        )
-
+        archivo = st.file_uploader("Archivo de respaldo (Imagen o PDF)", type=["png","jpg","jpeg","pdf"])
         guardar = st.form_submit_button("💾 Guardar")
 
         if guardar:

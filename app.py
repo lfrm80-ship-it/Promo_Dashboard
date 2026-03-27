@@ -136,6 +136,14 @@ with col_center:
 
     # Subtítulo
     st.markdown(
+        "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
+        "Playa Mujeres – DREPM &amp; SECPM"
+        "</div>",
+        unsafe_allow_html=True
+    )
+
+# Línea divisoria real
+st.divider()
 
 
 # =====================================================

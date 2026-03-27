@@ -134,7 +134,7 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 )
 
 # ==============================
-# PROMOCIONES — VISTA EJECUTIVA ✅
+# PROMOCIONES
 # ==============================
 with tab_promos:
     df = cargar_datos()
@@ -142,62 +142,27 @@ with tab_promos:
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
-        # Tabla operativa
-        view = df.copy()
+        # ---- Campo de búsqueda ----
+        search = st.text_input(
+            "🔍 Buscar promoción (Nombre o Notas)",
+            placeholder="Ej. Spring, Blackout, US, Upgrade..."
+        )
+
+        # ---- Aplicar filtro si hay texto ----
+        df_filtrado = df.copy()
+
+        if search:
+            mask = (
+                df_filtrado["Promo"].astype(str).str.contains(search, case=False, na=False)
+                | df_filtrado["Notas"].astype(str).str.contains(search, case=False, na=False)
+            )
+            df_filtrado = df_filtrado[mask]
+
+        # ---- Tabla operativa ----
+        view = df_filtrado.copy()
         view["Market"] = view["Market"].apply(lambda x: ", ".join(x))
         st.dataframe(view, use_container_width=True)
 
-        st.subheader("Estado y Vigencia de Promociones")
-
-        # 🔘 FILTRO EJECUTIVO
-        filtro = st.radio(
-            "Mostrar:",
-            ["Todas", "🟢 Activas", "🟡 Por iniciar", "🔴 Expiradas"],
-            horizontal=True
-        )
-
-        hoy = date.today()
-
-        for _, row in df.iterrows():
-            tw_ini = row["TW_Inicio"]
-            tw_fin = row["TW_Fin"]
-
-            # Estado
-            if hoy < tw_ini:
-                estado = "🟡 Por iniciar"
-                progreso = 0
-            elif hoy > tw_fin:
-                estado = "🔴 Expirada"
-                progreso = 100
-            else:
-                estado = "🟢 Activa"
-                total = (tw_fin - tw_ini).days or 1
-                trans = (hoy - tw_ini).days
-                progreso = int(max(min(trans / total * 100, 100), 0))
-
-            # ✅ Aplicar filtro
-            if filtro != "Todas" and estado != filtro:
-                continue
-
-            # Vista ejecutiva
-            with st.expander(f"{estado} | {row['Promo']} | {row['Hotel']} | {row['Rate_Plan']}"):
-                st.progress(progreso)
-                st.caption(f"Travel Window: {tw_ini} → {tw_fin} ({progreso} %)")
-
-                # Vista previa de imagen
-                path = row["Archivo_Path"]
-                if (
-                    isinstance(path, str)
-                    and path.lower().endswith((".png", ".jpg", ".jpeg"))
-                    and os.path.exists(path)
-                ):
-                    st.image(path, width=400)
-
-        st.download_button(
-            "Descargar Excel",
-            exportar_excel(df),
-            file_name="Promociones_Playa_Mujeres.xlsx"
-        )
 # ==============================
 # REGISTRAR / MODIFICAR
 # ==============================

@@ -125,8 +125,14 @@ st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
 col_left, col_center, col_right = st.columns([1, 1, 1])
 
 with col_center:
-    st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
-    st.image("HIC.png", width=90)
+    st.markdown(
+        """
+        <div style="margin-top:12px;">
+            <img src="HIC.png" width="90">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     # Título centrado
     st.markdown(

@@ -118,24 +118,28 @@ def exportar_excel(df):
 # HEADER DEFINITIVO — LOGO + TEXTO CENTRADOS COMO BLOQUE
 # =====================================================
 
-import base64
-
-def logo_base64(path):
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-logo = logo_base64("HIC.png")
-
 st.markdown(
     f"""
     <div style="width:100%; display:flex; justify-content:center; margin-top:24px;">
         <div style="display:flex; align-items:center; gap:18px;">
-            <img src="data:image/png;base64,{logo}" style="width:55px;" />
+            <img src="data:image/png;base64,{logo}" style="width:65px;"/>
+
             <div style="text-align:left;">
-                <div style="font-size:30px; font-weight:600;">
+                <div style="
+                    font-size:30px;
+                    font-weight:600;
+                    line-height:1.25;
+                    padding-top:4px;
+                ">
                     Administrador de Promociones
                 </div>
-                <div style="font-size:14px; color:#6b6b6b;">
+
+                <div style="
+                    font-size:14px;
+                    color:#6b6b6b;
+                    line-height:1.4;
+                    margin-top:2px;
+                ">
                     Playa Mujeres – DREPM &amp; SECPM
                 </div>
             </div>
@@ -146,8 +150,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-
 # =====================================================
 # TABS (ADMIN CONDICIONAL)
 # =====================================================

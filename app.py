@@ -45,24 +45,16 @@ div[data-testid="stVerticalBlock"] { gap: 0.4rem; }
 st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
 
 # ==============================
-# ESTADO DEL FORMULARIO
+# ESTADO DEL FORMULARIO (INIT)
 # ==============================
-if "promo" not in st.session_state:
-    st.session_state.promo = ""
-if "descuento" not in st.session_state:
-    st.session_state.descuento = 0
-if "bw" not in st.session_state:
-    st.session_state.bw = (date.today(), date.today())
-if "tw" not in st.session_state:
-    st.session_state.tw = (date.today(), date.today())
-if "rate_raw" not in st.session_state:
-    st.session_state.rate_raw = ""
-if "hoteles" not in st.session_state:
-    st.session_state.hoteles = []
-if "markets" not in st.session_state:
-    st.session_state.markets = []
-if "notas" not in st.session_state:
-    st.session_state.notas = ""
+st.session_state.setdefault("promo", "")
+st.session_state.setdefault("descuento", 0)
+st.session_state.setdefault("bw", (date.today(), date.today()))
+st.session_state.setdefault("tw", (date.today(), date.today()))
+st.session_state.setdefault("rate_raw", "")
+st.session_state.setdefault("hoteles", [])
+st.session_state.setdefault("markets", [])
+st.session_state.setdefault("notas", "")
 
 # ==============================
 # FUNCIONES
@@ -75,7 +67,7 @@ def cargar_datos():
             if c in df.columns:
                 df[c] = pd.to_datetime(df[c]).dt.date
 
-        for col in ["Market", "Archivo_Path"]:
+        for col in ["Market","Archivo_Path"]:
             if col not in df.columns:
                 df[col] = ""
 
@@ -106,9 +98,9 @@ def exportar_excel(df):
         ws.write("F2", fecha)
 
         df_x = df.copy()
-        df_x["Market"] = df_x["Market"].apply(lambda x:", ".join(x))
+        df_x["Market"] = df_x["Market"].apply(lambda x: ", ".join(x))
         df_x["Archivo_Respaldo"] = df_x["Archivo_Path"].apply(
-            lambda x: os.path.basename(x) if isinstance(x,str) and x else ""
+            lambda x: os.path.basename(x) if isinstance(x, str) and x else ""
         )
         df_x.drop(columns=["Archivo_Path"], inplace=True)
 
@@ -123,18 +115,24 @@ def exportar_excel(df):
 # HEADER
 # ==============================
 col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
+
 with col_logo:
     st.image("HIC.png", width=80)
+
 with col_title:
     st.markdown("## Administrador de Promociones")
-    st.markdown("<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>", unsafe_allow_html=True)
+    st.markdown(
+        "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
+        unsafe_allow_html=True
+    )
+
 st.markdown("<hr style='margin-top:6px; margin-bottom:8px;'>", unsafe_allow_html=True)
 
 # ==============================
 # TABS
 # ==============================
 tab_promos, tab_registro, tab_admin = st.tabs(
-    ["Promociones","Registrar / Modificar","Administración"]
+    ["Promociones", "Registrar / Modificar", "Administración"]
 )
 
 # ==============================
@@ -146,8 +144,9 @@ with tab_promos:
         st.info("No hay promociones registradas.")
     else:
         view = df.copy()
-        view["Market"] = view["Market"].apply(lambda x:", ".join(x))
+        view["Market"] = view["Market"].apply(lambda x: ", ".join(x))
         st.dataframe(view, use_container_width=True)
+
         st.download_button(
             "Descargar Excel",
             exportar_excel(df),
@@ -184,7 +183,6 @@ with tab_registro:
         st.text_area(
             "Notas / Restricciones",
             height=80,
-            placeholder="Blackouts, restricciones, combinabilidad…",
             key="notas"
         )
 
@@ -193,17 +191,27 @@ with tab_registro:
             type=["pdf","png","jpg","jpeg"]
         )
 
-        col_g, col_l, col_m = st.columns(3)
+        col_g, col_l = st.columns(2)
         guardar = col_g.form_submit_button("💾 Guardar")
         limpiar = col_l.form_submit_button("🧹 Limpiar")
 
         if limpiar:
-            for k in ["promo","descuento","rate_raw","hoteles","markets","notas"]:
-                st.session_state[k] = "" if isinstance(st.session_state[k], str) else []
+            st.session_state.promo = ""
+            st.session_state.descuento = 0
+            st.session_state.bw = (date.today(), date.today())
+            st.session_state.tw = (date.today(), date.today())
+            st.session_state.rate_raw = ""
+            st.session_state.hoteles = []
+            st.session_state.markets = []
+            st.session_state.notas = ""
             st.rerun()
 
         if guardar:
-            rate_plans = [r.strip() for r in st.session_state.rate_raw.replace(",", "\n").split("\n") if r.strip()]
+            rate_plans = [
+                r.strip()
+                for r in st.session_state.rate_raw.replace(",", "\n").split("\n")
+                if r.strip()
+            ]
 
             if not rate_plans or not st.session_state.hoteles or not st.session_state.markets:
                 st.error("Rate Plan, Market y Propiedad son obligatorios.")
@@ -225,16 +233,21 @@ with tab_registro:
                             "Archivo_Path": ""
                         })
 
-                pd.concat([df,pd.DataFrame(rows)], ignore_index=True).to_csv(CSV_FILE, index=False)
-
-                # ✅ Limpiar estado
-                for k in ["promo","descuento","rate_raw","hoteles","markets","notas"]:
-                    st.session_state[k] = "" if isinstance(st.session_state[k], str) else []
-                st.session_state.bw = (date.today(), date.today())
-                st.session_state.tw = (date.today(), date.today())
+                pd.concat([df, pd.DataFrame(rows)], ignore_index=True).to_csv(CSV_FILE, index=False)
 
                 st.success("✅ Promoción guardada correctamente. Limpiando formulario…")
                 time.sleep(1.2)
+
+                # ✅ LIMPIEZA SEGURA
+                st.session_state.promo = ""
+                st.session_state.descuento = 0
+                st.session_state.bw = (date.today(), date.today())
+                st.session_state.tw = (date.today(), date.today())
+                st.session_state.rate_raw = ""
+                st.session_state.hoteles = []
+                st.session_state.markets = []
+                st.session_state.notas = ""
+
                 st.rerun()
 
 # ==============================
@@ -247,5 +260,5 @@ with tab_admin:
         if confirmar and st.button("🗑️ Borrar toda la base"):
             if os.path.exists(CSV_FILE):
                 os.remove(CSV_FILE)
-            st.warning("Base de datos eliminada")
+            st.warning("Base eliminada")
             st.rerun()

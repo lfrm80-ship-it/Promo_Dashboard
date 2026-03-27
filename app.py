@@ -96,31 +96,26 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER – AJUSTE FINAL (≈ 2 cm A LA DERECHA)
+# HEADER FINAL – BLOQUE SIMÉTRICO Y BALANCEADO
 # =====================================================
 
-st.markdown("<div style='height:26px;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
 
-# Contenedor central
-col_left, col_center, col_right = st.columns([1.8, 6, 1])
+# Tres columnas iguales para centrar el bloque completo
+col_left, col_center, col_right = st.columns([1, 1.6, 1])
 
 with col_center:
-    # Desplazamiento óptico del bloque completo (≈ 2 cm)
-    st.markdown(
-        "<div style='padding-left:80px;'>",
-        unsafe_allow_html=True
-    )
+    # Bloque interno logo + texto
+    logo_col, text_col = st.columns([1, 3])
 
-    col_logo, col_text = st.columns([1.4, 4])
-
-    with col_logo:
+    with logo_col:
         st.image("HIC.png", width=90)
 
-    with col_text:
+    with text_col:
         st.markdown(
             """
-            <div style="padding-top:10px;">
-                <div style="font-size:30px; font-weight:600;">
+            <div style="padding-top:8px;">
+                <div style="font-size:28px; font-weight:600;">
                     Administrador de Promociones
                 </div>
                 <div style="font-size:14px; color:#6b6b6b;">
@@ -131,10 +126,8 @@ with col_center:
             unsafe_allow_html=True
         )
 
-    # Cierre del desplazamiento
-    st.markdown("</div>", unsafe_allow_html=True)
-
-st.markdown("<hr style='margin-top:18px; margin-bottom:14px;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top:16px; margin-bottom:14px;'>", unsafe_allow_html=True)
+``
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

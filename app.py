@@ -96,12 +96,15 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL (CENTRADO, IMAGEN SIEMPRE VISIBLE)
+# HEADER FINAL (LOGO A UN COSTADO, TEXTO CENTRADO)
 # =====================================================
-left, center, right = st.columns([1, 2, 1])
+col_logo, col_title, col_spacer = st.columns([1, 4, 1])
 
-with center:
-    st.image("HIC.png", width=120)
+with col_logo:
+    st.markdown("###")  # espacio vertical natural
+    st.image("HIC.png", width=90)
+
+with col_title:
     st.markdown("## Administrador de Promociones")
     st.markdown(
         "<div style='color:#6b6b6b; font-size:14px; text-align:center;'>"
@@ -110,7 +113,8 @@ with center:
         unsafe_allow_html=True
     )
 
-st.markdown("<hr style='margin-top:14px; margin-bottom:16px;'>", unsafe_allow_html=True)
+# Línea divisoria
+st.markdown("<hr style='margin-top:16px; margin-bottom:14px;'>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

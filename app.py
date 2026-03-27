@@ -69,7 +69,35 @@ st.markdown(
     unsafe_allow_html=True
 )
 st.divider()
+# =============================
+# PRODUCCIÓN - FUNCIONES
+# =============================
 
+PRODUCCION_FILE = "promociones_produccion.csv"
+
+def cargar_produccion():
+    if os.path.exists(PRODUCCION_FILE):
+        return pd.read_csv(PRODUCCION_FILE)
+    return pd.DataFrame(columns=[
+        "Promo",
+        "Hotel",
+        "Rate_Plan",
+        "Room_Nights",
+        "Revenue",
+        "Comentario"
+    ])
+
+def guardar_produccion(df_prod):
+    df_prod.to_csv(PRODUCCION_FILE, index=False)
+
+def obtener_produccion(df_prod, promo, hotel, rate_plan):
+    fila = df_prod[
+        (df_prod["Promo"] == promo) &
+        (df_prod["Hotel"] == hotel) &
+        (df_prod["Rate_Plan"] == rate_plan)
+    ]
+    return fila.iloc[0] if not fila.empty else None
+``
 # =============================
 # TABS
 # =============================

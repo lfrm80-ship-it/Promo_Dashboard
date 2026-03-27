@@ -102,16 +102,6 @@ with col_title:
     st.markdown("<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>", unsafe_allow_html=True)
 st.markdown("<hr style='margin-top:6px; margin-bottom:8px;'>", unsafe_allow_html=True)
 
-# =====================================================
-# ADMIN LOGIN (CONDICIONAL)
-# =====================================================
-if not st.session_state.is_admin:
-    with st.expander("🔒 Acceso administrador"):
-        clave = st.text_input("Clave Administrador", type="password")
-        if clave == PASSWORD_MAESTRA:
-            st.session_state.is_admin = True
-            st.success("Acceso administrador habilitado")
-            st.rerun()
 
 # =====================================================
 # TABS CON ADMIN CONDICIONAL
@@ -277,4 +267,12 @@ if st.session_state.is_admin:
             if os.path.exists(CSV_FILE):
                 os.remove(CSV_FILE)
             st.warning("Base de datos eliminada")
+            st.rerun()
+# ADMIN LOGIN (CONDICIONAL)
+if not st.session_state.is_admin:
+    with st.expander("🔒 Acceso administrador"):
+        clave = st.text_input("Clave Administrador", type="password")
+        if clave == PASSWORD_MAESTRA:
+            st.session_state.is_admin = True
+            st.success("Acceso administrador habilitado")
             st.rerun()

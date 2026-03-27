@@ -25,23 +25,15 @@ def safe_read_csv(path):
 # =============================
 # CARGA DE PROMOS
 # =============================
-def cargar_promos():
-    df = safe_read_csv(PROMOS_FILE)
-    if df.empty:
-        return df
 
-    # Fechas
-    for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
-        if c in df.columns:
-            df[c] = pd.to_datetime(df[c]).dt.date
+ate_plan = st.text_input("Rate Plan")
+descuento = st.number_input("Descuento (%)", 0, 100, step=1)
 
-    # Columnas opcionales seguras
-    if "Market" not in df.columns:
-        df["Market"] = ""
-    if "Notas" not in df.columns:
-        df["Notas"] = ""
+bw_ini = st.date_input("Booking Window Inicio")
+bw_fin = st.date_input("Booking Window Fin")
+tw_ini = st.date_input("Travel Window Inicio")
+tw_fin = st.date_input("Travel Window Fin")
 
-    return df
 
 # =============================
 # PRODUCCIÓN

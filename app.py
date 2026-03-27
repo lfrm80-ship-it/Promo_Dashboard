@@ -115,44 +115,41 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL DEFINITIVO (CENTRADO ABSOLUTO Y ESTABLE)
+# HEADER FINAL DEFINITIVO (IMAGEN + TEXTO CENTRADOS)
 # =====================================================
 
-# Espacio superior controlado
-st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+import base64
 
-# Tres columnas IGUALES → eje central real
-col_left, col_center, col_right = st.columns([1, 1, 1])
+def img_to_base64(path):
+    with open(path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
 
-with col_center:
-    st.markdown(
-        """
-        <div style="margin-top:12px;">
-            <img src="HIC.png" width="90">
+logo_base64 = img_to_base64("HIC.png")
+
+st.markdown(
+    f"""
+    <div style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 36px;
+    ">
+        <img src="data:image/png;base64,{logo_base64}"
+             style="margin-bottom:14px; width:90px;" />
+
+        <div style="font-size:30px; font-weight:600; text-align:center;">
+            Administrador de Promociones
         </div>
-        """,
-        unsafe_allow_html=True
-    )
 
-    # Título centrado
-    st.markdown(
-        "<div style='text-align:center; font-size:30px; font-weight:600;'>"
-        "Administrador de Promociones"
-        "</div>",
-        unsafe_allow_html=True
-    )
+        <div style="font-size:14px; color:#6b6b6b; text-align:center;">
+            Playa Mujeres – DREPM &amp; SECPM
+        </div>
+    </div>
 
-    # Subtítulo centrado
-    st.markdown(
-        "<div style='text-align:center; font-size:14px; color:#6b6b6b;'>"
-        "Playa Mujeres – DREPM & SECPM"
-        "</div>",
-        unsafe_allow_html=True
-    )
-
-# Línea divisoria (fuera del header)
-st.markdown("<div style='border-top:1px solid #d0d0d0; margin:16px 0 12px 0;'></div>",
-            unsafe_allow_html=True)
+    <div style="border-top:1px solid #d0d0d0; margin:20px 0 12px 0;"></div>
+    """,
+    unsafe_allow_html=True
+)
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

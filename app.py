@@ -115,25 +115,21 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL – ESTABLE, SIN MOVIMIENTOS
+# HEADER FINAL DEFINITIVO – NO SE MUEVE
 # =====================================================
 
-col_left, col_center, col_right = st.columns([1, 2, 1])
+with st.container():
+    # Logo centrado y estable
+    st.image("HIC.png", width=60)
 
-with col_center:
-    st.image("HIC.png", width=65, output_format="PNG")
-    st.markdown("<div style='margin-top:-8px;'></div>", unsafe_allow_html=True)
+    # Título nativo (no se recorta)
+    st.title("Administrador de Promociones")
 
-    st.markdown("## Administrador de Promociones")
+    # Subtítulo nativo
+    st.caption("Playa Mujeres – DREPM & SECPM")
 
-    st.markdown(
-        "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
-        "Playa Mujeres – DREPM &amp; SECPM"
-        "</div>",
-        unsafe_allow_html=True
-    )
-
-st.divider()
+    # Separador estable
+    st.divider()
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

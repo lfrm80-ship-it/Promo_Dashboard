@@ -6,10 +6,7 @@ from datetime import date
 # =============================
 # CONFIGURACIÓN GENERAL
 # =============================
-st.set_page_config(
-    page_title="Administrador de Promociones",
-    layout="wide"
-)
+st.set_page_config(page_title="Administrador de Promociones", layout="wide")
 
 PROMOS_FILE = "promociones_data.csv"
 PRODUCCION_FILE = "promociones_produccion.csv"
@@ -23,30 +20,22 @@ def safe_read_csv(path):
     return pd.DataFrame()
 
 # =============================
-# CARGA DE PROMOS
+# CARGAR PROMOS
 # =============================
+def cargar_promos():
+    df = safe_read_csv(PROMOS_FILE)
+    if df.empty:
+        return df
 
-# Rate Plan + Descuento en una sola línea
-col_rp, col_desc = st.columns([2, 1])
-with col_rp:
-    rate_plan = st.text_input("Rate Plan")
-with col_desc:
-    descuento = st.number_input("Descuento (%)", 0, 100, step=1)
+    for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
+        if c in df.columns:
+            df[c] = pd.to_datetime(df[c]).dt.date
 
-# BW en una línea
-col_bw1, col_bw2 = st.columns(2)
-with col_bw1:
-    bw_ini = st.date_input("BW Inicio")
-with col_bw2:
-    bw_fin = st.date_input("BW Fin")
+    for col in ["Market", "Notas", "Descuento"]:
+        if col not in df.columns:
+            df[col] = ""
 
-# TW en una línea
-col_tw1, col_tw2 = st.columns(2)
-with col_tw1:
-    tw_ini = st.date_input("TW Inicio")
-with col_tw2:
-    tw_fin = st.date_input("TW Fin")
-
+    return df
 
 # =============================
 # PRODUCCIÓN
@@ -55,8 +44,8 @@ def cargar_produccion():
     df = safe_read_csv(PRODUCCION_FILE)
     if df.empty:
         return pd.DataFrame(columns=[
-            "Promo","Hotel","Rate_Plan",
-            "Room_Nights","Revenue","Comentario"
+            "Promo", "Hotel", "Rate_Plan",
+            "Room_Nights", "Revenue", "Comentario"
         ])
     return df
 
@@ -75,17 +64,14 @@ def obtener_produccion(df, promo, hotel, rate):
 # EXPORTAR EXCEL
 # =============================
 def exportar_excel(df):
-    export_df = df.copy()
-    export_df.to_excel("promociones_export.xlsx", index=False)
-    return "promociones_export.xlsx"
+    archivo = "Promociones_Playa_Mujeres.xlsx"
+    df.to_excel(archivo, index=False)
+    return archivo
 
 # =============================
 # HEADER
 # =============================
-st.markdown(
-    "<h1 style='text-align:center;'>Administrador de Promociones</h1>",
-    unsafe_allow_html=True
-)
+st.markdown("<h1 style='text-align:center;'>Administrador de Promociones</h1>", unsafe_allow_html=True)
 st.markdown(
     "<div style='text-align:center;color:#6b6b6b;font-size:14px;'>"
     "Playa Mujeres – DREPM &amp; SECPM"
@@ -95,11 +81,9 @@ st.markdown(
 st.divider()
 
 # =============================
-# TABS
+# TABS PRINCIPALES
 # =============================
-tab_promos, tab_registro, tab_admin = st.tabs(
-    ["Promociones", "Registrar / Modificar", "Administración"]
-)
+tab_promos, tab_registro = st.tabs(["Promociones", "Registrar / Modificar"])
 
 # =============================
 # TAB PROMOCIONES
@@ -126,12 +110,6 @@ with tab_promos:
             )
             df_f = df_f[mask]
 
-        # Tabla
-        vista = df_f.copy()
-        if "Descuento" in vista.columns:
-            vista["Descuento"] = vista["Descuento"].astype(str) + " %"
-        st.dataframe(vista, use_container_width=True)
-
         st.subheader("Estado y Vigencia de Promociones")
 
         filtro = st.radio(
@@ -142,8 +120,7 @@ with tab_promos:
 
         for idx, row in df_f.iterrows():
 
-            tw_ini = row["TW_Inicio"]
-            tw_fin = row["TW_Fin"]
+            tw_ini, tw_fin = row["TW_Inicio"], row["TW_Fin"]
 
             if hoy < tw_ini:
                 estado = "🟡 Por iniciar"
@@ -155,10 +132,7 @@ with tab_promos:
             if filtro != "Todas" and estado != filtro:
                 continue
 
-            header = (
-                f"{estado} | {row['Promo']} | {row['Hotel']} | "
-                f"{row['Rate_Plan']} ({row['Descuento']}%)"
-            )
+            header = f"{estado} | {row['Promo']} | {row['Hotel']} | {row['Rate_Plan']} ({row['Descuento']}%)"
 
             with st.expander(header):
                 st.caption(
@@ -167,12 +141,7 @@ with tab_promos:
                 )
 
                 if hoy > tw_fin:
-                    prod = obtener_produccion(
-                        df_prod,
-                        row["Promo"],
-                        row["Hotel"],
-                        row["Rate_Plan"]
-                    )
+                    prod = obtener_produccion(df_prod, row["Promo"], row["Hotel"], row["Rate_Plan"])
 
                     if prod is None:
                         st.markdown("### 📊 Agregar Producción")
@@ -180,7 +149,7 @@ with tab_promos:
                         revenue = st.number_input("Revenue", 0.0, step=1000.0, key=f"rev_{idx}")
                         comentario = st.text_area("Comentario / Insight", key=f"com_{idx}")
 
-                        if st.button("Guardar Producción", key=f"save_{idx}"):
+                        if st.button("Guardar Producción", key=f"save_prod_{idx}"):
                             nueva = pd.DataFrame([{
                                 "Promo": row["Promo"],
                                 "Hotel": row["Hotel"],
@@ -189,6 +158,7 @@ with tab_promos:
                                 "Revenue": revenue,
                                 "Comentario": comentario
                             }])
+
                             df_prod = pd.concat([df_prod, nueva], ignore_index=True)
                             guardar_produccion(df_prod)
                             st.success("✅ Producción guardada")
@@ -214,18 +184,28 @@ with tab_promos:
 # TAB REGISTRAR / MODIFICAR
 # =============================
 with tab_registro:
-
     st.subheader("Registrar nueva promoción")
 
     promo = st.text_input("Nombre de la Promoción")
     hotel = st.text_input("Hotel")
-    rate_plan = st.text_input("Rate Plan")
-    descuento = st.number_input("Descuento (%)", 0, 100, step=1)
 
-    bw_ini = st.date_input("Booking Window Inicio")
-    bw_fin = st.date_input("Booking Window Fin")
-    tw_ini = st.date_input("Travel Window Inicio")
-    tw_fin = st.date_input("Travel Window Fin")
+    col_rp, col_desc = st.columns([2, 1])
+    with col_rp:
+        rate_plan = st.text_input("Rate Plan")
+    with col_desc:
+        descuento = st.number_input("Descuento (%)", 0, 100, step=1)
+
+    col_bw1, col_bw2 = st.columns(2)
+    with col_bw1:
+        bw_ini = st.date_input("BW Inicio")
+    with col_bw2:
+        bw_fin = st.date_input("BW Fin")
+
+    col_tw1, col_tw2 = st.columns(2)
+    with col_tw1:
+        tw_ini = st.date_input("TW Inicio")
+    with col_tw2:
+        tw_fin = st.date_input("TW Fin")
 
     notas = st.text_area("Notas")
 
@@ -248,23 +228,11 @@ with tab_registro:
         st.success("✅ Promoción guardada correctamente")
 
 # =============================
-# TAB ADMINISTRACIÓN
-# =============================
-with tab_admin:
-    st.warning("⚠️ Zona Administrativa")
-    if st.button("🗑️ Borrar todas las promociones"):
-        if os.path.exists(PROMOS_FILE):
-            os.remove(PROMOS_FILE)
-        if os.path.exists(PRODUCCION_FILE):
-            os.remove(PRODUCCION_FILE)
-        st.success("Base eliminada. Recarga la app.")
-
-# =============================
 # ADMINISTRACIÓN (DISCRETA)
 # =============================
 with st.expander("⚙️ Administración"):
-    st.warning("Zona administrativa")
-    if st.button("🗑️ Borrar todas las promociones"):
+    st.warning("Zona administrativa – usar con cuidado")
+    if st.button("🗑️ Borrar todas las promociones", key="btn_borrar_admin"):
         if os.path.exists(PROMOS_FILE):
             os.remove(PROMOS_FILE)
         if os.path.exists(PRODUCCION_FILE):

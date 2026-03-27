@@ -115,20 +115,36 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL DEFINITIVO – NO SE MUEVE
+# HEADER FINAL – CENTRADO REAL (SIN ÍCONO DE ENLACE)
 # =====================================================
 
+# Ocultar íconos de enlace de Streamlit (CLAVE)
+st.markdown("""
+<style>
+a[class^="stMarkdownHeader"] {
+    display: none;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Contenedor estable
 with st.container():
-    # Logo centrado y estable
-    st.image("HIC.png", width=60)
+    st.image("HIC.png", width=65)
 
-    # Título nativo (no se recorta)
-    st.title("Administrador de Promociones")
+    st.markdown(
+        "<h1 style='text-align:center; margin-bottom:4px;'>"
+        "Administrador de Promociones"
+        "</h1>",
+        unsafe_allow_html=True
+    )
 
-    # Subtítulo nativo
-    st.caption("Playa Mujeres – DREPM & SECPM")
+    st.markdown(
+        "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
+        "Playa Mujeres – DREPM &amp; SECPM"
+        "</div>",
+        unsafe_allow_html=True
+    )
 
-    # Separador estable
     st.divider()
 
 # =====================================================

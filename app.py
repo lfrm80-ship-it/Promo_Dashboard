@@ -96,26 +96,25 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL 100% ALINEADO Y CENTRADO COMO BLOQUE
+# HEADER FINAL – CENTRADO ÓPTICO CORRECTO
 # =====================================================
 
-# Espacio superior para evitar cortes
-st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+# Espacio superior para evitar recorte de texto
+st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
 
-# Contenedor central real
-col_left, col_center, col_right = st.columns([1, 6, 1])
+# Columnas con compensación visual
+col_left, col_center, col_right = st.columns([1.6, 6, 1])
 
 with col_center:
-    # Bloque logo + texto
-    col_logo, col_text = st.columns([1.2, 4])
+    logo_col, text_col = st.columns([1.4, 4])
 
-    with col_logo:
+    with logo_col:
         st.image("HIC.png", width=90)
 
-    with col_text:
+    with text_col:
         st.markdown(
             """
-            <div style="padding-top:6px;">
+            <div style="padding-top:10px;">
                 <div style="font-size:28px; font-weight:600;">
                     Administrador de Promociones
                 </div>
@@ -127,7 +126,7 @@ with col_center:
             unsafe_allow_html=True
         )
 
-st.markdown("<hr style='margin-top:16px; margin-bottom:14px;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top:18px; margin-bottom:14px;'>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

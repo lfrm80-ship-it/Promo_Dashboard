@@ -96,18 +96,32 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER (CORREGIDO)
+# HEADER (ALINEADO Y LIMPIO)
 # =====================================================
-col1, col2, col3 = st.columns([1,2,1])
-with col2:
-    st.image("HIC.png", width=110)
+col_logo, col_title, col_spacer = st.columns([1, 4, 1])
+
+with col_logo:
     st.markdown(
-        "<h2 style='text-align:center;'>Administrador de Promociones</h2>"
-        "<p style='text-align:center;color:#6b6b6b;'>Playa Mujeres – DREPM & SECPM</p>",
+        "<div style='display:flex; align-items:center; height:100%;'>",
+        unsafe_allow_html=True
+    )
+    st.image("HIC.png", width=100)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with col_title:
+    st.markdown(
+        """
+        <div style='text-align:center;'>
+            <h1 style='margin-bottom:4px;'>Administrador de Promociones</h1>
+            <span style='color:#6b6b6b; font-size:14px;'>
+                Playa Mujeres – DREPM & SECPM
+            </span>
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
-st.markdown("<hr>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top:18px; margin-bottom:12px;'>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

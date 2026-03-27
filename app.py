@@ -1,13 +1,11 @@
 import streamlit as st
 import pandas as pd
-import os
-import io
-import time
+import os, io, time
 from datetime import date, datetime
 
-# ==============================
+# =====================================================
 # CONFIGURACIÓN GENERAL
-# ==============================
+# =====================================================
 st.set_page_config(page_title="Administrador de Promociones", layout="wide")
 
 CSV_FILE = "promociones_data.csv"
@@ -15,16 +13,13 @@ MEDIA_DIR = "media"
 PASSWORD_MAESTRA = "PlayaMujeres2026"
 
 MARKETS = ["US", "Canada", "Mexico", "LATAM", "Europe", "Asia / ROW"]
-PROPERTIES = [
-    "DREPM - Dreams Playa Mujeres",
-    "SECPM - Secrets Playa Mujeres"
-]
+PROPERTIES = ["DREPM - Dreams Playa Mujeres", "SECPM - Secrets Playa Mujeres"]
 
 os.makedirs(MEDIA_DIR, exist_ok=True)
 
-# ==============================
+# =====================================================
 # CSS
-# ==============================
+# =====================================================
 st.markdown("""
 <style>
 body { background-color: #f7f8fa; }
@@ -37,29 +32,23 @@ div[data-testid="stVerticalBlock"] { gap: 0.4rem; }
 
 st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
 
-# ==============================
+# =====================================================
 # SESSION STATE
-# ==============================
+# =====================================================
 defaults = {
-    "promo": "",
-    "descuento": 0,
-    "bw": (date.today(), date.today()),
-    "tw": (date.today(), date.today()),
-    "rate_raw": "",
-    "hoteles": [],
-    "markets": [],
-    "notas": "",
-    "reset_form": False
+    "promo": "", "descuento": 0, "bw": (date.today(), date.today()),
+    "tw": (date.today(), date.today()), "rate_raw": "",
+    "hoteles": [], "markets": [], "notas": "",
+    "reset_form": False, "is_admin": False
 }
 for k, v in defaults.items():
     st.session_state.setdefault(k, v)
 
-# ==============================
+# =====================================================
 # HELPERS
-# ==============================
+# =====================================================
 def normalizar_market(x):
-    if isinstance(x, list):
-        return x
+    if isinstance(x, list): return x
     if isinstance(x, str):
         x = x.replace("[", "").replace("]", "").replace("'", "")
         return [m.strip() for m in x.split("|") if m.strip()]
@@ -90,7 +79,6 @@ def exportar_excel(df):
         writer.sheets["Promociones"] = ws
         ws.write("E2", "Fecha de generación:")
         ws.write("F2", fecha)
-
         df_x = df.copy()
         df_x["Market"] = df_x["Market"].apply(lambda x: ", ".join(x))
         df_x["Archivo_Respaldo"] = df_x["Archivo_Path"].apply(
@@ -98,45 +86,57 @@ def exportar_excel(df):
         )
         df_x.drop(columns=["Archivo_Path"], inplace=True)
         df_x.to_excel(writer, index=False, startrow=4)
-
         for i in range(len(df_x.columns)):
             ws.set_column(i, i, 18)
     buffer.seek(0)
     return buffer
 
-# ==============================
+# =====================================================
 # HEADER
-# ==============================
+# =====================================================
 col_l, col_logo, col_title, col_r = st.columns([1,1,2,1])
 with col_logo:
     st.image("HIC.png", width=80)
 with col_title:
     st.markdown("## Administrador de Promociones")
-    st.markdown(
-        "<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<span style='color:#6b6b6b'>Playa Mujeres – DREPM & SECPM</span>", unsafe_allow_html=True)
 st.markdown("<hr style='margin-top:6px; margin-bottom:8px;'>", unsafe_allow_html=True)
 
-# ==============================
-# TABS
-# ==============================
-tab_promos, tab_registro, tab_admin = st.tabs(
-    ["Promociones","Registrar / Modificar","Administración"]
-)
+# =====================================================
+# ADMIN LOGIN (CONDICIONAL)
+# =====================================================
+if not st.session_state.is_admin:
+    with st.expander("🔒 Acceso administrador"):
+        clave = st.text_input("Clave Administrador", type="password")
+        if clave == PASSWORD_MAESTRA:
+            st.session_state.is_admin = True
+            st.success("Acceso administrador habilitado")
+            st.rerun()
 
-# ==============================
+# =====================================================
+# TABS CON ADMIN CONDICIONAL
+# =====================================================
+tabs = ["Promociones", "Registrar / Modificar"]
+if st.session_state.is_admin:
+    tabs.append("Administración")
+
+tabs_objs = st.tabs(tabs)
+tab_promos = tabs_objs[0]
+tab_registro = tabs_objs[1]
+if st.session_state.is_admin:
+    tab_admin = tabs_objs[2]
+
+# =====================================================
 # PROMOCIONES
-# ==============================
+# =====================================================
 with tab_promos:
     df = cargar_datos()
-
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
         search = st.text_input(
             "🔍 Buscar promoción (Nombre, Notas, Rate Plan, Hotel o Market)",
-            placeholder="Ej. ATFPROMOC, BAR, US, Blackout…"
+            placeholder="Ej. BAR, ATFPROMOC, US, Blackout..."
         )
 
         df_filtrado = df.copy()
@@ -152,9 +152,7 @@ with tab_promos:
 
         view = df_filtrado.copy()
         view["Market"] = view["Market"].apply(lambda x: ", ".join(x))
-        view["Descuento"] = view["Descuento"].apply(
-            lambda x: f"{int(x)} %" if pd.notna(x) else ""
-        )
+        view["Descuento"] = view["Descuento"].apply(lambda x: f"{int(x)} %" if pd.notna(x) else "")
         st.dataframe(view, use_container_width=True)
 
         st.subheader("Estado y Vigencia de Promociones")
@@ -169,13 +167,10 @@ with tab_promos:
 
         for _, row in df_filtrado.iterrows():
             tw_ini, tw_fin = row["TW_Inicio"], row["TW_Fin"]
-
             if hoy < tw_ini:
-                estado = "🟡 Por iniciar"
-                progreso = 0
+                estado, progreso = "🟡 Por iniciar", 0
             elif hoy > tw_fin:
-                estado = "🔴 Expirada"
-                progreso = 100
+                estado, progreso = "🔴 Expirada", 100
             else:
                 estado = "🟢 Activa"
                 total = (tw_fin - tw_ini).days or 1
@@ -188,7 +183,6 @@ with tab_promos:
             with st.expander(f"{estado} | {row['Promo']} | {row['Hotel']} | {row['Rate_Plan']}"):
                 st.progress(progreso)
                 st.caption(f"Travel Window: {tw_ini} → {tw_fin} ({progreso} %)")
-
                 path = row["Archivo_Path"]
                 if (
                     isinstance(path, str)
@@ -203,9 +197,9 @@ with tab_promos:
             file_name="Promociones_Playa_Mujeres.xlsx"
         )
 
-# ==============================
+# =====================================================
 # REGISTRAR / MODIFICAR
-# ==============================
+# =====================================================
 with tab_registro:
     df = cargar_datos()
 
@@ -228,12 +222,7 @@ with tab_registro:
         col_bw.date_input("Booking Window", key="bw")
         col_tw.date_input("Travel Window", key="tw")
 
-        st.text_area(
-            "Rate Plan(s) – uno por línea",
-            placeholder="BAR\nPROMO2026\nCORP_PM",
-            height=90,
-            key="rate_raw"
-        )
+        st.text_area("Rate Plan(s) – uno por línea", height=90, key="rate_raw")
 
         col_prop, col_market = st.columns(2)
         col_prop.multiselect("Propiedad(es)", PROPERTIES, key="hoteles")
@@ -278,14 +267,13 @@ with tab_registro:
                 time.sleep(1)
                 st.rerun()
 
-# ==============================
-# ADMINISTRACIÓN
-# ==============================
-with tab_admin:
-    clave = st.text_input("Clave Administrador", type="password")
-    if clave == PASSWORD_MAESTRA:
-        confirmar = st.checkbox("Confirmo borrar toda la base")
-        if confirmar and st.button("🗑️ Borrar toda la base"):
+# =====================================================
+# ADMINISTRACIÓN (SOLO SI ADMIN)
+# =====================================================
+if st.session_state.is_admin:
+    with tab_admin:
+        st.subheader("Zona Administrativa")
+        if st.button("🗑️ Borrar toda la base"):
             if os.path.exists(CSV_FILE):
                 os.remove(CSV_FILE)
             st.warning("Base de datos eliminada")

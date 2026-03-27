@@ -115,41 +115,31 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL DEFINITIVO (IMAGEN + TEXTO CENTRADOS)
+# HEADER FINAL – CENTRADO, ESTABLE, SIN HTML ROTO
 # =====================================================
 
-import base64
+# Espacio superior controlado
+st.markdown("")
 
-def img_to_base64(path):
-    with open(path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode()
+# Tres columnas iguales → eje central real
+col_left, col_center, col_right = st.columns([1, 1, 1])
 
-logo_base64 = img_to_base64("HIC.png")
+with col_center:
+    # Logo ligeramente más abajo
+    st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+    st.image("HIC.png", width=90)
 
-st.markdown(
-    f"""
-    <div style="
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 36px;
-    ">
-        <img src="data:image/png;base64,{logo_base64}"
-             style="margin-bottom:14px; width:90px;" />
+    # Texto centrado (Markdown nativo)
+    st.markdown("## Administrador de Promociones")
+    st.markdown(
+        "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
+        "Playa Mujeres – DREPM &amp; SECPM"
+        "</div>",
+        unsafe_allow_html=True
+    )
 
-        <div style="font-size:30px; font-weight:600; text-align:center;">
-            Administrador de Promociones
-        </div>
-
-        <div style="font-size:14px; color:#6b6b6b; text-align:center;">
-            Playa Mujeres – DREPM &amp; SECPM
-        </div>
-    </div>
-
-    <div style="border-top:1px solid #d0d0d0; margin:20px 0 12px 0;"></div>
-    """,
-    unsafe_allow_html=True
-)
+# Línea divisoria real
+st.divider()
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

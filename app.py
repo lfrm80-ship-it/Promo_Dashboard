@@ -115,23 +115,38 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL ESTABLE (NO SE MUEVE)
+# HEADER DEFINITIVO — LOGO + TEXTO CENTRADOS COMO BLOQUE
 # =====================================================
 
-# Layout estable: logo izquierda + texto centrado
-col_logo, col_title, col_spacer = st.columns([1, 4, 1])
+import base64
 
-with col_logo:
-    # Logo reducido para no desbalancear
-    st.image("HIC.png", width=60)
+def logo_base64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
-with col_title:
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<h2 style='text-align:center;'>Administrador de Promociones</h2>", unsafe_allow_html=True)
-    st.caption("Playa Mujeres – DREPM & SECPM")
+logo = logo_base64("HIC.png")
 
-# Línea divisoria estable
-st.divider()
+st.markdown(
+    f"""
+    <div style="width:100%; display:flex; justify-content:center; margin-top:24px;">
+        <div style="display:flex; align-items:center; gap:18px;">
+            <img src="data:image/png;base64,{logo}" style="width:55px;" />
+            <div style="text-align:left;">
+                <div style="font-size:30px; font-weight:600;">
+                    Administrador de Promociones
+                </div>
+                <div style="font-size:14px; color:#6b6b6b;">
+                    Playa Mujeres – DREPM &amp; SECPM
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="border-top:1px solid #d0d0d0; margin:18px 0 12px 0;"></div>
+    """,
+    unsafe_allow_html=True
+)
+
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

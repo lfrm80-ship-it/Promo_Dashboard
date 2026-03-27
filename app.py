@@ -192,22 +192,29 @@ with tab_promos:
     # =============================
     # ADMINISTRACIÓN (SOLO AQUÍ)
     # =============================
-    st.divider()
     with st.expander("⚙️ Administración"):
-        password = st.text_input(
-            "Contraseña de administrador",
-            type="password",
-            key="admin_pass"
-        )
+    st.warning("Zona administrativa – usar con cuidado")
 
-        if password == "admin123":
-            st.warning("Zona administrativa")
+    password = st.text_input(
+        "Contraseña de administrador",
+        type="password",
+        key="admin_pass"
+    )
+
+    if st.button("Acceder", key="btn_admin_login"):
+        if password == "admin123":  # usa la clave que tú quieras
+            st.success("Acceso concedido")
+
             if st.button("🗑️ Borrar todas las promociones", key="btn_borrar_admin"):
                 if os.path.exists(PROMOS_FILE):
                     os.remove(PROMOS_FILE)
                 if os.path.exists(PRODUCCION_FILE):
                     os.remove(PRODUCCION_FILE)
+
                 st.success("Base eliminada. Recarga la app.")
+        else:
+            st.error("Contraseña incorrecta")
+
 
 # =============================
 # TAB REGISTRAR / MODIFICAR

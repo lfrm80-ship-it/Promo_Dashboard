@@ -205,6 +205,63 @@ with tab_promos:
                 total = max((tw_fin - tw_ini).days, 1)
                 avance = int((hoy - tw_ini).days / total * 100)
 
+# =========================
+# PRODUCCIÓN – SOLO EXPIRADAS
+# =========================
+df_prod = cargar_produccion()
+
+if hoy > tw_fin:
+    prod = obtener_produccion(
+        df_prod,
+        row["Promo"],
+        row["Hotel"],
+        row["Rate_Plan"]
+    )
+
+    if prod is None:
+        with st.expander("📊 Agregar Producción"):
+            rn = st.number_input(
+                "Room Nights",
+                min_value=0,
+                step=1,
+                key=f"rn_{row.name}"
+            )
+            revenue = st.number_input(
+                "Revenue",
+                min_value=0.0,
+                step=1000.0,
+                key=f"rev_{row.name}"
+            )
+            comentario = st.text_area(
+                "Comentario / Insight",
+                key=f"com_{row.name}"
+            )
+
+            if st.button("Guardar Producción", key=f"save_prod_{row.name}"):
+                nueva_fila = pd.DataFrame([{
+                    "Promo": row["Promo"],
+                    "Hotel": row["Hotel"],
+                    "Rate_Plan": row["Rate_Plan"],
+                    "Room_Nights": rn,
+                    "Revenue": revenue,
+                    "Comentario": comentario
+                }])
+
+                df_prod = pd.concat([df_prod, nueva_fila], ignore_index=True)
+                guardar_produccion(df_prod)
+
+                st.success("✅ Producción guardada correctamente")
+                st.experimental_rerun()
+    else:
+        st.markdown(
+            f"""
+            ✅ **Producción cargada**
+            - RN: **{int(prod['Room_Nights'])}**
+            - Revenue: **${prod['Revenue']:,.0f}**
+            - Insight: {prod['Comentario']}
+            """
+        )
+            
             if filtro != "Todas" and estado != filtro:
                 continue
 

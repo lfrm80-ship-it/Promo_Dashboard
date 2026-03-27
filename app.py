@@ -115,31 +115,22 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL – LIMPIO, CENTRADO Y PROFESIONAL
+# HEADER FINAL ESTABLE (NO SE MUEVE)
 # =====================================================
 
-# Espacio superior controlado
-st.markdown("")
+# Layout estable: logo izquierda + texto centrado
+col_logo, col_title, col_spacer = st.columns([1, 4, 1])
 
-# Columna central única (mismo eje visual)
-col_left, col_center, col_right = st.columns([1, 2, 1])
+with col_logo:
+    # Logo reducido para no desbalancear
+    st.image("HIC.png", width=60)
 
-with col_center:
-    # Logo reducido para balance visual (CLAVE)
-    st.image("HIC.png", width=65)
+with col_title:
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center;'>Administrador de Promociones</h2>", unsafe_allow_html=True)
+    st.caption("Playa Mujeres – DREPM & SECPM")
 
-    # Título principal
-    st.markdown("## Administrador de Promociones")
-
-    # Subtítulo
-    st.markdown(
-        "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
-        "Playa Mujeres – DREPM &amp; SECPM"
-        "</div>",
-        unsafe_allow_html=True
-    )
-
-# Línea divisoria estable (siempre visible)
+# Línea divisoria estable
 st.divider()
 
 # =====================================================

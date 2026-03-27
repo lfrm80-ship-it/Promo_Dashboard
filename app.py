@@ -115,41 +115,36 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER DEFINITIVO — LOGO + TEXTO CENTRADOS COMO BLOQUE
+# HEADER FINAL – ESTABLE, PROFESIONAL, SIN ERRORES
 # =====================================================
 
-st.markdown(
-    f"""
-    <div style="width:100%; display:flex; justify-content:center; margin-top:24px;">
-        <div style="display:flex; align-items:center; gap:18px;">
-            <img src="data:image/png;base64,{logo}" style="width:65px;"/>
+# Espacio superior para que Streamlit no recorte el texto
+st.markdown("")
 
-            <div style="text-align:left;">
-                <div style="
-                    font-size:30px;
-                    font-weight:600;
-                    line-height:1.25;
-                    padding-top:4px;
-                ">
-                    Administrador de Promociones
-                </div>
+# Tres columnas iguales → eje central estable
+col_left, col_center, col_right = st.columns([1, 1, 1])
 
-                <div style="
-                    font-size:14px;
-                    color:#6b6b6b;
-                    line-height:1.4;
-                    margin-top:2px;
-                ">
-                    Playa Mujeres – DREPM &amp; SECPM
-                </div>
-            </div>
-        </div>
-    </div>
+with col_center:
+    # Espaciador interno para bajar ligeramente el logo
+    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
 
-    <div style="border-top:1px solid #d0d0d0; margin:18px 0 12px 0;"></div>
-    """,
-    unsafe_allow_html=True
-)
+    # Logo (tamaño reducido y profesional)
+    st.image("HIC.png", width=65)
+
+    # Título (Markdown nativo — NO se corta)
+    st.markdown("## Administrador de Promociones")
+
+    # Subtítulo centrado, discreto
+    st.markdown(
+        "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
+        "Playa Mujeres – DREPM &amp; SECPM"
+        "</div>",
+        unsafe_allow_html=True
+    )
+
+# Línea divisoria nativa (siempre visible)
+st.divider()
+
 # =====================================================
 # TABS (ADMIN CONDICIONAL)
 # =====================================================

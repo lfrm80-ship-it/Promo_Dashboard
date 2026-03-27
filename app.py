@@ -129,6 +129,9 @@ a[class^="stMarkdownHeader"] {
 
 # Contenedor estable
 with st.container():
+    logo_left, logo_center, logo_right = st.columns([1, 1, 1])
+
+with logo_center:
     st.image("HIC.png", width=65)
 
     st.markdown(

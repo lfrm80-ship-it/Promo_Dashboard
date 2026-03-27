@@ -96,7 +96,7 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL (CENTRADO, LIMPIO, SIN CORTES)
+# HEADER FINAL (CENTRADO, CON IMAGEN FUNCIONANDO)
 # =====================================================
 st.markdown(
     """
@@ -105,15 +105,15 @@ st.markdown(
         flex-direction: column;
         align-items: center;
         text-align: center;
-        margin-top: 10px;
+        margin-top: 12px;
         margin-bottom: 10px;
     ">
-        <img src="HIC.png" style="width: 110px; margin-bottom: 12px;" />
-        <h1 style="margin: 0; font-size: 38px;">
+        <img src="HIC.png" style="width:120px; margin-bottom:10px;" />
+        <h1 style="margin: 0; font-size: 36px;">
             Administrador de Promociones
         </h1>
         <div style="color:#6b6b6b; font-size:14px; margin-top:6px;">
-            Playa Mujeres – DREPM & SECPM
+            Playa Mujeres – DREPM &amp; SECPM
         </div>
     </div>
     <hr style="margin-top:18px; margin-bottom:14px;" />

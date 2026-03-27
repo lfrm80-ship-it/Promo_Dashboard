@@ -97,7 +97,6 @@ def obtener_produccion(df_prod, promo, hotel, rate_plan):
         (df_prod["Rate_Plan"] == rate_plan)
     ]
     return fila.iloc[0] if not fila.empty else None
-``
 # =============================
 # TABS
 # =============================

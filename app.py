@@ -38,30 +38,21 @@ def normalizar_market(x):
 def cargar_promos():
     if os.path.exists(PROMOS_FILE):
         df = pd.read_csv(PROMOS_FILE)
+
+        # Convertir fechas
         for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
-            df[c] = pd.to_datetime(df[c]).dt.date
-        df["Market"] = df["Market"].apply(normalizar_market)
+            if c in df.columns:
+                df[c] = pd.to_datetime(df[c]).dt.date
+
+        # ✅ Asegurar columna Market
+        if "Market" not in df.columns:
+            df["Market"] = [[] for _ in range(len(df))]
+        else:
+            df["Market"] = df["Market"].apply(normalizar_market)
+
         return df
+
     return pd.DataFrame()
-
-def cargar_produccion():
-    if os.path.exists(PRODUCCION_FILE):
-        return pd.read_csv(PRODUCCION_FILE)
-    return pd.DataFrame(columns=[
-        "Promo","Hotel","Rate_Plan",
-        "Room_Nights","Revenue","Comentario"
-    ])
-
-def guardar_produccion(df_prod):
-    df_prod.to_csv(PRODUCCION_FILE, index=False)
-
-def obtener_produccion(df_prod, promo, hotel, rate_plan):
-    f = df_prod[
-        (df_prod["Promo"] == promo) &
-        (df_prod["Hotel"] == hotel) &
-        (df_prod["Rate_Plan"] == rate_plan)
-    ]
-    return f.iloc[0] if not f.empty else None
 
 # =============================
 # HEADER EJECUTIVO (SIMPLE Y ESTABLE)

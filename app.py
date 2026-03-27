@@ -96,25 +96,27 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL (LOGO A UN COSTADO, TEXTO CENTRADO)
+# HEADER FINAL DEFINITIVO (ESTABLE EN STREAMLIT)
 # =====================================================
-col_logo, col_title, col_spacer = st.columns([1, 4, 1])
+
+# Espacio superior para evitar recortes
+st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+
+col_logo, col_title, col_blank = st.columns([1.2, 5, 1.2])
 
 with col_logo:
-    st.markdown("###")  # espacio vertical natural
-    st.image("HIC.png", width=90)
+    st.image("HIC.png", width=85)
 
 with col_title:
-    st.markdown("## Administrador de Promociones")
     st.markdown(
-        "<div style='color:#6b6b6b; font-size:14px; text-align:center;'>"
-        "Playa Mujeres – DREPM & SECPM"
+        "<div style='padding-top:10px;'>"
+        "<span style='font-size:28px; font-weight:600;'>Administrador de Promociones</span><br>"
+        "<span style='font-size:14px; color:#6b6b6b;'>Playa Mujeres – DREPM &amp; SECPM</span>"
         "</div>",
         unsafe_allow_html=True
     )
 
-# Línea divisoria
-st.markdown("<hr style='margin-top:16px; margin-bottom:14px;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top:18px; margin-bottom:14px;'>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

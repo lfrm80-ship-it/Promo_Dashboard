@@ -219,4 +219,4 @@ with tab_registro:
         df_final.to_csv(PROMOS_FILE, index=False)
 
         st.success("✅ Promoción guardada correctamente")
-``
+

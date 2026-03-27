@@ -115,31 +115,28 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL – CENTRADO, ESTABLE, SIN HTML ROTO
+# HEADER FINAL – AJUSTE VERTICAL FINO (LOGO MÁS ABAJO)
 # =====================================================
 
-# Espacio superior controlado
-st.markdown("")
+# Espacio superior general
+st.markdown(" ")
 
 # Tres columnas iguales → eje central real
 col_left, col_center, col_right = st.columns([1, 1, 1])
 
 with col_center:
-    # Logo ligeramente más abajo
-    st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+    # ✅ Espaciador DENTRO de la columna (clave)
+    st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
+
+    # Logo ahora sí baja
     st.image("HIC.png", width=90)
 
-    # Texto centrado (Markdown nativo)
+    # Título centrado
     st.markdown("## Administrador de Promociones")
-    st.markdown(
-        "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
-        "Playa Mujeres – DREPM &amp; SECPM"
-        "</div>",
-        unsafe_allow_html=True
-    )
 
-# Línea divisoria real
-st.divider()
+    # Subtítulo
+    st.markdown(
+
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

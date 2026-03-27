@@ -127,7 +127,6 @@ with col_center:
         )
 
 st.markdown("<hr style='margin-top:16px; margin-bottom:14px;'>", unsafe_allow_html=True)
-``
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

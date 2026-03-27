@@ -115,45 +115,37 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL – CENTRADO REAL (SIN ÍCONO DE ENLACE)
+# HEADER FINAL – LOGO Y TEXTO CENTRADOS Y ALINEADOS
 # =====================================================
-
-# Ocultar íconos de enlace de Streamlit (CLAVE)
-st.markdown("""
-<style>
-a[class^="stMarkdownHeader"] {
-    display: none;
-}
-</style>
-""", unsafe_allow_html=True)
 
 # Contenedor estable
 with st.container():
-    logo_left, logo_center, logo_right = st.columns([1, 1, 1])
 
-with logo_center:
-    # ✅ Espaciador real para bajar el logo
-    st.write("")
-    st.write("")  # ← este es el truco correcto en Streamlit
-    st.image("HIC.png", width=65)
+    # Columna única central (mismo eje visual)
+    left, center, right = st.columns([1, 2, 1])
 
+    with center:
+        # ✅ Espaciador REAL para bajar el logo
+        st.write("")
+        st.write("")   # ← dos líneas = baja el logo suavemente
 
-    st.markdown(
-        "<h1 style='text-align:center; margin-bottom:4px;'>"
-        "Administrador de Promociones"
-        "</h1>",
-        unsafe_allow_html=True
-    )
+        # Logo ahora sí centrado y más bajo
+        st.image("HIC.png", width=65)
 
-    st.markdown(
-        "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
-        "Playa Mujeres – DREPM &amp; SECPM"
-        "</div>",
-        unsafe_allow_html=True
-    )
+        # Título
+        st.markdown("## Administrador de Promociones")
 
+        # Subtítulo
+        st.markdown(
+            "<div style='text-align:center; color:#6b6b6b; font-size:14px;'>"
+            "Playa Mujeres – DREPM &amp; SECPM"
+            "</div>",
+            unsafe_allow_html=True
+        )
+
+    # Línea divisoria estable
     st.divider()
-
+``
 # =====================================================
 # TABS (ADMIN CONDICIONAL)
 # =====================================================

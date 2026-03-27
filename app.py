@@ -96,17 +96,18 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL – CENTRADO ÓPTICO CORRECTO
+# HEADER – AJUSTE ÓPTICO FINAL (CENTRADO PREMIUM)
 # =====================================================
 
-# Espacio superior para evitar recorte de texto
-st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
+# Espacio superior para evitar cortes
+st.markdown("<div style='height:26px;'></div>", unsafe_allow_html=True)
 
-# Columnas con compensación visual
-col_left, col_center, col_right = st.columns([1.6, 6, 1])
+# Columnas con compensación visual final
+# (ligeramente más espacio a la derecha del logo)
+col_left, col_center, col_right = st.columns([1.8, 6, 1.2])
 
 with col_center:
-    logo_col, text_col = st.columns([1.4, 4])
+    logo_col, text_col = st.columns([1.35, 4])
 
     with logo_col:
         st.image("HIC.png", width=90)
@@ -115,7 +116,7 @@ with col_center:
         st.markdown(
             """
             <div style="padding-top:10px;">
-                <div style="font-size:28px; font-weight:600;">
+                <div style="font-size:30px; font-weight:600;">
                     Administrador de Promociones
                 </div>
                 <div style="font-size:14px; color:#6b6b6b;">

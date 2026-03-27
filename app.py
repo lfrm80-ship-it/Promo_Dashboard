@@ -96,25 +96,33 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL DEFINITIVO (ESTABLE EN STREAMLIT)
+# HEADER FINAL DEFINITIVO (BLOQUE CENTRADO CORRECTAMENTE)
 # =====================================================
 
-# Espacio superior para evitar recortes
 st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
 
-col_logo, col_title, col_blank = st.columns([1.2, 5, 1.2])
+left, center, right = st.columns([2, 5, 2])
 
-with col_logo:
-    st.image("HIC.png", width=85)
+with center:
+    col_logo, col_text = st.columns([1, 4])
 
-with col_title:
-    st.markdown(
-        "<div style='padding-top:10px;'>"
-        "<span style='font-size:28px; font-weight:600;'>Administrador de Promociones</span><br>"
-        "<span style='font-size:14px; color:#6b6b6b;'>Playa Mujeres – DREPM &amp; SECPM</span>"
-        "</div>",
-        unsafe_allow_html=True
-    )
+    with col_logo:
+        st.image("HIC.png", width=85)
+
+    with col_text:
+        st.markdown(
+            """
+            <div style="padding-top:10px;">
+                <div style="font-size:28px; font-weight:600;">
+                    Administrador de Promociones
+                </div>
+                <div style="font-size:14px; color:#6b6b6b;">
+                    Playa Mujeres – DREPM &amp; SECPM
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 st.markdown("<hr style='margin-top:18px; margin-bottom:14px;'>", unsafe_allow_html=True)
 

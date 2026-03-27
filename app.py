@@ -96,30 +96,21 @@ def exportar_excel(df):
     return buffer
 
 # =====================================================
-# HEADER FINAL (CENTRADO, CON IMAGEN FUNCIONANDO)
+# HEADER FINAL (CENTRADO, IMAGEN SIEMPRE VISIBLE)
 # =====================================================
-st.markdown(
-    """
-    <div style="
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        margin-top: 12px;
-        margin-bottom: 10px;
-    ">
-        <img src="HIC.png" style="width:120px; margin-bottom:10px;" />
-        <h1 style="margin: 0; font-size: 36px;">
-            Administrador de Promociones
-        </h1>
-        <div style="color:#6b6b6b; font-size:14px; margin-top:6px;">
-            Playa Mujeres – DREPM &amp; SECPM
-        </div>
-    </div>
-    <hr style="margin-top:18px; margin-bottom:14px;" />
-    """,
-    unsafe_allow_html=True
-)
+left, center, right = st.columns([1, 2, 1])
+
+with center:
+    st.image("HIC.png", width=120)
+    st.markdown("## Administrador de Promociones")
+    st.markdown(
+        "<div style='color:#6b6b6b; font-size:14px; text-align:center;'>"
+        "Playa Mujeres – DREPM & SECPM"
+        "</div>",
+        unsafe_allow_html=True
+    )
+
+st.markdown("<hr style='margin-top:14px; margin-bottom:16px;'>", unsafe_allow_html=True)
 
 # =====================================================
 # TABS (ADMIN CONDICIONAL)

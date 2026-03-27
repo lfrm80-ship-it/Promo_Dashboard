@@ -55,7 +55,7 @@ st.session_state.setdefault("notas", "")
 st.session_state.setdefault("reset_form", False)
 
 # ==============================
-# NORMALIZADOR DE MARKET
+# NORMALIZAR MARKET
 # ==============================
 def normalizar_market(x):
     if isinstance(x, list):
@@ -72,11 +72,11 @@ def cargar_datos():
     if os.path.exists(CSV_FILE):
         df = pd.read_csv(CSV_FILE)
 
-        for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
+        for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
             if c in df.columns:
                 df[c] = pd.to_datetime(df[c]).dt.date
 
-        for col in ["Market", "Archivo_Path"]:
+        for col in ["Market","Archivo_Path"]:
             if col not in df.columns:
                 df[col] = ""
 
@@ -90,7 +90,7 @@ def cargar_datos():
     ])
 
 # ==============================
-# EXCEL
+# EXPORTAR EXCEL
 # ==============================
 def exportar_excel(df):
     buffer = io.BytesIO()
@@ -99,9 +99,6 @@ def exportar_excel(df):
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         ws = writer.book.add_worksheet("Promociones")
         writer.sheets["Promociones"] = ws
-
-        if os.path.exists("HIC.png"):
-            ws.insert_image("A1", "HIC.png", {"x_scale": 0.4, "y_scale": 0.4})
 
         ws.write("E2", "Fecha de generación:")
         ws.write("F2", fecha)
@@ -139,16 +136,28 @@ tab_promos, tab_registro, tab_admin = st.tabs(
 )
 
 # ==============================
-# PROMOCIONES
+# PROMOCIONES (CON VISTA DE IMÁGEN)
 # ==============================
 with tab_promos:
     df = cargar_datos()
+
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
         view = df.copy()
         view["Market"] = view["Market"].apply(lambda x: ", ".join(x))
         st.dataframe(view, use_container_width=True)
+
+        st.markdown("### Vista previa de archivos")
+
+        for _, row in df.iterrows():
+            path = row["Archivo_Path"]
+
+            if isinstance(path, str) and path:
+                if path.lower().endswith((".png", ".jpg", ".jpeg")) and os.path.exists(path):
+                    with st.expander(f"📸 {row['Promo']} | {row['Hotel']} | {row['Rate_Plan']}"):
+                        st.image(path, width=400)
+
         st.download_button(
             "Descargar Excel",
             exportar_excel(df),
@@ -161,7 +170,6 @@ with tab_promos:
 with tab_registro:
     df = cargar_datos()
 
-    # RESET SEGURO
     if st.session_state.reset_form:
         st.session_state.promo = ""
         st.session_state.descuento = 0
@@ -196,18 +204,14 @@ with tab_registro:
         st.text_area("Notas / Restricciones", height=80, key="notas")
 
         archivo = st.file_uploader(
-            "Archivo de respaldo",
-            type=["pdf","png","jpg","jpeg"]
+            "Archivo de respaldo (Imagen o PDF)",
+            type=["png","jpg","jpeg","pdf"]
         )
 
         guardar = st.form_submit_button("💾 Guardar")
 
         if guardar:
-            rate_plans = [
-                r.strip()
-                for r in st.session_state.rate_raw.replace(",", "\n").split("\n")
-                if r.strip()
-            ]
+            rate_plans = [r.strip() for r in st.session_state.rate_raw.replace(",", "\n").split("\n") if r.strip()]
 
             if not rate_plans or not st.session_state.hoteles or not st.session_state.markets:
                 st.error("Rate Plan, Market y Propiedad son obligatorios.")
@@ -237,9 +241,9 @@ with tab_registro:
 
                 pd.concat([df, pd.DataFrame(rows)], ignore_index=True).to_csv(CSV_FILE, index=False)
 
-                st.success("✅ Promoción guardada correctamente. Limpiando formulario…")
+                st.success("✅ Promoción guardada correctamente")
                 st.session_state.reset_form = True
-                time.sleep(1.2)
+                time.sleep(1)
                 st.rerun()
 
 # ==============================

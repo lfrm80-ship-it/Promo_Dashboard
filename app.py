@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # =============================
-# PASSWORD ADMIN (SECRETS)
+# PASSWORD ADMIN
 # =============================
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
 
@@ -24,10 +24,9 @@ if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
 # =============================
-# ARCHIVOS
+# ARCHIVO DE DATOS (PRODUCCIÓN)
 # =============================
-PROMOS_QA = "promociones_data.csv"
-PROMOS_PROD = "promociones_produccion.csv"
+PROMOS_FILE = "promociones_produccion.csv"
 
 # =============================
 # CONSTANTES
@@ -58,6 +57,7 @@ st.markdown("""
     font-size: 13px;
     color: #6b6b6b;
 }
+
 .readonly-badge {
     position: fixed;
     top: 90px;
@@ -71,35 +71,15 @@ st.markdown("""
     border: 1px solid #cbd5e1;
     z-index: 1000;
 }
-.env-badge {
-    position: fixed;
-    top: 58px;
-    right: 22px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 700;
-    z-index: 1000;
-}
-.env-qa {
-    background-color: #e0f2fe;
-    color: #075985;
-    border: 1px solid #7dd3fc;
-}
-.env-prod {
-    background-color: #fee2e2;
-    color: #7f1d1d;
-    border: 1px solid #fca5a5;
-}
 </style>
 """, unsafe_allow_html=True)
 
 # =============================
 # HELPERS
 # =============================
-def cargar_promos(path):
-    if os.path.exists(path):
-        df = pd.read_csv(path)
+def cargar_promos():
+    if os.path.exists(PROMOS_FILE):
+        df = pd.read_csv(PROMOS_FILE)
         for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
             if c in df.columns:
                 df[c] = pd.to_datetime(df[c]).dt.date
@@ -119,23 +99,7 @@ with st.sidebar:
     st.image("HIC.png", use_container_width=True)
     st.divider()
 
-    # =============================
-    # CONTEXTO (NO MENÚ)
-    # =============================
-    env = st.radio(
-        "Entorno de trabajo",
-        ["QA", "Producción"],
-        horizontal=True,
-        help="QA = pruebas | Producción = datos oficiales"
-    )
-
-    PROMOS_FILE = PROMOS_PROD if env == "Producción" else PROMOS_QA
-
-    st.divider()
-
-    # =============================
     # NAVEGACIÓN
-    # =============================
     menu_items = ["🔍 Vista rápida"]
     if st.session_state.is_admin:
         menu_items += ["📝 Editar promociones", "➕ Nueva promoción"]
@@ -144,9 +108,7 @@ with st.sidebar:
 
     st.divider()
 
-    # =============================
-    # ADMIN (AL FINAL)
-    # =============================
+    # ADMIN AL FINAL
     st.caption("Acceso administrativo")
 
     if st.session_state.is_admin:
@@ -175,14 +137,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================
-# ENVIRONMENT BADGE
-# =============================
-if env == "QA":
-    st.markdown('<div class="env-badge env-qa">QA</div>', unsafe_allow_html=True)
-else:
-    st.markdown('<div class="env-badge env-prod">PRODUCCIÓN</div>', unsafe_allow_html=True)
-
-# =============================
 # READ ONLY BADGE
 # =============================
 if not st.session_state.is_admin:
@@ -191,7 +145,7 @@ if not st.session_state.is_admin:
 # =============================
 # DATA
 # =============================
-df = cargar_promos(PROMOS_FILE)
+df = cargar_promos()
 
 # =============================
 # VISTA RÁPIDA

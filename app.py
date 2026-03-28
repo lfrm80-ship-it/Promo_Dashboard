@@ -234,33 +234,80 @@ with tab_promos:
 with tab_registro:
     st.subheader("Registrar nueva promoción")
 
-    promo = st.text_input("Nombre de la Promoción")
-    hoteles = st.multiselect("Propiedad(es)", PROPERTIES)
+    promo = st.text_input("Nombre de la Promoción", key="promo")
+    hoteles = st.multiselect("Propiedad(es)", PROPERTIES, key="hoteles")
 
+    # Rate Plan + Descuento en una sola línea
     col_rp, col_desc = st.columns([2, 1])
     with col_rp:
-        rate_plan = st.text_input("Rate Plan")
+        rate_plan = st.text_input("Rate Plan", key="rate_plan")
     with col_desc:
-        descuento = st.number_input("Descuento (%)", 0, 100, step=1)
+        descuento = st.number_input("Descuento (%)", 0, 100, step=1, key="descuento")
 
     # BW – TW en UNA SOLA LÍNEA
     col_bw_ini, col_bw_fin, col_tw_ini, col_tw_fin = st.columns(4)
     with col_bw_ini:
-        bw_ini = st.date_input("BW Inicio")
+        bw_ini = st.date_input("BW Inicio", key="bw_ini")
     with col_bw_fin:
-        bw_fin = st.date_input("BW Fin")
+        bw_fin = st.date_input("BW Fin", key="bw_fin")
     with col_tw_ini:
-        tw_ini = st.date_input("TW Inicio")
+        tw_ini = st.date_input("TW Inicio", key="tw_ini")
     with col_tw_fin:
-        tw_fin = st.date_input("TW Fin")
+        tw_fin = st.date_input("TW Fin", key="tw_fin")
 
-    notas = st.text_area("Notas")
+    notas = st.text_area("Notas", key="notas")
+
+    archivo = st.file_uploader(
+        "Adjuntar archivo (imagen o PDF)",
+        type=["png", "jpg", "jpeg", "pdf"],
+        key="archivo"
+    )
 
     if st.button("Guardar Promoción", key="btn_guardar_promo"):
         if not promo or not rate_plan or not hoteles:
             st.error("Completa todos los campos obligatorios.")
         else:
             df_existente = cargar_promos()
+            rows = []
+
+            archivo_path = ""
+            if archivo:
+                archivo_path = os.path.join(MEDIA_DIR, archivo.name)
+                with open(archivo_path, "wb") as f:
+                    f.write(archivo.getbuffer())
+
+            for h in hoteles:
+                rows.append({
+                    "Hotel": h,
+                    "Promo": promo,
+                    "Rate_Plan": rate_plan,
+                    "Descuento": descuento,
+                    "BW_Inicio": bw_ini,
+                    "BW_Fin": bw_fin,
+                    "TW_Inicio": tw_ini,
+                    "TW_Fin": tw_fin,
+                    "Notas": notas,
+                    "Archivo_Path": archivo_path
+                })
+
+            df_final = pd.concat([df_existente, pd.DataFrame(rows)], ignore_index=True)
+            df_final.to_csv(PROMOS_FILE, index=False)
+
+            st.success("✅ Promoción guardada correctamente")
+
+            # Limpiar formulario
+            st.session_state.promo = ""
+            st.session_state.hoteles = []
+            st.session_state.rate_plan = ""
+            st.session_state.descuento = 0
+            st.session_state.notas = ""
+            st.session_state.bw_ini = date.today()
+            st.session_state.bw_fin = date.today()
+            st.session_state.tw_ini = date.today()
+            st.session_state.tw_fin = date.today()
+
+            st.rerun()
+
             rows = []
 
             for h in hoteles:

@@ -258,4 +258,4 @@ if bw_f < bw_i:
 if tw_f < tw_i:
     st.error("❌ TW Fin no puede ser menor que TW Inicio.")
     st.stop()
-``
+

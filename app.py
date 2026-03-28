@@ -78,10 +78,29 @@ with st.sidebar:
     st.image("HIC.png", use_container_width=True)
     st.divider()
 
+    # -------------------------
+    # ENTORNO (VISIBLE PARA TODOS)
+    # -------------------------
     env = st.selectbox("Entorno", ["Producción", "QA"])
     PROMOS_FILE = PROMOS_PROD if env == "Producción" else PROMOS_QA
 
     st.divider()
+
+    # -------------------------
+    # NAVEGACIÓN (PRIORIDAD)
+    # -------------------------
+    menu_items = ["🔍 Vista rápida"]
+    if st.session_state.is_admin:
+        menu_items += ["📝 Editar promociones", "➕ Nueva promoción"]
+
+    menu = st.radio("Navegación", menu_items)
+
+    st.divider()
+
+    # -------------------------
+    # ADMIN (AL FINAL, DISCRETO)
+    # -------------------------
+    st.caption("Acceso administrativo")
 
     if st.session_state.is_admin:
         st.success("🟢 Modo ADMIN activo")
@@ -97,14 +116,6 @@ with st.sidebar:
                     st.rerun()
                 else:
                     st.error("Contraseña incorrecta")
-
-    st.divider()
-
-    menu_items = ["🔍 Vista rápida"]
-    if st.session_state.is_admin:
-        menu_items += ["📝 Editar promociones", "➕ Nueva promoción"]
-
-    menu = st.radio("Navegación", menu_items)
 
 # =============================
 # HEADER

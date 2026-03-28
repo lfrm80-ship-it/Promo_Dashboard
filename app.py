@@ -88,17 +88,18 @@ with st.sidebar:
     st.image("HIC.png", use_container_width=True)
     st.divider()
 
-    # -------------------------
-    # ENTORNO (VISIBLE PARA TODOS)
-    # -------------------------
-    env = st.selectbox("Entorno", ["Producción", "QA"])
+    # CONTEXTO (NO MENÚ)
+    env = st.selectbox(
+        "Entorno de trabajo",
+        ["QA", "Producción"],
+        help="QA: pruebas | Producción: datos oficiales"
+    )
+
     PROMOS_FILE = PROMOS_PROD if env == "Producción" else PROMOS_QA
 
     st.divider()
 
-    # -------------------------
-    # NAVEGACIÓN (PRIORIDAD)
-    # -------------------------
+    # NAVEGACIÓN REAL
     menu_items = ["🔍 Vista rápida"]
     if st.session_state.is_admin:
         menu_items += ["📝 Editar promociones", "➕ Nueva promoción"]
@@ -107,25 +108,9 @@ with st.sidebar:
 
     st.divider()
 
-    # -------------------------
-    # ADMIN (AL FINAL, DISCRETO)
-    # -------------------------
+    # ADMIN AL FINAL (como ya lo dejaste, perfecto)
     st.caption("Acceso administrativo")
-
-    if st.session_state.is_admin:
-        st.success("🟢 Modo ADMIN activo")
-        if st.button("Salir de modo Admin"):
-            st.session_state.is_admin = False
-            st.rerun()
-    else:
-        with st.expander("🔒 Cambiar a Admin"):
-            pwd = st.text_input("Contraseña Admin", type="password")
-            if st.button("Entrar"):
-                if pwd == ADMIN_PASSWORD:
-                    st.session_state.is_admin = True
-                    st.rerun()
-                else:
-                    st.error("Contraseña incorrecta")
+    ...
 
 # =============================
 # HEADER

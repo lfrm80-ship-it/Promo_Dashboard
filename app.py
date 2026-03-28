@@ -194,7 +194,19 @@ if menu == "🔍 Vista rápida":
                     st.image(archivo, use_container_width=True)
             else:
                 st.info("Esta promoción no tiene archivo adjunto.")
+# =============================
+# ACCIONES ADMIN (VISTA RÁPIDA)
+# =============================
+if st.session_state.is_admin and not df[mask].empty:
 
+    st.divider()
+    st.subheader("🛠 Acciones administrativas")
+
+    action = st.radio(
+        "Selecciona una acción",
+        ["Editar", "Extender vigencia", "Eliminar"],
+        horizontal=True
+    )
 # =============================
 # NUEVA PROMO (ADMIN)
 # =============================

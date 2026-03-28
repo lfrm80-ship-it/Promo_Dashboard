@@ -6,150 +6,124 @@ from datetime import date
 # =============================
 # CONFIGURACIÓN GENERAL
 # =============================
-st.set_page_config(page_title="Administrador de Promociones", layout="wide")
+st.set_page_config(page_title="Master Record Playa Mujeres", layout="wide")
 
 PROMOS_FILE = "promociones_data.csv"
-PRODUCCION_FILE = "promociones_produccion.csv"
 MEDIA_DIR = "media"
 os.makedirs(MEDIA_DIR, exist_ok=True)
 
-PROPERTIES = [
-    "DREPM - Dreams Playa Mujeres",
-    "SECPM - Secrets Playa Mujeres"
-]
+PROPERTIES = ["DREPM - Dreams Playa Mujeres", "SECPM - Secrets Playa Mujeres"]
+MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 
-# =============================
-# SEGURIDAD (ST.SECRETS)
-# =============================
-# Nota: En local, crea un archivo .streamlit/secrets.toml con: admin_password = "tu_password"
-# En la nube, agrégalo en la sección "Secrets" del dashboard.
+# Carga segura de secretos para producción
 try:
     ADMIN_PASSWORD = st.secrets["admin_password"]
 except:
-    ADMIN_PASSWORD = "admin123" # Fallback para desarrollo local inicial
+    ADMIN_PASSWORD = "admin123"
 
 # =============================
-# HELPERS
+# FUNCIONES DE DATOS
 # =============================
-def safe_read_csv(path):
-    if os.path.exists(path):
-        return pd.read_csv(path)
-    return pd.DataFrame()
-
 def cargar_promos():
-    df = safe_read_csv(PROMOS_FILE)
-    if df.empty:
+    if os.path.exists(PROMOS_FILE):
+        df = pd.read_csv(PROMOS_FILE)
+        # Convertir fechas para que Streamlit las reconozca en el editor
+        for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
+            if c in df.columns:
+                df[c] = pd.to_datetime(df[c]).dt.date
         return df
-    for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
-        if c in df.columns:
-            df[c] = pd.to_datetime(df[c]).dt.date
-    return df
+    return pd.DataFrame(columns=[
+        "Hotel", "Promo", "Market", "Rate_Plan", "Descuento", 
+        "BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin", "Notas"
+    ])
 
-def cargar_produccion():
-    df = safe_read_csv(PRODUCCION_FILE)
+# =============================
+# INTERFAZ PRINCIPAL
+# =============================
+st.title("📊 Master Record de Promociones")
+st.caption("Gestión Operativa Playa Mujeres | DREPM & SECPM")
+
+tab_view, tab_edit, tab_new = st.tabs(["🔍 Vista Rápida", "📝 Modificar/Extender", "➕ Nueva Promo"])
+
+df = cargar_promos()
+
+# -----------------------------
+# TAB: VISTA RÁPIDA (Lectura)
+# -----------------------------
+with tab_view:
     if df.empty:
-        return pd.DataFrame(columns=["Promo","Hotel","Rate_Plan","Room_Nights","Revenue","Comentario"])
-    return df
-
-def guardar_produccion(df):
-    df.to_csv(PRODUCCION_FILE, index=False)
-
-# =============================
-# HEADER
-# =============================
-st.markdown("<h1 style='text-align:center;'>Administrador de Promociones</h1>", unsafe_allow_html=True)
-st.markdown("<div style='text-align:center;color:#6b6b6b;font-size:14px;'>Playa Mujeres – DREPM & SECPM</div>", unsafe_allow_html=True)
-st.divider()
-
-# =============================
-# TABS
-# =============================
-tab_promos, tab_registro = st.tabs(["Promociones", "Registrar / Modificar"])
-
-# =============================
-# TAB PROMOCIONES
-# =============================
-with tab_promos:
-    df = cargar_promos()
-    df_prod = cargar_produccion()
-    hoy = date.today()
-
-    if df.empty:
-        st.info("No hay promociones registradas.")
+        st.info("No hay promociones en la base de datos.")
     else:
-        search = st.text_input("🔍 Buscar promoción")
-        df_f = df.copy()
+        search = st.text_input("Buscar por Promo o Rate Plan")
+        filtered_df = df[df['Promo'].str.contains(search, case=False) | df['Rate_Plan'].str.contains(search, case=False)]
+        st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
-        if search:
-            mask = (df_f["Promo"].str.contains(search, case=False, na=False) | 
-                    df_f["Hotel"].str.contains(search, case=False, na=False))
-            df_f = df_f[mask]
+# -----------------------------
+# TAB: MODIFICAR / EXTENDER (La "Mejora")
+# -----------------------------
+with tab_edit:
+    st.subheader("Edición Directa y Extensiones")
+    st.info("Puedes editar las fechas o descuentos directamente en la tabla y presionar 'Guardar Cambios'.")
+    
+    # Usamos st.data_editor para permitir cambios rápidos
+    edited_df = st.data_editor(
+        df, 
+        num_rows="dynamic", 
+        use_container_width=True,
+        column_config={
+            "Market": st.column_config.SelectboxColumn("Market", options=MARKETS),
+            "Hotel": st.column_config.SelectboxColumn("Hotel", options=PROPERTIES),
+            "Descuento": st.column_config.NumberColumn("%", format="%d%%"),
+            "BW_Inicio": st.column_config.DateColumn("BW Start"),
+            "BW_Fin": st.column_config.DateColumn("BW End"),
+            "TW_Inicio": st.column_config.DateColumn("TW Start"),
+            "TW_Fin": st.column_config.DateColumn("TW End"),
+        },
+        hide_index=True,
+        key="editor_promos"
+    )
 
-        filtro = st.radio("Mostrar:", ["Todas", "🟢 Activas", "🟡 Por iniciar", "🔴 Expiradas"], horizontal=True)
+    if st.button("💾 Guardar Cambios en la Base"):
+        edited_df.to_csv(PROMOS_FILE, index=False)
+        st.success("¡Base de datos actualizada correctamente!")
+        st.rerun()
 
-        for idx, row in df_f.iterrows():
-            tw_ini, tw_fin = row["TW_Inicio"], row["TW_Fin"]
-            estado = "🟢 Activa" if tw_ini <= hoy <= tw_fin else ("🟡 Por iniciar" if hoy < tw_ini else "🔴 Expirada")
-            
-            if filtro != "Todas" and estado != filtro:
-                continue
-
-            with st.expander(f"{estado} | {row['Promo']} | {row['Hotel']}"):
-                st.write(f"**Rate Plan:** {row['Rate_Plan']} | **Descuento:** {row['Descuento']}%")
-                st.caption(f"BW: {row['BW_Inicio']} a {row['BW_Fin']} | TW: {row['TW_Inicio']} a {row['TW_Fin']}")
-
-    # ZONA ADMINISTRATIVA SEGURA
-    st.divider()
-    with st.expander("⚙️ Configuración Avanzada"):
-        if not st.session_state.get("is_admin", False):
-            pass_input = st.text_input("Contraseña de acceso", type="password")
-            if st.button("Validar Acceso"):
-                if pass_input == ADMIN_PASSWORD:
-                    st.session_state.is_admin = True
-                    st.rerun()
-                else:
-                    st.error("Acceso denegado")
-        else:
-            st.success("Modo Administrador Activo")
-            if st.button("Cerrar Sesión"):
-                st.session_state.is_admin = False
-                st.rerun()
-            
-            if st.button("🗑️ Purgar Base de Datos"):
-                if os.path.exists(PROMOS_FILE): os.remove(PROMOS_FILE)
-                st.warning("Datos eliminados.")
-                st.rerun()
-
-# =============================
-# TAB REGISTRAR / MODIFICAR
-# =============================
-with tab_registro:
-    st.subheader("Nueva Promoción")
-    with st.form("form_registro", clear_on_submit=True):
-        promo = st.text_input("Nombre de la Promoción")
-        hoteles = st.multiselect("Propiedades", PROPERTIES)
+# -----------------------------
+# TAB: NUEVA PROMO
+# -----------------------------
+with tab_new:
+    with st.form("nuevo_registro"):
+        col1, col2 = st.columns(2)
+        with col1:
+            n_promo = st.text_input("Nombre de la Promoción")
+            n_hotel = st.multiselect("Propiedades", PROPERTIES)
+            n_market = st.selectbox("Mercado / Market", MARKETS)
+        with col2:
+            n_rate = st.text_input("Rate Plan (ej. PROMO24)")
+            n_desc = st.number_input("Descuento (%)", 0, 100, step=5)
         
-        c1, c2 = st.columns(2)
-        bw_ini = c1.date_input("Booking Start")
-        bw_fin = c2.date_input("Booking End")
+        st.divider()
+        c3, c4, c5, c6 = st.columns(4)
+        bw_i = c3.date_input("BW Inicio")
+        bw_f = c4.date_input("BW Fin")
+        tw_i = c5.date_input("TW Inicio")
+        tw_f = c6.date_input("TW Fin")
         
-        c3, c4 = st.columns(2)
-        tw_ini = c3.date_input("Travel Start")
-        tw_fin = c4.date_input("Travel End")
-
-        submit = st.form_submit_button("Guardar")
-
-        if submit:
-            # VALIDACIÓN DE LÓGICA DE FECHAS
-            if bw_fin < bw_ini or tw_fin < tw_ini:
-                st.error("Error: La fecha de fin no puede ser anterior a la de inicio.")
-            elif not promo or not hoteles:
-                st.error("Por favor llena los campos obligatorios.")
+        n_notas = st.text_area("Notas / Restricciones")
+        
+        if st.form_submit_button("Registrar Promoción"):
+            if not n_promo or not n_hotel or not n_rate:
+                st.error("Faltan campos obligatorios.")
             else:
-                # Lógica de guardado...
-                df_existente = cargar_promos()
-                new_rows = [{"Hotel": h, "Promo": promo, "BW_Inicio": bw_ini, "BW_Fin": bw_fin, 
-                             "TW_Inicio": tw_ini, "TW_Fin": tw_fin, "Rate_Plan": "Estandar", "Descuento": 0} for h in hoteles]
-                df_final = pd.concat([df_existente, pd.DataFrame(new_rows)], ignore_index=True)
-                df_final.to_csv(PROMOS_FILE, index=False)
-                st.success("Promoción registrada con éxito.")
+                new_data = []
+                for h in n_hotel:
+                    new_data.append({
+                        "Hotel": h, "Promo": n_promo, "Market": n_market, 
+                        "Rate_Plan": n_rate, "Descuento": n_desc,
+                        "BW_Inicio": bw_i, "BW_Fin": bw_f, 
+                        "TW_Inicio": tw_i, "TW_Fin": tw_f, "Notas": n_notas
+                    })
+                df_updated = pd.concat([df, pd.DataFrame(new_data)], ignore_index=True)
+                df_updated.to_csv(PROMOS_FILE, index=False)
+                st.success(f"Registrada: {n_promo}")
+                st.rerun()

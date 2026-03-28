@@ -202,7 +202,7 @@ with tab_promos:
     )
 
     if st.button("Acceder", key="btn_admin_login"):
-        if password == "admin123":  # usa la clave que tú quieras
+        if password == "admin123":  # cambia la clave si quieres
             st.success("Acceso concedido")
 
             if st.button("🗑️ Borrar todas las promociones", key="btn_borrar_admin"):
@@ -214,8 +214,6 @@ with tab_promos:
                 st.success("Base eliminada. Recarga la app.")
         else:
             st.error("Contraseña incorrecta")
-
-
 # =============================
 # TAB REGISTRAR / MODIFICAR
 # =============================

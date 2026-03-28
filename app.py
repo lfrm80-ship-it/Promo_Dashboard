@@ -84,33 +84,16 @@ def generar_excel(df):
 # =============================
 # SIDEBAR
 # =============================
-with st.sidebar:
-    st.image("HIC.png", use_container_width=True)
-    st.divider()
-
-    # CONTEXTO (NO MENÚ)
-    env = st.selectbox(
-        "Entorno de trabajo",
-        ["QA", "Producción"],
-        help="QA: pruebas | Producción: datos oficiales"
+if env == "QA":
+    st.markdown(
+        '<div class="env-badge env-qa">QA</div>',
+        unsafe_allow_html=True
     )
-
-    PROMOS_FILE = PROMOS_PROD if env == "Producción" else PROMOS_QA
-
-    st.divider()
-
-    # NAVEGACIÓN REAL
-    menu_items = ["🔍 Vista rápida"]
-    if st.session_state.is_admin:
-        menu_items += ["📝 Editar promociones", "➕ Nueva promoción"]
-
-    menu = st.radio("Navegación", menu_items)
-
-    st.divider()
-
-    # ADMIN AL FINAL (como ya lo dejaste, perfecto)
-    st.caption("Acceso administrativo")
-    ...
+else:
+    st.markdown(
+        '<div class="env-badge env-prod">PRODUCCIÓN</div>',
+        unsafe_allow_html=True
+    )
 
 # =============================
 # HEADER

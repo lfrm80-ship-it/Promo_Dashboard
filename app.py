@@ -120,7 +120,7 @@ with st.sidebar:
     st.divider()
 
     # CONTEXTO (NO MENÚ)
-   env = st.radio(
+   (env = st.radio(
     "Entorno de trabajo",
     ["QA", "Producción"],
     horizontal=True,

@@ -188,9 +188,11 @@ with tab_promos:
             data=open(exportar_excel(df), "rb"),
             file_name="Promociones_Playa_Mujeres.xlsx"
         )
-   # =============================
-    # ADMINISTRACIÓN (DISCRETA)
+
     # =============================
+    # ADMINISTRACIÓN (SOLO AQUÍ)
+    # =============================
+    st.divider()
     admin_expander = st.expander("⚙️ Administración")
 
     with admin_expander:
@@ -206,7 +208,7 @@ with tab_promos:
         )
 
         if st.button("Acceder", key="btn_admin_login"):
-            if password == "admin123":  # cambia la clave si quieres
+            if password == "admin123":
                 st.session_state.is_admin = True
                 st.success("Acceso concedido")
             else:
@@ -233,7 +235,6 @@ with tab_registro:
     st.subheader("Registrar nueva promoción")
 
     promo = st.text_input("Nombre de la Promoción")
-
     hoteles = st.multiselect("Propiedad(es)", PROPERTIES)
 
     col_rp, col_desc = st.columns([2, 1])

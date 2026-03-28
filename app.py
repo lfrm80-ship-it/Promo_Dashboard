@@ -236,36 +236,46 @@ elif menu == "➕ Nueva promoción":
 
         notas = st.text_area("Notas / Restricciones")
 
-        # ✅ BOTÓN OBLIGATORIO DEL FORM
+        # ✅ BOTÓN DEL FORM (OBLIGATORIO)
         submit = st.form_submit_button("✅ Registrar promoción")
 
-        # =============================
-        # LÓGICA AL ENVIAR
-        # =============================
+        # ==================================================
+        # ✅ AQUÍ VAN TODAS LAS VALIDACIONES
+        # ==================================================
         if submit:
 
+            # Campos obligatorios
             if not promo or not hotels or not rate:
                 st.error("Completa los campos obligatorios (*)")
                 st.stop()
 
+            # BW lógica
             if bw_f < bw_i:
                 st.error("❌ BW Fin no puede ser menor que BW Inicio.")
                 st.stop()
 
+            # TW lógica
             if tw_f < tw_i:
                 st.error("❌ TW Fin no puede ser menor que TW Inicio.")
                 st.stop()
 
-            if not (bw_i <= tw_i <= bw_f and bw_i <= tw_f <= bw_f):
-                st.error("❌ El Travel Window debe estar dentro del Booking Window.")
+            # ✅ VALIDACIÓN CORRECTA TW dentro de BW
+            if tw_i < bw_i:
+                st.error("❌ TW Inicio no puede ser menor que BW Inicio.")
                 st.stop()
 
+            if tw_f > bw_f:
+                st.error("❌ TW Fin no puede ser mayor que BW Fin.")
+                st.stop()
+
+            # Guardar archivo
             file_path = ""
             if uploaded_file:
                 file_path = os.path.join(MEDIA_DIR, uploaded_file.name)
                 with open(file_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
 
+            # Crear registros
             rows = []
             for h in hotels:
                 rows.append({

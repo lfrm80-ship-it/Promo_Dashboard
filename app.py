@@ -5,10 +5,16 @@ import io
 from datetime import date
 
 # =============================
-# CONFIG
+# CONFIGURACIÓN GENERAL
 # =============================
-st.set_page_config(page_title="Master Record Playa Mujeres", layout="wide")
+st.set_page_config(
+    page_title="Master Record Playa Mujeres",
+    layout="wide"
+)
 
+# =============================
+# PASSWORD ADMIN (SECRETS)
+# =============================
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
 
 # =============================
@@ -18,17 +24,17 @@ if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
 # =============================
-# FILES
+# ARCHIVOS
 # =============================
 PROMOS_QA = "promociones_data.csv"
 PROMOS_PROD = "promociones_produccion.csv"
 
 # =============================
-# CONSTANTS
+# CONSTANTES
 # =============================
 PROPERTIES = [
     "DREPM - Dreams Playa Mujeres",
-    "SECPM - Secrets Playa Mujeres",
+    "SECPM - Secrets Playa Mujeres"
 ]
 
 MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
@@ -38,23 +44,48 @@ MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 # =============================
 st.markdown("""
 <style>
+.header-container {
+    text-align: center;
+    border-bottom: 1px solid #e6e9ef;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+}
+.main-title {
+    font-size: 22px;
+    font-weight: 700;
+}
+.sub-title {
+    font-size: 13px;
+    color: #6b6b6b;
+}
+.readonly-badge {
+    position: fixed;
+    top: 90px;
+    right: 22px;
+    background-color: #f1f5f9;
+    color: #334155;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid #cbd5e1;
+    z-index: 1000;
+}
 .env-badge {
     position: fixed;
-    top: 50px;
-    right: 24px;
+    top: 58px;
+    right: 22px;
     padding: 4px 10px;
     border-radius: 999px;
     font-size: 11px;
     font-weight: 700;
     z-index: 1000;
 }
-
 .env-qa {
     background-color: #e0f2fe;
     color: #075985;
     border: 1px solid #7dd3fc;
 }
-
 .env-prod {
     background-color: #fee2e2;
     color: #7f1d1d;
@@ -84,23 +115,65 @@ def generar_excel(df):
 # =============================
 # SIDEBAR
 # =============================
-if env == "QA":
-    st.markdown(
-        '<div class="env-badge env-qa">QA</div>',
-        unsafe_allow_html=True
+with st.sidebar:
+    st.image("HIC.png", use_container_width=True)
+    st.divider()
+
+    # CONTEXTO (NO MENÚ)
+    env = st.selectbox(
+        "Entorno de trabajo",
+        ["QA", "Producción"],
+        help="QA = pruebas | Producción = datos oficiales"
     )
-else:
-    st.markdown(
-        '<div class="env-badge env-prod">PRODUCCIÓN</div>',
-        unsafe_allow_html=True
-    )
+
+    PROMOS_FILE = PROMOS_PROD if env == "Producción" else PROMOS_QA
+
+    st.divider()
+
+    # NAVEGACIÓN
+    menu_items = ["🔍 Vista rápida"]
+    if st.session_state.is_admin:
+        menu_items += ["📝 Editar promociones", "➕ Nueva promoción"]
+
+    menu = st.radio("Navegación", menu_items)
+
+    st.divider()
+
+    # ADMIN AL FINAL (DISCRETO)
+    st.caption("Acceso administrativo")
+
+    if st.session_state.is_admin:
+        st.success("🟢 Modo ADMIN activo")
+        if st.button("Salir de modo Admin"):
+            st.session_state.is_admin = False
+            st.rerun()
+    else:
+        with st.expander("🔒 Cambiar a Admin"):
+            pwd = st.text_input("Contraseña Admin", type="password")
+            if st.button("Entrar"):
+                if pwd == ADMIN_PASSWORD:
+                    st.session_state.is_admin = True
+                    st.rerun()
+                else:
+                    st.error("Contraseña incorrecta")
 
 # =============================
 # HEADER
 # =============================
 st.markdown("""
-<h3 style="text-align:center;">📊 Master Record Playa Mujeres</h3>
+<div class="header-container">
+    <div class="main-title">📊 Master Record Playa Mujeres</div>
+    <div class="sub-title">Herramienta oficial de control de promociones</div>
+</div>
 """, unsafe_allow_html=True)
+
+# =============================
+# ENVIRONMENT BADGE
+# =============================
+if env == "QA":
+    st.markdown('<div class="env-badge env-qa">QA</div>', unsafe_allow_html=True)
+else:
+    st.markdown('<div class="env-badge env-prod">PRODUCCIÓN</div>', unsafe_allow_html=True)
 
 # =============================
 # READ ONLY BADGE
@@ -114,57 +187,113 @@ if not st.session_state.is_admin:
 df = cargar_promos(PROMOS_FILE)
 
 # =============================
-# VISTA
+# VISTA RÁPIDA
 # =============================
 if menu == "🔍 Vista rápida":
 
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
+        # VIEWER VE SOLO ACTIVAS
         if not st.session_state.is_admin:
             today = date.today()
-            df = df[(df["TW_Inicio"] <= today) & (df["TW_Fin"] >= today)]
+            df = df[
+                (df["TW_Inicio"] <= today) &
+                (df["TW_Fin"] >= today)
+            ]
 
-        c1, c2 = st.columns([4,1])
+        c1, c2 = st.columns([4, 1])
         with c1:
-            search = st.text_input("", placeholder="Buscar promoción...")
+            search = st.text_input("", placeholder="Buscar por promo, hotel, market o rate plan…")
         with c2:
-            st.download_button("📥 Excel", generar_excel(df), file_name="MasterRecord.xlsx")
+            st.download_button(
+                "📥 Exportar Excel",
+                generar_excel(df),
+                file_name=f"MasterRecord_{date.today()}.xlsx",
+                use_container_width=True
+            )
 
-        mask = df.astype(str).apply(lambda x: x.str.contains(search, case=False, na=False)).any(axis=1)
-        st.dataframe(df[mask], use_container_width=True, hide_index=True)
+        mask = df.astype(str).apply(
+            lambda x: x.str.contains(search, case=False, na=False)
+        ).any(axis=1)
+
+        st.dataframe(
+            df[mask],
+            use_container_width=True,
+            hide_index=True
+        )
 
 # =============================
-# EDITAR
+# EDITAR PROMOS (ADMIN)
 # =============================
 elif menu == "📝 Editar promociones":
-    edited = st.data_editor(df, use_container_width=True, hide_index=True)
-    if st.button("Guardar cambios"):
+
+    edited = st.data_editor(
+        df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    if st.button("💾 Guardar cambios", use_container_width=True):
         edited.to_csv(PROMOS_FILE, index=False)
-        st.success("Cambios guardados")
+        st.success("Cambios guardados correctamente ✅")
         st.rerun()
 
 # =============================
-# NUEVA
+# NUEVA PROMO (ADMIN)
 # =============================
 elif menu == "➕ Nueva promoción":
-    with st.form("new"):
-        promo = st.text_input("Promoción")
-        hotels = st.multiselect("Hotel", PROPERTIES)
-        rate = st.text_input("Rate Plan")
-        discount = st.number_input("Descuento %", 0, 100)
 
-        submit = st.form_submit_button("Registrar")
+    with st.form("form_nueva_promo", clear_on_submit=True):
 
-        if submit and promo and hotels:
-            rows = [{
-                "Hotel": h,
-                "Promo": promo,
-                "Rate_Plan": rate,
-                "Descuento": discount
-            } for h in hotels]
+        col1, col2 = st.columns(2)
 
-            df_final = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
-            df_final.to_csv(PROMOS_FILE, index=False)
-            st.success("Promoción creada")
-            st.rerun()
+        with col1:
+            promo = st.text_input("Nombre de la promoción *")
+            hotels = st.multiselect("Propiedad(es) *", PROPERTIES)
+            market = st.selectbox("Market", MARKETS)
+
+        with col2:
+            rate = st.text_input("Rate Plan *")
+            discount = st.number_input("Descuento (%)", 0, 100, step=1)
+
+        st.divider()
+
+        c3, c4, c5, c6 = st.columns(4)
+        with c3:
+            bw_i = st.date_input("BW Inicio")
+        with c4:
+            bw_f = st.date_input("BW Fin")
+        with c5:
+            tw_i = st.date_input("TW Inicio")
+        with c6:
+            tw_f = st.date_input("TW Fin")
+
+        notes = st.text_area("Notas / Restricciones")
+
+        submit = st.form_submit_button("✅ Registrar promoción", use_container_width=True)
+
+        if submit:
+            if not promo or not hotels or not rate:
+                st.error("Completa los campos obligatorios (*)")
+            else:
+                rows = []
+                for h in hotels:
+                    rows.append({
+                        "Hotel": h,
+                        "Promo": promo,
+                        "Market": market,
+                        "Rate_Plan": rate,
+                        "Descuento": discount,
+                        "BW_Inicio": bw_i,
+                        "BW_Fin": bw_f,
+                        "TW_Inicio": tw_i,
+                        "TW_Fin": tw_f,
+                        "Notas": notes
+                    })
+
+                df_final = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+                df_final.to_csv(PROMOS_FILE, index=False)
+
+                st.success("🎉 Promoción registrada correctamente")
+                st.rerun()

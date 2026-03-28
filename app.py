@@ -11,6 +11,9 @@ st.set_page_config(page_title="Administrador de Promociones", layout="wide")
 PROMOS_FILE = "promociones_data.csv"
 PRODUCCION_FILE = "promociones_produccion.csv"
 
+MEDIA_DIR = "media"
+os.makedirs(MEDIA_DIR, exist_ok=True)
+
 PROPERTIES = [
     "DREPM - Dreams Playa Mujeres",
     "SECPM - Secrets Playa Mujeres"

@@ -212,6 +212,7 @@ elif menu == "➕ Nueva promoción":
             promo = st.text_input("Promoción *")
             hotels = st.multiselect("Hotel *", PROPERTIES)
             market = st.selectbox("Market", MARKETS)
+
         with col2:
             rate = st.text_input("Rate Plan *")
             discount = st.number_input("Descuento %", 0, 100)
@@ -219,3 +220,70 @@ elif menu == "➕ Nueva promoción":
         st.divider()
 
         c3, c4, c5, c6 = st.columns(4)
+        with c3:
+            bw_i = st.date_input("BW Inicio")
+        with c4:
+            bw_f = st.date_input("BW Fin")
+        with c5:
+            tw_i = st.date_input("TW Inicio")
+        with c6:
+            tw_f = st.date_input("TW Fin")
+
+        uploaded_file = st.file_uploader(
+            "Adjuntar flyer / PDF (opcional)",
+            ["pdf", "png", "jpg", "jpeg"]
+        )
+
+        notas = st.text_area("Notas / Restricciones")
+
+        # ✅ BOTÓN OBLIGATORIO DEL FORM
+        submit = st.form_submit_button("✅ Registrar promoción")
+
+        # =============================
+        # LÓGICA AL ENVIAR
+        # =============================
+        if submit:
+
+            if not promo or not hotels or not rate:
+                st.error("Completa los campos obligatorios (*)")
+                st.stop()
+
+            if bw_f < bw_i:
+                st.error("❌ BW Fin no puede ser menor que BW Inicio.")
+                st.stop()
+
+            if tw_f < tw_i:
+                st.error("❌ TW Fin no puede ser menor que TW Inicio.")
+                st.stop()
+
+            if not (bw_i <= tw_i <= bw_f and bw_i <= tw_f <= bw_f):
+                st.error("❌ El Travel Window debe estar dentro del Booking Window.")
+                st.stop()
+
+            file_path = ""
+            if uploaded_file:
+                file_path = os.path.join(MEDIA_DIR, uploaded_file.name)
+                with open(file_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+
+            rows = []
+            for h in hotels:
+                rows.append({
+                    "Hotel": h,
+                    "Promo": promo,
+                    "Market": market,
+                    "Rate_Plan": rate,
+                    "Descuento": discount,
+                    "BW_Inicio": bw_i,
+                    "BW_Fin": bw_f,
+                    "TW_Inicio": tw_i,
+                    "TW_Fin": tw_f,
+                    "Archivo_Path": file_path,
+                    "Notas": notas
+                })
+
+            df_final = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+            df_final.to_csv(PROMOS_FILE, index=False)
+
+            st.success("🎉 Promoción registrada correctamente")
+            st.rerun()

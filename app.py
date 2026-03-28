@@ -14,6 +14,9 @@ st.set_page_config(
 
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
 
+# =============================
+# SESSION STATE
+# =============================
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
@@ -21,6 +24,9 @@ PROMOS_FILE = "promociones_produccion.csv"
 MEDIA_DIR = "media"
 os.makedirs(MEDIA_DIR, exist_ok=True)
 
+# =============================
+# CONSTANTES
+# =============================
 PROPERTIES = [
     "DREPM - Dreams Playa Mujeres",
     "SECPM - Secrets Playa Mujeres"
@@ -33,17 +39,6 @@ MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 # =============================
 st.markdown("""
 <style>
-.badge {
-    padding: 4px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
-    color: white;
-}
-.activa { background-color: #16a34a; }
-.futura { background-color: #f59e0b; }
-.expirada { background-color: #dc2626; }
-
 .readonly {
     position: fixed;
     top: 90px;
@@ -55,6 +50,9 @@ st.markdown("""
     font-weight: 600;
     border: 1px solid #cbd5e1;
 }
+.activa { color: green; font-weight: 600; }
+.futura { color: orange; font-weight: 600; }
+.expirada { color: red; font-weight: 600; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -65,22 +63,20 @@ def cargar_promos():
     if os.path.exists(PROMOS_FILE):
         df = pd.read_csv(PROMOS_FILE)
 
-        # Convertir fechas SOLO si existen
-        for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
-            if c in df.columns:
-                df[c] = pd.to_datetime(df[c], errors="coerce").dt.date
-
+        for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
         return df
 
     return pd.DataFrame()
 
 def generar_excel(df):
-    out = io.BytesIO()
-    with pd.ExcelWriter(out, engine="xlsxwriter") as writer:
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False)
-    return out.getvalue()
+    return output.getvalue()
 
-def calcular_estado(row):
+def estado_promo(row):
     hoy = date.today()
     tw_i = row.get("TW_Inicio")
     tw_f = row.get("TW_Fin")
@@ -102,22 +98,22 @@ with st.sidebar:
     st.image("HIC.png", use_container_width=True)
     st.divider()
 
-    menu = st.radio(
-        "Navegación",
-        ["🔍 Vista rápida"] +
-        (["📝 Editar promociones", "➕ Nueva promoción"] if st.session_state.is_admin else [])
-    )
+    menu_items = ["🔍 Vista rápida"]
+    if st.session_state.is_admin:
+        menu_items += ["➕ Nueva promoción"]
+
+    menu = st.radio("Navegación", menu_items)
 
     st.divider()
     st.caption("Acceso administrativo")
 
     if st.session_state.is_admin:
-        st.success("🟢 Modo ADMIN activo")
+        st.success("🟢 Modo ADMIN")
         if st.button("Salir de Admin"):
             st.session_state.is_admin = False
             st.rerun()
     else:
-        with st.expander("🔒 Cambiar a Admin"):
+        with st.expander("🔒 Entrar como Admin"):
             pwd = st.text_input("Contraseña", type="password")
             if st.button("Entrar"):
                 if pwd == ADMIN_PASSWORD:
@@ -129,10 +125,7 @@ with st.sidebar:
 # =============================
 # HEADER
 # =============================
-st.markdown(
-    "<h3 style='text-align:center;'>📊 Master Record Playa Mujeres</h3>",
-    unsafe_allow_html=True
-)
+st.markdown("<h3 style='text-align:center;'>📊 Master Record Playa Mujeres</h3>", unsafe_allow_html=True)
 
 if not st.session_state.is_admin:
     st.markdown("<div class='readonly'>READ ONLY</div>", unsafe_allow_html=True)
@@ -147,23 +140,16 @@ if menu == "🔍 Vista rápida":
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
-        df["Estado"] = df.apply(calcular_estado, axis=1)
+        df["Estado"] = df.apply(estado_promo, axis=1)
 
         estados = ["Activa", "Futura", "Expirada"]
         default = ["Activa"] if not st.session_state.is_admin else estados
 
-        filtro_estado = st.multiselect(
-            "Estado de la promoción",
-            estados,
-            default=default
-        )
+        filtro = st.multiselect("Estado", estados, default=default)
+        df = df[df["Estado"].isin(filtro)]
 
-        df = df[df["Estado"].isin(filtro_estado)]
-
-        search = st.text_input("Buscar…")
-        mask = df.astype(str).apply(
-            lambda x: x.str.contains(search, case=False, na=False)
-        ).any(axis=1)
+        search = st.text_input("Buscar promoción…")
+        mask = df.astype(str).apply(lambda x: x.str.contains(search, case=False, na=False)).any(axis=1)
 
         st.dataframe(
             df[mask],
@@ -173,32 +159,6 @@ if menu == "🔍 Vista rápida":
                 "Archivo_Path": st.column_config.LinkColumn("Flyer / PDF")
             }
         )
-
-        # =============================
-        # PREVISUALIZACIÓN
-        # =============================
-        if not df[mask].empty and "Archivo_Path" in df.columns:
-            st.divider()
-            st.subheader("📎 Vista previa")
-
-            idx = st.selectbox(
-                "Selecciona una promoción",
-                df[mask].index,
-                format_func=lambda i: df.loc[i, "Promo"]
-            )
-
-            archivo = df.loc[idx, "Archivo_Path"]
-
-            if isinstance(archivo, str) and archivo and os.path.exists(archivo):
-                if archivo.lower().endswith(".pdf"):
-                    st.markdown(
-                        f'<iframe src="{archivo}" width="100%" height="600"></iframe>',
-                        unsafe_allow_html=True
-                    )
-                else:
-                    st.image(archivo, use_container_width=True)
-            else:
-                st.info("Esta promoción no tiene archivo adjunto.")
 
 # =============================
 # NUEVA PROMO (ADMIN)
@@ -212,10 +172,9 @@ elif menu == "➕ Nueva promoción":
             promo = st.text_input("Promoción *")
             hotels = st.multiselect("Hotel *", PROPERTIES)
             market = st.selectbox("Market", MARKETS)
-
         with col2:
             rate = st.text_input("Rate Plan *")
-            discount = st.number_input("Descuento %", 0, 100)
+            discount = st.number_input("Descuento (%)", 0, 100)
 
         st.divider()
 
@@ -236,37 +195,29 @@ elif menu == "➕ Nueva promoción":
 
         notas = st.text_area("Notas / Restricciones")
 
-        # ✅ BOTÓN DEL FORM
         submit = st.form_submit_button("✅ Registrar promoción")
 
-        # =============================
-        # LÓGICA DE GUARDADO
-        # =============================
         if submit:
 
-            # Campos obligatorios
+            # ✅ Validaciones mínimas y CORRECTAS
             if not promo or not hotels or not rate:
-                st.error("Completa los campos obligatorios (*)")
+                st.error("Completa los campos obligatorios.")
                 st.stop()
 
-            # Booking Window válido
             if bw_f < bw_i:
-                st.error("❌ BW Fin no puede ser menor que BW Inicio.")
+                st.error("BW Fin no puede ser menor que BW Inicio.")
                 st.stop()
 
-            # Travel Window válido
             if tw_f < tw_i:
-                st.error("❌ TW Fin no puede ser menor que TW Inicio.")
+                st.error("TW Fin no puede ser menor que TW Inicio.")
                 st.stop()
 
-            # Guardar archivo
             file_path = ""
             if uploaded_file:
                 file_path = os.path.join(MEDIA_DIR, uploaded_file.name)
                 with open(file_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
 
-            # Crear registros
             rows = []
             for h in hotels:
                 rows.append({
@@ -288,25 +239,3 @@ elif menu == "➕ Nueva promoción":
 
             st.success("🎉 Promoción registrada correctamente")
             st.rerun()
-# =============================
-# VALIDAR FECHAS (ROBUSTO)
-# =============================
-if bw_i is None or bw_f is None or tw_i is None or tw_f is None:
-    st.error("❌ Todas las fechas deben estar completas.")
-    st.stop()
-
-# Normalizar tipos (blindaje extra)
-bw_i = pd.to_datetime(bw_i).date()
-bw_f = pd.to_datetime(bw_f).date()
-tw_i = pd.to_datetime(tw_i).date()
-tw_f = pd.to_datetime(tw_f).date()
-
-# Booking Window
-if bw_f < bw_i:
-    st.error("❌ BW Fin no puede ser menor que BW Inicio.")
-    st.stop()
-
-# Travel Window
-if tw_f < tw_i:
-    st.error("❌ TW Fin no puede ser menor que TW Inicio.")
-    st.stop()

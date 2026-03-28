@@ -188,44 +188,44 @@ with tab_promos:
             data=open(exportar_excel(df), "rb"),
             file_name="Promociones_Playa_Mujeres.xlsx"
         )
-    # =============================
+   # =============================
     # ADMINISTRACIÓN (DISCRETA)
     # =============================
-    with st.expander("⚙️ Administración"):
-    st.warning("Zona administrativa – usar con cuidado")
+    admin_expander = st.expander("⚙️ Administración")
 
-    # Inicializar estado admin
-    if "is_admin" not in st.session_state:
-        st.session_state.is_admin = False
+    with admin_expander:
+        st.warning("Zona administrativa – usar con cuidado")
 
-    password = st.text_input(
-        "Contraseña de administrador",
-        type="password",
-        key="admin_pass"
-    )
-
-    if st.button("Acceder", key="btn_admin_login"):
-        if password == "admin123":  # cambia la clave si quieres
-            st.session_state.is_admin = True
-            st.success("Acceso concedido")
-        else:
-            st.error("Contraseña incorrecta")
-
-    # UNA VEZ AUTENTICADO, ya no depende del botón "Acceder"
-    if st.session_state.is_admin:
-        st.divider()
-        st.warning("Acciones críticas")
-
-        if st.button("🗑️ Borrar todas las promociones", key="btn_borrar_admin"):
-            if os.path.exists(PROMOS_FILE):
-                os.remove(PROMOS_FILE)
-            if os.path.exists(PRODUCCION_FILE):
-                os.remove(PRODUCCION_FILE)
-
-            st.success("✅ Base eliminada correctamente")
+        if "is_admin" not in st.session_state:
             st.session_state.is_admin = False
-            st.rerun()
-  
+
+        password = st.text_input(
+            "Contraseña de administrador",
+            type="password",
+            key="admin_pass"
+        )
+
+        if st.button("Acceder", key="btn_admin_login"):
+            if password == "admin123":  # cambia la clave si quieres
+                st.session_state.is_admin = True
+                st.success("Acceso concedido")
+            else:
+                st.error("Contraseña incorrecta")
+
+        if st.session_state.is_admin:
+            st.divider()
+            st.warning("Acciones críticas")
+
+            if st.button("🗑️ Borrar todas las promociones", key="btn_borrar_admin"):
+                if os.path.exists(PROMOS_FILE):
+                    os.remove(PROMOS_FILE)
+                if os.path.exists(PRODUCCION_FILE):
+                    os.remove(PRODUCCION_FILE)
+
+                st.success("✅ Base eliminada correctamente")
+                st.session_state.is_admin = False
+                st.rerun()
+
 # =============================
 # TAB REGISTRAR / MODIFICAR
 # =============================

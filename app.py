@@ -245,55 +245,17 @@ elif menu == "➕ Nueva promoción":
         if submit:
 
             # Campos obligatorios
-            if not promo or not hotels or not rate:
-                st.error("Completa los campos obligatorios (*)")
-                st.stop()
+if not promo or not hotels or not rate:
+    st.error("Completa los campos obligatorios (*)")
+    st.stop()
 
-            # BW lógica
-            if bw_f < bw_i:
-                st.error("❌ BW Fin no puede ser menor que BW Inicio.")
-                st.stop()
+# Booking Window válido
+if bw_f < bw_i:
+    st.error("❌ BW Fin no puede ser menor que BW Inicio.")
+    st.stop()
 
-            # TW lógica
-            if tw_f < tw_i:
-                st.error("❌ TW Fin no puede ser menor que TW Inicio.")
-                st.stop()
-
-            # ✅ VALIDACIÓN CORRECTA TW dentro de BW
-            if tw_i < bw_i:
-                st.error("❌ TW Inicio no puede ser menor que BW Inicio.")
-                st.stop()
-
-            if tw_f > bw_f:
-                st.error("❌ TW Fin no puede ser mayor que BW Fin.")
-                st.stop()
-
-            # Guardar archivo
-            file_path = ""
-            if uploaded_file:
-                file_path = os.path.join(MEDIA_DIR, uploaded_file.name)
-                with open(file_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-
-            # Crear registros
-            rows = []
-            for h in hotels:
-                rows.append({
-                    "Hotel": h,
-                    "Promo": promo,
-                    "Market": market,
-                    "Rate_Plan": rate,
-                    "Descuento": discount,
-                    "BW_Inicio": bw_i,
-                    "BW_Fin": bw_f,
-                    "TW_Inicio": tw_i,
-                    "TW_Fin": tw_f,
-                    "Archivo_Path": file_path,
-                    "Notas": notas
-                })
-
-            df_final = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
-            df_final.to_csv(PROMOS_FILE, index=False)
-
-            st.success("🎉 Promoción registrada correctamente")
-            st.rerun()
+# Travel Window válido
+if tw_f < tw_i:
+    st.error("❌ TW Fin no puede ser menor que TW Inicio.")
+    st.stop()
+``

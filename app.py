@@ -14,9 +14,6 @@ st.set_page_config(
 
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
 
-# =============================
-# SESSION STATE
-# =============================
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
@@ -66,12 +63,12 @@ def cargar_promos():
     return pd.DataFrame()
 
 def generar_excel(df):
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False)
-    return output.getvalue()
+    return buffer.getvalue()
 
-def estado_promo(row):
+def calcular_estado(row):
     hoy = date.today()
     tw_i = row.get("TW_Inicio")
     tw_f = row.get("TW_Fin")
@@ -92,11 +89,11 @@ with st.sidebar:
     st.image("HIC.png", use_container_width=True)
     st.divider()
 
-    menu_items = ["🔍 Vista rápida"]
+    opciones_menu = ["🔍 Vista rápida"]
     if st.session_state.is_admin:
-        menu_items.append("➕ Nueva promoción")
+        opciones_menu.append("➕ Nueva promoción")
 
-    menu = st.radio("Navegación", menu_items)
+    menu = st.radio("Navegación", opciones_menu)
 
     st.divider()
     st.caption("Acceso administrativo")
@@ -130,66 +127,60 @@ if not st.session_state.is_admin:
 df = cargar_promos()
 
 # =============================
-# PREVIEW + ACCIONES ADMIN
+# VISTA RÁPIDA
 # =============================
-if not df_view.empty:
-    st.divider()
-    st.subheader("📎 Vista previa")
+if menu == "🔍 Vista rápida":
 
-    idx = st.selectbox(
-        "Selecciona una promoción",
-        df_view.index,
-        format_func=lambda i: df_view.loc[i, "Promo"]
-    )
-
-    archivo = df_view.loc[idx, "Archivo_Path"]
-
-    if isinstance(archivo, str) and archivo and os.path.exists(archivo):
-        if archivo.lower().endswith(".pdf"):
-            with open(archivo, "rb") as f:
-                st.download_button(
-                    "📥 Descargar PDF",
-                    f,
-                    file_name=os.path.basename(archivo)
-                )
-        else:
-            st.image(archivo, use_container_width=True)
+    if df.empty:
+        st.info("No hay promociones registradas.")
     else:
-        st.info("Esta promoción no tiene archivo adjunto.")
+        df = df.copy()
+        df["Estado"] = df.apply(calcular_estado, axis=1)
 
-    # ✅ ACCIONES ADMIN
-    if st.session_state.is_admin:
-        st.divider()
-        st.subheader("🛠 Acciones administrativas")
+        estados = ["Activa", "Futura", "Expirada"]
+        default = ["Activa"] if not st.session_state.is_admin else estados
 
-        action = st.radio(
-            "Acción",
-            ["Eliminar"],
-            horizontal=True
+        filtro_estado = st.multiselect("Estado", estados, default=default)
+        df_filtrado = df[df["Estado"].isin(filtro_estado)]
+
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            search = st.text_input("Buscar promoción…")
+        with col2:
+            st.download_button(
+                "📥 Descargar Excel",
+                data=generar_excel(df_filtrado),
+                file_name=f"MasterRecord_{date.today()}.xlsx",
+                use_container_width=True
+            )
+
+        if search:
+            df_filtrado = df_filtrado[
+                df_filtrado.astype(str)
+                .apply(lambda x: x.str.contains(search, case=False, na=False))
+                .any(axis=1)
+            ]
+
+        st.dataframe(
+            df_filtrado,
+            use_container_width=True,
+            hide_index=True
         )
 
-        if action == "Eliminar":
-            st.warning("⚠️ Esta acción no se puede deshacer")
-            if st.checkbox("Confirmar eliminación"):
-                if st.button("Eliminar promoción"):
-                    df = df.drop(idx)
-                    df.to_csv(PROMOS_FILE, index=False)
-                    st.success("Promoción eliminada")
-                    st.rerun()
         # =============================
         # PREVIEW + ACCIONES ADMIN
         # =============================
-        if not df_view.empty:
+        if not df_filtrado.empty:
             st.divider()
             st.subheader("📎 Vista previa")
 
             idx = st.selectbox(
                 "Selecciona una promoción",
-                df_view.index,
-                format_func=lambda i: df_view.loc[i, "Promo"]
+                df_filtrado.index,
+                format_func=lambda i: df_filtrado.loc[i, "Promo"]
             )
 
-            archivo = df_view.loc[idx, "Archivo_Path"]
+            archivo = df_filtrado.loc[idx, "Archivo_Path"]
 
             if isinstance(archivo, str) and archivo and os.path.exists(archivo):
                 if archivo.lower().endswith(".pdf"):
@@ -211,63 +202,16 @@ if not df_view.empty:
                 st.divider()
                 st.subheader("🛠 Acciones administrativas")
 
-                action = st.radio(
-                    "Acción",
-                    ["Editar", "Extender vigencia", "Eliminar"],
-                    horizontal=True
-                )
-
-                if action == "Eliminar":
-                    st.warning("⚠️ Esta acción no se puede deshacer")
+                if st.button("🗑 Eliminar promoción"):
+                    st.warning("Esta acción no se puede deshacer.")
                     if st.checkbox("Confirmar eliminación"):
-                        if st.button("Eliminar promoción"):
-                            df = df.drop(idx)
-                            df.to_csv(PROMOS_FILE, index=False)
-                            st.success("Promoción eliminada")
-                            st.rerun()
+                        df = df.drop(idx)
+                        df.to_csv(PROMOS_FILE, index=False)
+                        st.success("Promoción eliminada correctamente")
+                        st.rerun()
 
-        # =============================
-        # VISTA PREVIA DE ARCHIVOS
-        # =============================
-        st.divider()
-        st.subheader("📎 Vista previa")
-
-        if not df[mask].empty and "Archivo_Path" in df.columns:
-            idx = st.selectbox(
-                "Selecciona una promoción",
-                df[mask].index,
-                format_func=lambda i: df.loc[i, "Promo"]
-            )
-
-            archivo = df.loc[idx, "Archivo_Path"]
-
-            if isinstance(archivo, str) and archivo and os.path.exists(archivo):
-                if archivo.lower().endswith(".pdf"):
-                    with open(archivo, "rb") as f:
-                        st.download_button(
-                            "📥 Descargar PDF",
-                            f,
-                            file_name=os.path.basename(archivo)
-                        )
-                else:
-                    st.image(archivo, use_container_width=True)
-            else:
-                st.info("Esta promoción no tiene archivo adjunto.")
 # =============================
-# ACCIONES ADMIN (VISTA RÁPIDA)
-# =============================
-if st.session_state.is_admin and not df[mask].empty:
-
-    st.divider()
-    st.subheader("🛠 Acciones administrativas")
-
-    action = st.radio(
-        "Selecciona una acción",
-        ["Editar", "Extender vigencia", "Eliminar"],
-        horizontal=True
-    )
-# =============================
-# NUEVA PROMO (ADMIN)
+# NUEVA PROMOCIÓN
 # =============================
 elif menu == "➕ Nueva promoción":
 
@@ -294,7 +238,7 @@ elif menu == "➕ Nueva promoción":
         with c6:
             tw_f = st.date_input("TW Fin")
 
-        uploaded_file = st.file_uploader(
+        archivo = st.file_uploader(
             "Adjuntar flyer / PDF (opcional)",
             ["pdf", "png", "jpg", "jpeg"]
         )
@@ -317,11 +261,11 @@ elif menu == "➕ Nueva promoción":
                 st.error("TW Fin no puede ser menor que TW Inicio.")
                 st.stop()
 
-            file_path = ""
-            if uploaded_file:
-                file_path = os.path.join(MEDIA_DIR, uploaded_file.name)
-                with open(file_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
+            archivo_path = ""
+            if archivo:
+                archivo_path = os.path.join(MEDIA_DIR, archivo.name)
+                with open(archivo_path, "wb") as f:
+                    f.write(archivo.getbuffer())
 
             rows = []
             for h in hotels:
@@ -335,12 +279,12 @@ elif menu == "➕ Nueva promoción":
                     "BW_Fin": bw_f,
                     "TW_Inicio": tw_i,
                     "TW_Fin": tw_f,
-                    "Archivo_Path": file_path,
+                    "Archivo_Path": archivo_path,
                     "Notas": notas
                 })
 
-            df_final = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
-            df_final.to_csv(PROMOS_FILE, index=False)
+            df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+            df.to_csv(PROMOS_FILE, index=False)
 
             st.success("🎉 Promoción registrada correctamente")
             st.rerun()

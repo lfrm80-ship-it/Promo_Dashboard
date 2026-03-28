@@ -182,18 +182,22 @@ if menu == "🔍 Vista rápida":
 
             archivo = df_filtrado.loc[idx, "Archivo_Path"]
 
-            if isinstance(archivo, str) and archivo and os.path.exists(archivo):
-                if archivo.lower().endswith(".pdf"):
-                    with open(archivo, "rb") as f:
-                        st.download_button(
-                            "📥 Descargar PDF",
-                            f,
-                            file_name=os.path.basename(archivo)
-                        )
-                else:
-                    st.image(archivo, use_container_width=True)
-            else:
-                st.info("Esta promoción no tiene archivo adjunto.")
+if isinstance(archivo, str) and archivo and os.path.exists(archivo):
+
+    if st.button("👁 Ver archivo"):
+        if archivo.lower().endswith(".pdf"):
+            with open(archivo, "rb") as f:
+                st.download_button(
+                    "📥 Descargar PDF",
+                    f,
+                    file_name=os.path.basename(archivo)
+                )
+        else:
+            st.image(archivo, use_container_width=True)
+
+else:
+    st.info("Esta promoción no tiene archivo adjunto.")
+
 
             # =============================
             # ACCIONES ADMIN

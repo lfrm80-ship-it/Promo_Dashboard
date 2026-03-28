@@ -119,19 +119,23 @@ with st.sidebar:
     st.image("HIC.png", use_container_width=True)
     st.divider()
 
+    # =============================
     # CONTEXTO (NO MENÚ)
-   (env = st.radio(
-    "Entorno de trabajo",
-    ["QA", "Producción"],
-    horizontal=True,
-    help="QA = pruebas | Producción = datos oficiales"
-)
+    # =============================
+    env = st.radio(
+        "Entorno de trabajo",
+        ["QA", "Producción"],
+        horizontal=True,
+        help="QA = pruebas | Producción = datos oficiales"
+    )
 
     PROMOS_FILE = PROMOS_PROD if env == "Producción" else PROMOS_QA
 
     st.divider()
 
+    # =============================
     # NAVEGACIÓN
+    # =============================
     menu_items = ["🔍 Vista rápida"]
     if st.session_state.is_admin:
         menu_items += ["📝 Editar promociones", "➕ Nueva promoción"]
@@ -140,7 +144,9 @@ with st.sidebar:
 
     st.divider()
 
-    # ADMIN AL FINAL (DISCRETO)
+    # =============================
+    # ADMIN (AL FINAL)
+    # =============================
     st.caption("Acceso administrativo")
 
     if st.session_state.is_admin:

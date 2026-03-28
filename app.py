@@ -35,7 +35,7 @@ PROPERTIES = [
 MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 
 # =============================
-# CSS
+# ESTILOS
 # =============================
 st.markdown("""
 <style>
@@ -50,9 +50,6 @@ st.markdown("""
     font-weight: 600;
     border: 1px solid #cbd5e1;
 }
-.activa { color: green; font-weight: 600; }
-.futura { color: orange; font-weight: 600; }
-.expirada { color: red; font-weight: 600; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -62,12 +59,10 @@ st.markdown("""
 def cargar_promos():
     if os.path.exists(PROMOS_FILE):
         df = pd.read_csv(PROMOS_FILE)
-
         for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
         return df
-
     return pd.DataFrame()
 
 def generar_excel(df):
@@ -83,7 +78,6 @@ def estado_promo(row):
 
     if pd.isna(tw_i) or pd.isna(tw_f):
         return "Expirada"
-
     if tw_i <= hoy <= tw_f:
         return "Activa"
     elif hoy < tw_i:
@@ -100,7 +94,7 @@ with st.sidebar:
 
     menu_items = ["🔍 Vista rápida"]
     if st.session_state.is_admin:
-        menu_items += ["➕ Nueva promoción"]
+        menu_items.append("➕ Nueva promoción")
 
     menu = st.radio("Navegación", menu_items)
 
@@ -125,7 +119,10 @@ with st.sidebar:
 # =============================
 # HEADER
 # =============================
-st.markdown("<h3 style='text-align:center;'>📊 Master Record Playa Mujeres</h3>", unsafe_allow_html=True)
+st.markdown(
+    "<h3 style='text-align:center;'>📊 Master Record Playa Mujeres</h3>",
+    unsafe_allow_html=True
+)
 
 if not st.session_state.is_admin:
     st.markdown("<div class='readonly'>READ ONLY</div>", unsafe_allow_html=True)
@@ -145,20 +142,58 @@ if menu == "🔍 Vista rápida":
         estados = ["Activa", "Futura", "Expirada"]
         default = ["Activa"] if not st.session_state.is_admin else estados
 
-        filtro = st.multiselect("Estado", estados, default=default)
-        df = df[df["Estado"].isin(filtro)]
+        filtro_estado = st.multiselect("Estado", estados, default=default)
 
-        search = st.text_input("Buscar promoción…")
-        mask = df.astype(str).apply(lambda x: x.str.contains(search, case=False, na=False)).any(axis=1)
+        df = df[df["Estado"].isin(filtro_estado)]
+
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            search = st.text_input("Buscar promoción…")
+        with col2:
+            st.download_button(
+                "📥 Descargar Excel",
+                data=generar_excel(df),
+                file_name=f"MasterRecord_{date.today()}.xlsx",
+                use_container_width=True
+            )
+
+        mask = df.astype(str).apply(
+            lambda x: x.str.contains(search, case=False, na=False)
+        ).any(axis=1)
 
         st.dataframe(
             df[mask],
             use_container_width=True,
-            hide_index=True,
-            column_config={
-                "Archivo_Path": st.column_config.LinkColumn("Flyer / PDF")
-            }
+            hide_index=True
         )
+
+        # =============================
+        # VISTA PREVIA DE ARCHIVOS
+        # =============================
+        st.divider()
+        st.subheader("📎 Vista previa")
+
+        if not df[mask].empty and "Archivo_Path" in df.columns:
+            idx = st.selectbox(
+                "Selecciona una promoción",
+                df[mask].index,
+                format_func=lambda i: df.loc[i, "Promo"]
+            )
+
+            archivo = df.loc[idx, "Archivo_Path"]
+
+            if isinstance(archivo, str) and archivo and os.path.exists(archivo):
+                if archivo.lower().endswith(".pdf"):
+                    with open(archivo, "rb") as f:
+                        st.download_button(
+                            "📥 Descargar PDF",
+                            f,
+                            file_name=os.path.basename(archivo)
+                        )
+                else:
+                    st.image(archivo, use_container_width=True)
+            else:
+                st.info("Esta promoción no tiene archivo adjunto.")
 
 # =============================
 # NUEVA PROMO (ADMIN)
@@ -199,7 +234,6 @@ elif menu == "➕ Nueva promoción":
 
         if submit:
 
-            # ✅ Validaciones mínimas y CORRECTAS
             if not promo or not hotels or not rate:
                 st.error("Completa los campos obligatorios.")
                 st.stop()

@@ -238,8 +238,6 @@ with tab_registro:
     st.subheader("Registrar nueva promoción")
 
     with st.form("form_registro", clear_on_submit=True):
-``
-
     promo = st.text_input("Nombre de la Promoción", key="promo")
     hoteles = st.multiselect("Propiedad(es)", PROPERTIES, key="hoteles")
 

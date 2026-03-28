@@ -130,49 +130,52 @@ if not st.session_state.is_admin:
 df = cargar_promos()
 
 # =============================
-# VISTA RÁPIDA
+# PREVIEW + ACCIONES ADMIN
 # =============================
-if menu == "🔍 Vista rápida":
+if not df_view.empty:
+    st.divider()
+    st.subheader("📎 Vista previa")
 
-    if df.empty:
-        st.info("No hay promociones registradas.")
+    idx = st.selectbox(
+        "Selecciona una promoción",
+        df_view.index,
+        format_func=lambda i: df_view.loc[i, "Promo"]
+    )
+
+    archivo = df_view.loc[idx, "Archivo_Path"]
+
+    if isinstance(archivo, str) and archivo and os.path.exists(archivo):
+        if archivo.lower().endswith(".pdf"):
+            with open(archivo, "rb") as f:
+                st.download_button(
+                    "📥 Descargar PDF",
+                    f,
+                    file_name=os.path.basename(archivo)
+                )
+        else:
+            st.image(archivo, use_container_width=True)
     else:
-        df["Estado"] = df.apply(estado_promo, axis=1)
+        st.info("Esta promoción no tiene archivo adjunto.")
 
-        estados = ["Activa", "Futura", "Expirada"]
-        default = ["Activa"] if not st.session_state.is_admin else estados
+    # ✅ ACCIONES ADMIN
+    if st.session_state.is_admin:
+        st.divider()
+        st.subheader("🛠 Acciones administrativas")
 
-        filtro_estado = st.multiselect(
-            "Estado",
-            estados,
-            default=default
+        action = st.radio(
+            "Acción",
+            ["Eliminar"],
+            horizontal=True
         )
 
-        df_view = df[df["Estado"].isin(filtro_estado)]
-
-        col1, col2 = st.columns([4, 1])
-        with col1:
-            search = st.text_input("Buscar promoción…")
-        with col2:
-            st.download_button(
-                "📥 Descargar Excel",
-                data=generar_excel(df_view),
-                file_name=f"MasterRecord_{date.today()}.xlsx",
-                use_container_width=True
-            )
-
-        df_view = df_view[
-            df_view.astype(str)
-            .apply(lambda x: x.str.contains(search, case=False, na=False))
-            .any(axis=1)
-        ]
-
-        st.dataframe(
-            df_view,
-            use_container_width=True,
-            hide_index=True
-        )
-
+        if action == "Eliminar":
+            st.warning("⚠️ Esta acción no se puede deshacer")
+            if st.checkbox("Confirmar eliminación"):
+                if st.button("Eliminar promoción"):
+                    df = df.drop(idx)
+                    df.to_csv(PROMOS_FILE, index=False)
+                    st.success("Promoción eliminada")
+                    st.rerun()
         # =============================
         # PREVIEW + ACCIONES ADMIN
         # =============================

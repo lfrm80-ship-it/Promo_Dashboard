@@ -38,17 +38,27 @@ MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 # =============================
 st.markdown("""
 <style>
-.readonly-badge {
+.env-badge {
     position: fixed;
-    top: 84px;
+    top: 50px;
     right: 24px;
-    background: #f1f5f9;
-    color: #334155;
     padding: 4px 10px;
     border-radius: 999px;
     font-size: 11px;
-    font-weight: 600;
-    border: 1px solid #cbd5f5;
+    font-weight: 700;
+    z-index: 1000;
+}
+
+.env-qa {
+    background-color: #e0f2fe;
+    color: #075985;
+    border: 1px solid #7dd3fc;
+}
+
+.env-prod {
+    background-color: #fee2e2;
+    color: #7f1d1d;
+    border: 1px solid #fca5a5;
 }
 </style>
 """, unsafe_allow_html=True)

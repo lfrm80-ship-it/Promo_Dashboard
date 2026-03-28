@@ -9,7 +9,7 @@ from datetime import date
 # =============================
 st.set_page_config(page_title="Master Record Playa Mujeres", layout="wide")
 
-# CSS para maximizar espacio vertical y centrar contenido
+# CSS para maximizar espacio vertical, centrar y asegurar visibilidad
 st.markdown("""
     <style>
     .block-container {
@@ -105,19 +105,18 @@ with tab_view:
         )
 
 # -----------------------------
-# TAB: EDITAR (CORREGIDO)
+# TAB: EDITAR
 # -----------------------------
 with tab_edit:
     if not df.empty:
         updated_df = st.data_editor(df, num_rows="dynamic", use_container_width=True, hide_index=True, key="editor_key")
-        # LA LÍNEA 112 CORREGIDA AQUÍ:
         if st.button("💾 Guardar Cambios", use_container_width=True):
             updated_df.to_csv(PROMOS_FILE, index=False)
             st.success("¡Base de datos actualizada!")
             st.rerun()
 
 # -----------------------------
-# TAB: NUEVA PROMO
+# TAB: NUEVA PROMO (CORREGIDO)
 # -----------------------------
 with tab_new:
     with st.form("form_registro", clear_on_submit=True):
@@ -131,4 +130,40 @@ with tab_new:
             n_desc = st.number_input("Descuento (%)", 0, 100, step=1)
         
         st.divider()
-        c3,
+        # Se definen c3, c4, c5 y c6 para evitar el NameError
+        c3, c4, c5, c6 = st.columns(4)
+        with c3:
+            bw_i = st.date_input("BW Inicio")
+        with c4:
+            bw_f = st.date_input("BW Fin")
+        with c5:
+            tw_i = st.date_input("TW Inicio")
+        with c6:
+            tw_f = st.date_input("TW Fin")
+        
+        uploaded_file = st.file_uploader("Adjuntar Flyer (PDF/Imagen)", type=["pdf", "png", "jpg", "jpeg"])
+        n_notas = st.text_area("Notas / Restricciones")
+        
+        if st.form_submit_button("✅ Registrar Promoción", use_container_width=True):
+            if not n_promo or not n_hotel or not n_rate:
+                st.error("Completa los campos obligatorios.")
+            else:
+                path_archivo = ""
+                if uploaded_file:
+                    path_archivo = os.path.join(MEDIA_DIR, uploaded_file.name)
+                    with open(path_archivo, "wb") as f:
+                        f.write(uploaded_file.getbuffer())
+
+                new_entries = []
+                for h in n_hotel:
+                    new_entries.append({
+                        "Hotel": h, "Promo": n_promo, "Market": n_market, 
+                        "Rate_Plan": n_rate, "Descuento": n_desc,
+                        "BW_Inicio": bw_i, "BW_Fin": bw_f, 
+                        "TW_Inicio": tw_i, "TW_Fin": tw_f, 
+                        "Archivo_Path": path_archivo, "Notas": n_notas
+                    })
+                df_final = pd.concat([df, pd.DataFrame(new_entries)], ignore_index=True)
+                df_final.to_csv(PROMOS_FILE, index=False)
+                st.success("✅ Promoción registrada.")
+                st.rerun()

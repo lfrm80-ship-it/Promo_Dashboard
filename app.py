@@ -66,12 +66,12 @@ def guardar_produccion(df):
     df.to_csv(PRODUCCION_FILE, index=False)
 
 def obtener_produccion(df, promo, hotel, rate):
-    f = df[
+    fila = df[
         (df["Promo"] == promo) &
         (df["Hotel"] == hotel) &
         (df["Rate_Plan"] == rate)
     ]
-    return f.iloc[0] if not f.empty else None
+    return fila.iloc[0] if not fila.empty else None
 
 # =============================
 # EXCEL
@@ -94,7 +94,7 @@ st.markdown(
 st.divider()
 
 # =============================
-# TABS PRINCIPALES
+# TABS
 # =============================
 tab_promos, tab_registro = st.tabs(["Promociones", "Registrar / Modificar"])
 
@@ -190,7 +190,7 @@ with tab_promos:
         )
 
     # =============================
-    # ADMINISTRACIÓN (SOLO AQUÍ)
+    # ADMINISTRACIÓN
     # =============================
     st.divider()
     admin_expander = st.expander("⚙️ Administración")
@@ -243,16 +243,15 @@ with tab_registro:
     with col_desc:
         descuento = st.number_input("Descuento (%)", 0, 100, step=1)
 
-    col_bw1, col_bw2 = st.columns(2)
-    with col_bw1:
+    # BW – TW en UNA SOLA LÍNEA
+    col_bw_ini, col_bw_fin, col_tw_ini, col_tw_fin = st.columns(4)
+    with col_bw_ini:
         bw_ini = st.date_input("BW Inicio")
-    with col_bw2:
+    with col_bw_fin:
         bw_fin = st.date_input("BW Fin")
-
-    col_tw1, col_tw2 = st.columns(2)
-    with col_tw1:
+    with col_tw_ini:
         tw_ini = st.date_input("TW Inicio")
-    with col_tw2:
+    with col_tw_fin:
         tw_fin = st.date_input("TW Fin")
 
     notas = st.text_area("Notas")
@@ -262,8 +261,8 @@ with tab_registro:
             st.error("Completa todos los campos obligatorios.")
         else:
             df_existente = cargar_promos()
-
             rows = []
+
             for h in hoteles:
                 rows.append({
                     "Hotel": h,

@@ -222,7 +222,7 @@ if menu == "🔍 Vista rápida":
                             df.to_csv(PROMOS_FILE, index=False)
                             st.success("Promoción eliminada")
                             st.rerun()
-``
+
         # =============================
         # VISTA PREVIA DE ARCHIVOS
         # =============================

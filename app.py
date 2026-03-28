@@ -288,3 +288,25 @@ elif menu == "➕ Nueva promoción":
 
             st.success("🎉 Promoción registrada correctamente")
             st.rerun()
+# =============================
+# VALIDAR FECHAS (ROBUSTO)
+# =============================
+if bw_i is None or bw_f is None or tw_i is None or tw_f is None:
+    st.error("❌ Todas las fechas deben estar completas.")
+    st.stop()
+
+# Normalizar tipos (blindaje extra)
+bw_i = pd.to_datetime(bw_i).date()
+bw_f = pd.to_datetime(bw_f).date()
+tw_i = pd.to_datetime(tw_i).date()
+tw_f = pd.to_datetime(tw_f).date()
+
+# Booking Window
+if bw_f < bw_i:
+    st.error("❌ BW Fin no puede ser menor que BW Inicio.")
+    st.stop()
+
+# Travel Window
+if tw_f < tw_i:
+    st.error("❌ TW Fin no puede ser menor que TW Inicio.")
+    st.stop()

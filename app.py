@@ -60,7 +60,41 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+.tooltip {
+    position: relative;
+    cursor: help;
+    display: inline-block;
+    margin-left: 4px;
+}
 
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 260px;
+    background-color: #1f2937;
+    color: #fff;
+    text-align: left;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+</style>
+""", unsafe_allow_html=True)
 # =============================
 # HELPERS
 # =============================

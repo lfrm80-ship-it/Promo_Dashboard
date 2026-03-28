@@ -5,9 +5,12 @@ import io
 from datetime import date
 
 # =============================
-# CONFIG
+# CONFIGURACIÓN GENERAL
 # =============================
-st.set_page_config(page_title="Master Record Playa Mujeres", layout="wide")
+st.set_page_config(
+    page_title="Master Record Playa Mujeres",
+    layout="wide"
+)
 
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
 
@@ -50,6 +53,7 @@ st.markdown("""
     border-radius: 999px;
     font-size: 11px;
     font-weight: 600;
+    border: 1px solid #cbd5e1;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -60,9 +64,14 @@ st.markdown("""
 def cargar_promos():
     if os.path.exists(PROMOS_FILE):
         df = pd.read_csv(PROMOS_FILE)
+
+        # Convertir fechas SOLO si existen
         for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
-            df[c] = pd.to_datetime(df[c]).dt.date
+            if c in df.columns:
+                df[c] = pd.to_datetime(df[c], errors="coerce").dt.date
+
         return df
+
     return pd.DataFrame()
 
 def generar_excel(df):
@@ -71,11 +80,17 @@ def generar_excel(df):
         df.to_excel(writer, index=False)
     return out.getvalue()
 
-def calcular_status(row):
+def calcular_estado(row):
     hoy = date.today()
-    if row["TW_Inicio"] <= hoy <= row["TW_Fin"]:
+    tw_i = row.get("TW_Inicio")
+    tw_f = row.get("TW_Fin")
+
+    if pd.isna(tw_i) or pd.isna(tw_f):
+        return "Expirada"
+
+    if tw_i <= hoy <= tw_f:
         return "Activa"
-    elif hoy < row["TW_Inicio"]:
+    elif hoy < tw_i:
         return "Futura"
     else:
         return "Expirada"
@@ -89,10 +104,8 @@ with st.sidebar:
 
     menu = st.radio(
         "Navegación",
-        ["🔍 Vista rápida"] + (
-            ["📝 Editar promociones", "➕ Nueva promoción"]
-            if st.session_state.is_admin else []
-        )
+        ["🔍 Vista rápida"] +
+        (["📝 Editar promociones", "➕ Nueva promoción"] if st.session_state.is_admin else [])
     )
 
     st.divider()
@@ -116,7 +129,10 @@ with st.sidebar:
 # =============================
 # HEADER
 # =============================
-st.markdown("<h3 style='text-align:center;'>📊 Master Record Playa Mujeres</h3>", unsafe_allow_html=True)
+st.markdown(
+    "<h3 style='text-align:center;'>📊 Master Record Playa Mujeres</h3>",
+    unsafe_allow_html=True
+)
 
 if not st.session_state.is_admin:
     st.markdown("<div class='readonly'>READ ONLY</div>", unsafe_allow_html=True)
@@ -131,14 +147,13 @@ if menu == "🔍 Vista rápida":
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
-        df["Estado"] = df.apply(calcular_status, axis=1)
+        df["Estado"] = df.apply(calcular_estado, axis=1)
 
-        # 🔥 SEMÁFORO
         estados = ["Activa", "Futura", "Expirada"]
         default = ["Activa"] if not st.session_state.is_admin else estados
 
         filtro_estado = st.multiselect(
-            "Estado de promoción",
+            "Estado de la promoción",
             estados,
             default=default
         )
@@ -146,7 +161,6 @@ if menu == "🔍 Vista rápida":
         df = df[df["Estado"].isin(filtro_estado)]
 
         search = st.text_input("Buscar…")
-
         mask = df.astype(str).apply(
             lambda x: x.str.contains(search, case=False, na=False)
         ).any(axis=1)
@@ -156,81 +170,52 @@ if menu == "🔍 Vista rápida":
             use_container_width=True,
             hide_index=True,
             column_config={
-                "Estado": st.column_config.TextColumn(),
                 "Archivo_Path": st.column_config.LinkColumn("Flyer / PDF")
             }
         )
 
-        # 🔍 PREVIEW
-        promo_sel = st.selectbox(
-            "Vista previa",
-            df[mask].index,
-            format_func=lambda i: df.loc[i, "Promo"]
-        )
+        # =============================
+        # PREVISUALIZACIÓN
+        # =============================
+        if not df[mask].empty and "Archivo_Path" in df.columns:
+            st.divider()
+            st.subheader("📎 Vista previa")
 
-        archivo = df.loc[promo_sel, "Archivo_Path"]
+            idx = st.selectbox(
+                "Selecciona una promoción",
+                df[mask].index,
+                format_func=lambda i: df.loc[i, "Promo"]
+            )
 
-        if archivo and os.path.exists(archivo):
-            if archivo.lower().endswith(".pdf"):
-                st.markdown(
-                    f"<iframe src='{archivo}' width='100%' height='600'></iframe>",
-                    unsafe_allow_html=True
-                )
+            archivo = df.loc[idx, "Archivo_Path"]
+
+            if isinstance(archivo, str) and archivo and os.path.exists(archivo):
+                if archivo.lower().endswith(".pdf"):
+                    st.markdown(
+                        f'<iframe src="{archivo}" width="100%" height="600"></iframe>',
+                        unsafe_allow_html=True
+                    )
+                else:
+                    st.image(archivo, use_container_width=True)
             else:
-                st.image(archivo, use_container_width=True)
+                st.info("Esta promoción no tiene archivo adjunto.")
 
 # =============================
-# NUEVA PROMO
+# NUEVA PROMO (ADMIN)
 # =============================
 elif menu == "➕ Nueva promoción":
 
-    with st.form("new", clear_on_submit=True):
+    with st.form("new_promo", clear_on_submit=True):
 
-        promo = st.text_input("Promoción *")
-        hotels = st.multiselect("Hotel *", PROPERTIES)
-        rate = st.text_input("Rate Plan *")
-        discount = st.number_input("Descuento %", 0, 100)
+        col1, col2 = st.columns(2)
+        with col1:
+            promo = st.text_input("Promoción *")
+            hotels = st.multiselect("Hotel *", PROPERTIES)
+            market = st.selectbox("Market", MARKETS)
+        with col2:
+            rate = st.text_input("Rate Plan *")
+            discount = st.number_input("Descuento %", 0, 100)
 
-        bw_i = st.date_input("BW Inicio")
-        bw_f = st.date_input("BW Fin")
-        tw_i = st.date_input("TW Inicio")
-        tw_f = st.date_input("TW Fin")
+        st.divider()
 
-        upload = st.file_uploader("Flyer / PDF", ["pdf", "png", "jpg", "jpeg"])
-        notas = st.text_area("Notas")
-
-        submit = st.form_submit_button("Registrar")
-
-        if submit:
-            if bw_f < bw_i or tw_f < tw_i:
-                st.error("Fechas inválidas")
-                st.stop()
-
-            if not (bw_i <= tw_i <= bw_f and bw_i <= tw_f <= bw_f):
-                st.error("TW debe estar dentro del BW")
-                st.stop()
-
-            file_path = ""
-            if upload:
-                file_path = os.path.join(MEDIA_DIR, upload.name)
-                with open(file_path, "wb") as f:
-                    f.write(upload.getbuffer())
-
-            rows = [{
-                "Hotel": h,
-                "Promo": promo,
-                "Rate_Plan": rate,
-                "Descuento": discount,
-                "BW_Inicio": bw_i,
-                "BW_Fin": bw_f,
-                "TW_Inicio": tw_i,
-                "TW_Fin": tw_f,
-                "Archivo_Path": file_path,
-                "Notas": notas
-            } for h in hotels]
-
-            pd.concat([df, pd.DataFrame(rows)], ignore_index=True)\
-              .to_csv(PROMOS_FILE, index=False)
-
-            st.success("✅ Promoción registrada")
-            st.rerun()
+        c3, c4, c5, c6 = st.columns(4)

@@ -120,11 +120,12 @@ with st.sidebar:
     st.divider()
 
     # CONTEXTO (NO MENÚ)
-    env = st.selectbox(
-        "Entorno de trabajo",
-        ["QA", "Producción"],
-        help="QA = pruebas | Producción = datos oficiales"
-    )
+   env = st.radio(
+    "Entorno de trabajo",
+    ["QA", "Producción"],
+    horizontal=True,
+    help="QA = pruebas | Producción = datos oficiales"
+)
 
     PROMOS_FILE = PROMOS_PROD if env == "Producción" else PROMOS_QA
 

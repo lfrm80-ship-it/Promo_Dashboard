@@ -188,32 +188,32 @@ with tab_promos:
             data=open(exportar_excel(df), "rb"),
             file_name="Promociones_Playa_Mujeres.xlsx"
         )
-
     # =============================
-    # ADMINISTRACIÓN (SOLO AQUÍ)
+    # ADMINISTRACIÓN (DISCRETA)
     # =============================
     with st.expander("⚙️ Administración"):
-    st.warning("Zona administrativa – usar con cuidado")
+        st.warning("Zona administrativa – usar con cuidado")
 
-    password = st.text_input(
-        "Contraseña de administrador",
-        type="password",
-        key="admin_pass"
-    )
+        password = st.text_input(
+            "Contraseña de administrador",
+            type="password",
+            key="admin_pass"
+        )
 
-    if st.button("Acceder", key="btn_admin_login"):
-        if password == "admin123":  # cambia la clave si quieres
-            st.success("Acceso concedido")
+        if st.button("Acceder", key="btn_admin_login"):
+            if password == "admin123":
+                st.success("Acceso concedido")
 
-            if st.button("🗑️ Borrar todas las promociones", key="btn_borrar_admin"):
-                if os.path.exists(PROMOS_FILE):
-                    os.remove(PROMOS_FILE)
-                if os.path.exists(PRODUCCION_FILE):
-                    os.remove(PRODUCCION_FILE)
+                if st.button("🗑️ Borrar todas las promociones", key="btn_borrar_admin"):
+                    if os.path.exists(PROMOS_FILE):
+                        os.remove(PROMOS_FILE)
+                    if os.path.exists(PRODUCCION_FILE):
+                        os.remove(PRODUCCION_FILE)
 
-                st.success("Base eliminada. Recarga la app.")
-        else:
-            st.error("Contraseña incorrecta")
+                    st.success("Base eliminada. Recarga la app.")
+            else:
+                st.error("Contraseña incorrecta")
+  
 # =============================
 # TAB REGISTRAR / MODIFICAR
 # =============================

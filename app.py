@@ -296,9 +296,6 @@ elif menu == "📈 Upsell":
 
     col1, col2 = st.columns([1, 2])
 
-    # ---------------------------------
-    # INPUTS
-    # ---------------------------------
     with col1:
         hotel = st.selectbox("Hotel", ["DREPM", "SECPM"])
 
@@ -311,84 +308,3 @@ elif menu == "📈 Upsell":
             "Tarifa actual por noche (USD)",
             min_value=0,
             step=50,
-            value=500
-        )
-
-        noches = st.number_input("Noches", min_value=1, value=1)
-
-        fecha_llegada = st.date_input(
-            "Fecha de llegada",
-            value=date(2026, 4, 1)
-        )
-
-        # -----------------------------
-        # OCUPACIÓN
-        # -----------------------------
-        if hotel == "DREPM":  # Familias
-            adultos = st.number_input("Adultos", 1, 4, 2)
-            ninos = st.number_input("Niños", 0, 4, 0)
-
-            with st.expander("👶 Política de niños (Referencia)"):
-                st.markdown("""
-**Edades**
-- 0–2 años: sin costo  
-- 3–12 años: aplica cargo adicional  
-- 13 años en adelante: se consideran adultos  
-
-**🏊 Swim Out**
-- **NO acepta niños**
-
-(*) Información referencial validada por Revenue / PMS
-""")
-
-        else:  # SECPM
-            adultos = st.number_input("Adultos", 1, 3, 2)
-            ninos = 0
-            st.caption("ℹ️ Resort solo adultos (18+)")
-
-        calcular = st.button("Calcular Upsell")
-
-    # ---------------------------------
-    # RESULTADOS
-    # ---------------------------------
-    with col2:
-        if calcular:
-            temporada, precios = detectar_ok_rm(fecha_llegada)
-
-            if not precios:
-                st.error("No hay reglas cargadas para el año seleccionado.")
-            else:
-                net = precios["net"]
-                pub = precios["pub"]
-                net_mx = round(net * TC_MXN)
-                pub_mx = round(pub * TC_MXN)
-
-                st.success(f"✅ Temporada detectada automáticamente: **{temporada}**")
-
-                if hotel == "DREPM" and ninos > 0:
-                    st.markdown(f"""
-### 👶 Cargos por niño (3–12 años)
-
-| Tipo | USD | MXN |
-|------|-----|-----|
-| **NET** | ${net} | ${net_mx:,} |
-| **PUBLIC** | ${pub} | ${pub_mx:,} |
-
-🔁 Tipo de cambio de referencia: **{TC_MXN}**
-""")
-
-                # -----------------------------
-                # UPSWLL HABITACIÓN (EJEMPLO)
-                # -----------------------------
-                GAP_UPSELL = 75  # ejemplo
-                total_upsell = GAP_UPSELL * noches
-
-                st.markdown(f"""
-### 🏨 Upsell de habitación
-
-- Incremento por noche: **${GAP_UPSELL} USD**
-- Noches: **{noches}**
-- **Total Upsell estimado:** **${total_upsell} USD**
-
-(*) Referencia informativa, sujeta a disponibilidad y validación final
-""")

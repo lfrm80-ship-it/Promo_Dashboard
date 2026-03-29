@@ -167,37 +167,48 @@ if menu == "🔍 Vista rápida":
             hide_index=True
         )
 
-        # =============================
-        # PREVIEW + ACCIONES ADMIN
-        # =============================
-        if not df_filtrado.empty:
-            st.divider()
-            st.subheader("📎 Vista previa")
+       # =============================
+# PREVIEW + ACCIONES ADMIN
+# =============================
+if not df_filtrado.empty:
+    st.divider()
+    st.subheader("📎 Vista previa")
 
-            idx = st.selectbox(
-                "Selecciona una promoción",
-                df_filtrado.index,
-                format_func=lambda i: df_filtrado.loc[i, "Promo"]
-            )
+    idx = st.selectbox(
+        "Selecciona una promoción",
+        df_filtrado.index,
+        format_func=lambda i: df_filtrado.loc[i, "Promo"]
+    )
 
-            archivo = df_filtrado.loc[idx, "Archivo_Path"]
+    archivo = df_filtrado.loc[idx, "Archivo_Path"]
 
-if isinstance(archivo, str) and archivo and os.path.exists(archivo):
+    if isinstance(archivo, str) and archivo and os.path.exists(archivo):
+        if st.button("👁 Ver archivo"):
+            if archivo.lower().endswith(".pdf"):
+                with open(archivo, "rb") as f:
+                    st.download_button(
+                        "📥 Descargar PDF",
+                        f,
+                        file_name=os.path.basename(archivo)
+                    )
+            else:
+                st.image(archivo, use_container_width=True)
+    else:
+        st.info("Esta promoción no tiene archivo adjunto.")
 
-    if st.button("👁 Ver archivo"):
-        if archivo.lower().endswith(".pdf"):
-            with open(archivo, "rb") as f:
-                st.download_button(
-                    "📥 Descargar PDF",
-                    f,
-                    file_name=os.path.basename(archivo)
-                )
-        else:
-            st.image(archivo, use_container_width=True)
+# ✅ ESTE BLOQUE VA AL MISMO NIVEL, NO MÁS ADENTRO
+if st.session_state.is_admin and not df_filtrado.empty:
+    st.divider()
+    st.subheader("🛠 Acciones administrativas")
 
-else:
-    st.info("Esta promoción no tiene archivo adjunto.")
-
+    if st.button("🗑 Eliminar promoción"):
+        st.warning("Esta acción no se puede deshacer.")
+        if st.checkbox("Confirmar eliminación"):
+            df = df.drop(idx)
+            df.to_csv(PROMOS_FILE, index=False)
+            st.success("Promoción eliminada correctamente")
+            st.rerun()
+``
 
             # =============================
             # ACCIONES ADMIN

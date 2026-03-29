@@ -234,22 +234,15 @@ elif menu == "➕ Nueva promoción":
 # =============================
 # UPSELL ✅
 # =============================
-
-habitacion_actual = st.selectbox(
-    "Habitación actual",
-    HABITACIONES
-)
-
-# Solo mostrar opciones superiores
-idx_actual = HABITACIONES.index(habitacion_actual)
-opciones_upsell = HABITACIONES[idx_actual + 1:]
-
-habitacion_destino = st.selectbox(
-    "Upsell a",
-    opciones_upsell if opciones_upsell else ["No hay opciones disponibles"]
-)
-elif menu == "📈 Upsell":
+if menu == "📈 Upsell":
     st.subheader("📈 Upsell")
+
+    HABITACIONES = [
+        "JS Garden View",
+        "JS Pool View",
+        "JS Ocean View",
+        "JS Swim Out"
+    ]
 
     col1, col2 = st.columns([1, 2])
 
@@ -259,30 +252,47 @@ elif menu == "📈 Upsell":
         noches = st.number_input("Noches", value=1)
         fecha = st.date_input("Fecha de llegada", value=date(2026, 4, 1))
 
+        habitacion_actual = st.selectbox("Habitación actual", HABITACIONES)
+        idx = HABITACIONES.index(habitacion_actual)
+        opciones_upsell = HABITACIONES[idx + 1:]
+
+        habitacion_destino = st.selectbox(
+            "Upsell a",
+            opciones_upsell if opciones_upsell else ["No hay opciones disponibles"]
+        )
+
         if hotel == "DREPM":
             adultos = st.number_input("Adultos", 1, 4, 2)
             ninos = st.number_input("Niños", 0, 4, 0)
         else:
             adultos = st.number_input("Adultos", 1, 3, 2)
             ninos = 0
-            st.caption("ℹ️ Solo adultos")
+            st.caption("ℹ️ Resort solo adultos")
 
         calcular = st.button("Calcular Upsell")
 
     with col2:
         if calcular:
             temporada, precios = detectar_ok_rm(fecha)
-            if precios:
-                st.success(f"Temporada: {temporada}")
-                if ninos > 0:
-                    net, pub = precios["net"], precios["pub"]
-                    st.markdown(f"""
+
+            st.success(f"Temporada: {temporada}")
+
+            st.markdown(f"""
+### 🏨 Upsell de habitación
+**De:** {habitacion_actual}  
+**A:** {habitacion_destino}
+""")
+
+            if ninos > 0:
+                net, pub = precios["net"], precios["pub"]
+                st.markdown(f"""
 **Cargos por niño**
 - NET: ${net} USD / ${round(net * TC_MXN):,} MXN  
 - PUBLIC: ${pub} USD / ${round(pub * TC_MXN):,} MXN
 """)
 
-                st.markdown("### Upsell habitación (ejemplo)")
-                st.markdown(f"Incremento estimado: **${75 * noches} USD**")
-            else:
-                st.info("Sin reglas para esta fecha.")
+            incremento = 75 * noches
+            st.markdown(f"""
+### 💰 Upsell estimado
+Incremento total: **${incremento} USD**
+""")

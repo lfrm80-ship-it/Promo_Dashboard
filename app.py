@@ -305,24 +305,24 @@ elif menu == "📈 Upsell":
             )
 
            with st.expander("👶 Política de niños (referencia)"):
-    st.write("""
-    **Edades**
-    - 0 – 2 años: sin costo (infantes)
-    - 3 – 12 años: aplica cargo adicional
-    - 13 años en adelante: se consideran adultos
+    st.markdown("""
+**Edades**
+- 0 – 2 años: sin costo (infantes)
+- 3 – 12 años: aplica cargo adicional
+- 13 años en adelante: se consideran adultos
 
-    **Temporada Regular**
-    - 1er niño: sin costo
-    - 2do niño: $25 USD / noche
+**Temporada Regular**
+- 1er niño: sin costo
+- 2do niño: $25 USD / noche
 
-    **Temporada Holiday**
-    - Niño: $40 USD / noche
+**Temporada Holiday**
+- Niño: $40 USD / noche
 
-    **🏊 Swim Out** NO - Acepta niños
+**🏊 Swim Out** NO - Acepta niños
 
-    (*) Información de referencia. Sujeto a reglas de Revenue y PMS,
-    así como a categoría de habitación.
-    """)
+(*) Información de referencia. Sujeta a reglas de Revenue y PMS,
+así como a categoría de habitación.
+""")
 
 
         calcular = st.button("Calcular Upsell")

@@ -274,7 +274,7 @@ elif menu == "📈 Upsell":
             "Tarifa actual por noche",
             min_value=0,
             step=10,
-            value=200
+            value=500
         )
 
         noches = st.number_input(
@@ -284,7 +284,9 @@ elif menu == "📈 Upsell":
             value=1
         )
 
-        # ✅ OCUPACIÓN (adultos only)
+        # =============================
+        # OCUPACIÓN DINÁMICA
+        # =============================
         adultos = st.number_input(
             "Adultos",
             min_value=1,
@@ -292,6 +294,30 @@ elif menu == "📈 Upsell":
             step=1,
             value=2
         )
+
+        if hotel == "DREPM":
+            ninos = st.number_input(
+                "Niños",
+                min_value=0,
+                max_value=4,
+                step=1,
+                value=0
+            )
+
+            with st.expander("👶 Política de niños (referencia)"):
+                st.write("""
+                **Temporada Regular**
+                - 1er niño: sin costo
+                - 2do niño: $25 USD / noche
+
+                **Temporada Holiday**
+                - Niño: $40 USD / noche
+
+                (*) Sujeto a edad y categoría
+                """)
+
+        else:
+            st.caption("ℹ️ Resort solo adultos (18+)")
 
         periodo = st.selectbox(
             "Periodo",

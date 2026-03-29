@@ -14,6 +14,11 @@ st.set_page_config(
 
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROMOS_FILE = os.path.join(BASE_DIR, "promociones_produccion.csv")
+MEDIA_DIR = os.path.join(BASE_DIR, "media")
+os.makedirs(MEDIA_DIR, exist_ok=True)
+
 # =============================
 # SESSION STATE
 # =============================
@@ -22,13 +27,6 @@ if "is_admin" not in st.session_state:
 
 if "selected_idx" not in st.session_state:
     st.session_state.selected_idx = None
-
-PROMOS_FILE = "promociones_produccion.csv"
-st.write("Archivo existe:", os.path.exists(PROMOS_FILE))
-st.write("Ruta actual:", os.getcwd())
-
-MEDIA_DIR = "media"
-os.makedirs(MEDIA_DIR, exist_ok=True)
 
 # =============================
 # CONSTANTES
@@ -41,55 +39,46 @@ PROPERTIES = [
 MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 
 # =============================
-# ESTILOS
-# =============================
-st.markdown("""
-<style>
-.readonly {
-    position: fixed;
-    top: 90px;
-    right: 22px;
-    background: #f1f5f9;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
-    border: 1px solid #cbd5e1;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# =============================
 # FUNCIONES
 # =============================
 def cargar_promos():
     if os.path.exists(PROMOS_FILE):
-        st.subheader("🔎 DEBUG CSV")
-
-        # Leer el archivo como texto crudo
-        with open(PROMOS_FILE, "r", encoding="utf-8", errors="ignore") as f:
-            preview = f.readlines()[:10]
-
-        st.write("Primeras líneas del archivo:")
-        for line in preview:
-            st.text(line)
-
-        # Intento 1: autodetectar separador
         try:
             df = pd.read_csv(PROMOS_FILE, sep=None, engine="python")
-            st.write("Leído con autodetección (engine=python)")
-        except Exception as e:
-            st.error(f"Error autodetección: {e}")
-            df = pd.DataFrame()
+        except Exception:
+            df = pd.read_csv(PROMOS_FILE)
 
-        st.write("Filas detectadas:", len(df))
-        st.write("Columnas detectadas:", df.columns.tolist())
-        st.dataframe(df.head())
+        for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
 
         return df
 
-    st.error("Archivo NO encontrado")
     return pd.DataFrame()
+
+
+def generar_excel(df):
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        df.to_excel(writer, index=False)
+    return buffer.getvalue()
+
+
+def calcular_estado(row):
+    hoy = date.today()
+    tw_i = row.get("TW_Inicio")
+    tw_f = row.get("TW_Fin")
+
+    if pd.isna(tw_i) or pd.isna(tw_f):
+        return "Expirada"
+
+    if tw_i <= hoy <= tw_f:
+        return "Activa"
+    elif hoy < tw_i:
+        return "Futura"
+    else:
+        return "Expirada"
+
 # =============================
 # SIDEBAR
 # =============================
@@ -106,7 +95,6 @@ with st.sidebar:
     st.divider()
     st.caption("Acceso administrativo")
 
-    # -------- ADMIN ACCESS --------
     if st.session_state.is_admin:
         st.success("🟢 Modo ADMIN activo")
         if st.button("Salir de Admin"):
@@ -123,18 +111,19 @@ with st.sidebar:
                 else:
                     st.error("Contraseña incorrecta")
 
-
 # =============================
 # HEADER
 # =============================
 st.markdown("""
-#### 📊 Master Record Playa Mujeres
+### 📊 Master Record Playa Mujeres
 """, unsafe_allow_html=True)
 
 if not st.session_state.is_admin:
     st.markdown("⚠️ **READ ONLY**", unsafe_allow_html=True)
 
-# ✅ CARGA DE PROMOCIONES (CRÍTICO)
+# =============================
+# CARGA DE PROMOCIONES (CRÍTICO)
+# =============================
 df = cargar_promos()
 
 # =============================
@@ -145,10 +134,9 @@ if menu == "🔍 Vista rápida":
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
-        df = df.copy()
-        df["Estado"] = df.apply(calcular_estado, axis=1)
+        df_view = df.copy()
+        df_view["Estado"] = df_view.apply(calcular_estado, axis=1)
 
-        # ===== SEMÁFORO VISUAL =====
         estados_ui = {
             "🟢 Activa": "Activa",
             "🟠 Futura": "Futura",
@@ -161,19 +149,20 @@ if menu == "🔍 Vista rápida":
             else list(estados_ui.keys())
         )
 
-        filtro_estado_ui = st.multiselect(
+        filtro_ui = st.multiselect(
             "Estado",
             list(estados_ui.keys()),
             default=default_ui
         )
 
-        filtro_estado = [estados_ui[e] for e in filtro_estado_ui]
-
-        df_view = df[df["Estado"].isin(filtro_estado)]
+        filtro = [estados_ui[e] for e in filtro_ui]
+        df_view = df_view[df_view["Estado"].isin(filtro)]
 
         col1, col2 = st.columns([4, 1])
+
         with col1:
             search = st.text_input("Buscar promoción…")
+
         with col2:
             st.download_button(
                 "📥 Descargar Excel",
@@ -189,15 +178,9 @@ if menu == "🔍 Vista rápida":
                 .any(axis=1)
             ]
 
-        st.dataframe(
-            df_view,
-            use_container_width=True,
-            hide_index=True
-        )
+        st.dataframe(df_view, use_container_width=True, hide_index=True)
 
-        # =============================
-        # VISTA PREVIA + ACCIONES ADMIN
-        # =============================
+        # -------- Vista previa --------
         if not df_view.empty:
             st.divider()
             st.subheader("📎 Vista previa")
@@ -208,66 +191,62 @@ if menu == "🔍 Vista rápida":
                 format_func=lambda i: df_view.loc[i, "Promo"]
             )
 
-            st.session_state.selected_idx = selected_idx
-            archivo = df_view.loc[selected_idx, "Archivo_Path"]
-
-            if isinstance(archivo, str) and archivo and os.path.exists(archivo):
+            archivo = df_view.loc[selected_idx].get("Archivo_Path")
+            if isinstance(archivo, str) and os.path.exists(archivo):
                 if st.button("👁 Ver archivo"):
-                    if archivo.lower().endswith((".png", ".jpg", ".jpeg")):
-                        st.image(archivo, use_container_width=True)
-                    else:
-                        st.info("Este archivo no se puede previsualizar.")
+                    st.image(archivo, use_container_width=True)
             else:
                 st.info("Esta promoción no tiene archivo adjunto.")
 
-            # =============================
-            # ELIMINAR PROMOCIÓN (ADMIN)
-            # =============================
-            if st.session_state.is_admin:
-                st.divider()
-                st.subheader("🛠 Acciones administrativas")
+        # -------- Eliminar promoción (ADMIN) --------
+        if st.session_state.is_admin and not df_view.empty:
+            st.divider()
+            st.subheader("🛠 Acciones administrativas")
+            st.warning("⚠️ Esta acción no se puede deshacer")
 
-                st.warning("⚠️ Esta acción no se puede deshacer")
+            if st.checkbox("Confirmar eliminación"):
+                if st.button("🗑 Eliminar promoción"):
+                    df = df.drop(selected_idx)
 
-                confirm_delete = st.checkbox("Confirmar eliminación")
+                    # 🔒 PROTECCIÓN CSV
+                    if len(df) == 0:
+                        st.error("⚠️ ERROR: Eliminar dejaría el CSV vacío. Operación cancelada.")
+                        st.stop()
 
-                if confirm_delete:
-                    if st.button("🗑 Eliminar promoción", type="primary"):
-                        idx = st.session_state.selected_idx
-                        if idx in df.index:
-                            df = df.drop(idx)
-                            df.to_csv(PROMOS_FILE, index=False)
-                            st.session_state.selected_idx = None
-                            st.success("Promoción eliminada correctamente ✅")
-                            st.rerun()
-                        else:
-                            st.error("No se pudo identificar la promoción.")
+                    df.to_csv(PROMOS_FILE, index=False)
+                    st.success("Promoción eliminada correctamente ✅")
+                    st.rerun()
 
 # =============================
-# NUEVA PROMOCIÓN
+# NUEVA PROMOCIÓN (ADMIN)
 # =============================
 elif menu == "➕ Nueva promoción":
 
     with st.form("new_promo", clear_on_submit=True):
 
         col1, col2 = st.columns(2)
+
         with col1:
             promo = st.text_input("Promoción *")
             hotels = st.multiselect("Hotel *", PROPERTIES)
             market = st.selectbox("Market", MARKETS)
+
         with col2:
             rate = st.text_input("Rate Plan *")
             discount = st.number_input("Descuento (%)", 0, 100, step=1)
 
         st.divider()
-
         c3, c4, c5, c6 = st.columns(4)
+
         with c3:
             bw_i = st.date_input("BW Inicio")
+
         with c4:
             bw_f = st.date_input("BW Fin")
+
         with c5:
             tw_i = st.date_input("TW Inicio")
+
         with c6:
             tw_f = st.date_input("TW Fin")
 
@@ -283,14 +262,6 @@ elif menu == "➕ Nueva promoción":
         if submit:
             if not promo or not hotels or not rate:
                 st.error("Completa los campos obligatorios.")
-                st.stop()
-
-            if bw_f < bw_i:
-                st.error("BW Fin no puede ser menor que BW Inicio.")
-                st.stop()
-
-            if tw_f < tw_i:
-                st.error("TW Fin no puede ser menor que TW Inicio.")
                 st.stop()
 
             archivo_path = ""
@@ -317,11 +288,22 @@ elif menu == "➕ Nueva promoción":
 
             df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
 
-# 🔒 PROTECCIÓN ANTI CSV VACÍO
-if len(df) == 0:
-    st.error("⚠️ ERROR: Intento de guardar CSV vacío. Operación cancelada.")
-    st.stop()
+            # 🔒 PROTECCIÓN CSV
+            if len(df) == 0:
+                st.error("⚠️ ERROR: Intento de guardar CSV vacío. Operación cancelada.")
+                st.stop()
 
-df.to_csv(PROMOS_FILE, index=False)
-st.success("🎉 Promoción registrada correctamente")
-st.rerun()
+            df.to_csv(PROMOS_FILE, index=False)
+            st.success("🎉 Promoción registrada correctamente")
+            st.rerun()
+
+# =============================
+# UPSELL (PLACEHOLDER)
+# =============================
+elif menu == "📈 Upsell":
+    st.subheader("📈 Upsell")
+    st.info(
+        "Esta pestaña es solo un contenedor por ahora.\n\n"
+        "Aquí implementaremos más adelante la calculadora de Upsell "
+        "para Front Desk y Reservas, sin afectar promociones existentes."
+    )

@@ -208,7 +208,6 @@ if st.session_state.is_admin and not df_filtrado.empty:
             df.to_csv(PROMOS_FILE, index=False)
             st.success("Promoción eliminada correctamente")
             st.rerun()
-``
 
             # =============================
             # ACCIONES ADMIN

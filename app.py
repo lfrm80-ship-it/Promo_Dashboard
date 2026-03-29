@@ -40,17 +40,13 @@ MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 # =============================
 def cargar_promos():
     if os.path.exists(PROMOS_FILE):
-        try:
-            df = pd.read_csv(PROMOS_FILE, sep=None, engine="python")
-        except Exception:
-            df = pd.read_csv(PROMOS_FILE)
-
+        df = pd.read_csv(PROMOS_FILE, sep=None, engine="python")
         for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
-
         return df
     return pd.DataFrame()
+
 
 def generar_excel(df):
     buffer = io.BytesIO()
@@ -68,7 +64,7 @@ def calcular_estado(row):
         return "Expirada"
     if tw_i <= hoy <= tw_f:
         return "Activa"
-    elif hoy < tw_i:
+    if hoy < tw_i:
         return "Futura"
     return "Expirada"
 
@@ -85,6 +81,8 @@ with st.sidebar:
         (["➕ Nueva promoción"] if st.session_state.is_admin else [])
     )
 
+    # 🔽 BAJAMOS EL BLOQUE DE ADMIN
+    st.markdown("<br><br>", unsafe_allow_html=True)
     st.divider()
     st.caption("Acceso administrativo")
 
@@ -107,6 +105,7 @@ with st.sidebar:
 # HEADER
 # =============================
 st.markdown("### 📊 Master Record Playa Mujeres")
+
 if not st.session_state.is_admin:
     st.markdown("⚠️ **READ ONLY**")
 
@@ -125,7 +124,6 @@ if menu == "🔍 Vista rápida":
     else:
         df_view = df.copy()
         df_view["Estado"] = df_view.apply(calcular_estado, axis=1)
-
         st.dataframe(df_view, use_container_width=True, hide_index=True)
 
         st.download_button(
@@ -135,59 +133,98 @@ if menu == "🔍 Vista rápida":
         )
 
 # =============================
-# NUEVA PROMOCIÓN (ADMIN)
+# NUEVA PROMOCIÓN
 # =============================
 elif menu == "➕ Nueva promoción":
 
     with st.form("new_promo", clear_on_submit=True):
 
-    st.subheader("📥 Carga masiva desde Excel (opcional)")
-    excel_file = st.file_uploader(
-        "Subir archivo Excel (.xlsx / .xls)",
-        ["xlsx", "xls"]
-    )
+        st.subheader("📥 Carga masiva desde Excel (opcional)")
+        excel_file = st.file_uploader(
+            "Subir archivo Excel (.xlsx / .xls)",
+            ["xlsx", "xls"]
+        )
 
-    st.divider()
-    st.subheader("📝 Carga manual")
+        st.divider()
+        st.subheader("📝 Carga manual")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        promo = st.text_input("Promoción")
-        hotels = st.multiselect("Hotel", PROPERTIES)
-        market = st.selectbox("Market", MARKETS)
+        col1, col2 = st.columns(2)
+        with col1:
+            promo = st.text_input("Promoción")
+            hotels = st.multiselect("Hotel", PROPERTIES)
+            market = st.selectbox("Market", MARKETS)
 
-    with col2:
-        rate = st.text_input("Rate Plan")
-        discount = st.number_input("Descuento (%)", 0, 100)
+        with col2:
+            rate = st.text_input("Rate Plan")
+            discount = st.number_input("Descuento (%)", 0, 100)
 
-    st.divider()
+        st.divider()
 
-    # ✅ ESTO ES LO IMPORTANTE
-    col_bw_i, col_bw_f, col_tw_i, col_tw_f = st.columns(4)
+        # ✅ FECHAS EN UNA SOLA LÍNEA
+        c_bw_i, c_bw_f, c_tw_i, c_tw_f = st.columns(4)
+        with c_bw_i:
+            bw_i = st.date_input("BW Inicio")
+        with c_bw_f:
+            bw_f = st.date_input("BW Fin")
+        with c_tw_i:
+            tw_i = st.date_input("TW Inicio")
+        with c_tw_f:
+            tw_f = st.date_input("TW Fin")
 
-    with col_bw_i:
-        bw_i = st.date_input("BW Inicio")
+        imagen_file = st.file_uploader(
+            "Adjuntar imagen (PNG / JPG)",
+            ["png", "jpg", "jpeg"]
+        )
 
-    with col_bw_f:
-        bw_f = st.date_input("BW Fin")
+        notas = st.text_area("Notas / Restricciones")
+        submit = st.form_submit_button("✅ Guardar")
 
-    with col_tw_i:
-        tw_i = st.date_input("TW Inicio")
+        if submit:
 
-    with col_tw_f:
-        tw_f = st.date_input("TW Fin")
+            # ===== EXCEL =====
+            if excel_file is not None:
+                df_excel = pd.read_excel(excel_file)
 
-    imagen_file = st.file_uploader(
-        "Adjuntar imagen (PNG / JPG)",
-        ["png", "jpg", "jpeg"]
-    )
+                if df_excel.empty:
+                    st.error("El Excel está vacío.")
+                    st.stop()
 
-    notas = st.text_area("Notas / Restricciones")
+                df = pd.concat([df, df_excel], ignore_index=True)
 
-    submit = st.form_submit_button("✅ Guardar")
-            # ===== PROTECCIÓN CSV =====
+            # ===== MANUAL =====
+            elif promo and hotels and rate:
+
+                archivo_path = ""
+                if imagen_file:
+                    archivo_path = os.path.join(MEDIA_DIR, imagen_file.name)
+                    with open(archivo_path, "wb") as f:
+                        f.write(imagen_file.getbuffer())
+
+                rows = []
+                for h in hotels:
+                    rows.append({
+                        "Hotel": h,
+                        "Promo": promo,
+                        "Market": market,
+                        "Rate_Plan": rate,
+                        "Descuento": discount,
+                        "BW_Inicio": bw_i,
+                        "BW_Fin": bw_f,
+                        "TW_Inicio": tw_i,
+                        "TW_Fin": tw_f,
+                        "Archivo_Path": archivo_path,
+                        "Notas": notas
+                    })
+
+                df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+
+            else:
+                st.error("Sube un Excel o completa el formulario manual.")
+                st.stop()
+
+            # 🔒 PROTECCIÓN CSV
             if len(df) == 0:
-                st.error("⚠️ Error: el CSV quedaría vacío.")
+                st.error("Error: el CSV quedaría vacío.")
                 st.stop()
 
             df.to_csv(PROMOS_FILE, index=False)
@@ -200,7 +237,7 @@ elif menu == "➕ Nueva promoción":
 elif menu == "📈 Upsell":
     st.subheader("📈 Upsell")
     st.info(
-        "Esta pestaña ya está creada y aislada.\n\n"
-        "Aquí se implementará la calculadora de Upsell "
-        "para Front Desk y Reservas en el siguiente paso."
+        "Esta pestaña queda lista.\n\n"
+        "Aquí se desarrollará la calculadora de Upsell "
+        "para Front Desk y Reservas."
     )

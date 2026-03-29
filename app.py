@@ -246,7 +246,6 @@ elif menu == "➕ Nueva promoción":
             df.to_csv(PROMOS_FILE, index=False)
             st.success("✅ Promociones guardadas correctamente")
             st.rerun()
-``
 
 # =============================
 # UPSELL (PLACEHOLDER)

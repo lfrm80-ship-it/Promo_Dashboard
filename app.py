@@ -308,76 +308,58 @@ elif menu == "📈 Upsell":
                 value=0
             )
 
-            # -----------------------------
-            # POLÍTICA DE NIÑOS
-            # -----------------------------
-            with st.expander("👶 Política de niños (referencia)"):
-                st.markdown("""
-**Edades**
+        # =============================
+        # POLÍTICA DE NIÑOS – DREPM
+        # =============================
+with st.expander("👶 Política de niños (referencia)"):
+    st.markdown("""
+### Edades
 - **0 – 2 años:** sin costo (infantes)
 - **3 – 12 años:** aplica cargo adicional
 - **13 años en adelante:** se consideran adultos
 
-**🏊 Swim Out**
-- Acepta niños
+### 🏊 Swim Out
+- **NO acepta niños**
+- Restricción operativa de la categoría
 
-(*) Información de referencia. Sujeta a reglas de Revenue y PMS,
-así como a la categoría de habitación.
+(*) Información de referencia. Sujeta a validación en PMS / Revenue.
 """)
 
-            # -----------------------------
-            # CARGOS POR NIÑO – NET / PUBLIC
-            # -----------------------------
-            if ninos > 0:
-                with st.expander("💵 Cargos por niño – NET / PUBLIC (Referencia)"):
-                    st.markdown("""
-### Temporada **Regular** (OK RM)
+         # =============================
+# CARGOS POR NIÑO – NET / PUBLIC
+# =============================
+if ninos > 0:
+    with st.expander("💵 Cargos por niño – NET / PUBLIC por Fecha (Referencia)"):
+        st.markdown("""
+### ✅ Fechas **OK RM** – Aplicación directa
+
+#### **2026**
+**26 MAR – 13 ABR**
 
 | Tipo | USD | MXN |
-|-----|-----|-----|
-| **NET** | $67 | $1,240 |
-| **PUBLIC** | $89 | $1,653 |
-
----
-
-### Temporada **Holiday** (OK RM)
-
-| Tipo | USD | MXN |
-|-----|-----|-----|
+|------|-----|-----|
 | **NET** | $111 | $2,054 |
 | **PUBLIC** | $148 | $2,738 |
 
 ---
 
-### Fechas **OK RM**
+#### **2027**
+**20 MAR – 11 ABR**
 
-**2026**
-- 26 Mar – 13 Abr  
-  USD **$148** | MXN **$2,738**
+| Tipo | USD | MXN |
+|------|-----|-----|
+| **NET** | $118 | $2,183 |
+| **PUBLIC** | $157 | $2,911 |
 
-**2027**
-- 20 Mar – 11 Abr  
-  USD **$157** | MXN **$2,904.50**
+---
 
-(*) Valores de referencia. Sujetos a validación final en PMS / Revenue.
+### 📅 Fuera de Fechas OK RM
+- Aplican cargos de **Temporada Regular**
+- Sujeto a validación según temporada y categoría
+
+(*) Valores **referenciales**. No sustituyen el cálculo final del PMS.
 """)
-
-        else:  # SECPM – Solo Adultos
-            adultos = st.number_input(
-                "Adultos",
-                min_value=1,
-                max_value=3,
-                step=1,
-                value=2
-            )
-            st.caption("ℹ️ Resort solo adultos (18+)")
-
-        periodo = st.selectbox(
-            "Periodo",
-            ["Regular", "Holiday"]
-        )
-
-        calcular = st.button("Calcular Upsell")
+``
 
     # =================================
     # COLUMNA DERECHA – RESULTADOS

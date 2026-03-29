@@ -24,6 +24,9 @@ if "selected_idx" not in st.session_state:
     st.session_state.selected_idx = None
 
 PROMOS_FILE = "promociones_produccion.csv"
+st.write("Archivo existe:", os.path.exists(PROMOS_FILE))
+st.write("Ruta actual:", os.getcwd())
+
 MEDIA_DIR = "media"
 os.makedirs(MEDIA_DIR, exist_ok=True)
 

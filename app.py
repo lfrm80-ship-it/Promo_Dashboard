@@ -20,6 +20,9 @@ ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
+if "selected_idx" not in st.session_state:
+    st.session_state.selected_idx = None
+
 PROMOS_FILE = "promociones_produccion.csv"
 MEDIA_DIR = "media"
 os.makedirs(MEDIA_DIR, exist_ok=True)
@@ -54,7 +57,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================
-# FUNCIONES AUXILIARES
+# FUNCIONES
 # =============================
 def cargar_promos():
     if os.path.exists(PROMOS_FILE):
@@ -104,6 +107,7 @@ with st.sidebar:
         st.success("🟢 Modo ADMIN activo")
         if st.button("Salir de Admin"):
             st.session_state.is_admin = False
+            st.session_state.selected_idx = None
             st.rerun()
     else:
         with st.expander("🔒 Entrar como Admin"):
@@ -142,13 +146,8 @@ if menu == "🔍 Vista rápida":
         estados = ["Activa", "Futura", "Expirada"]
         default = ["Activa"] if not st.session_state.is_admin else estados
 
-        filtro_estado = st.multiselect(
-            "Estado",
-            estados,
-            default=default
-        )
-
-        df_filtrado = df[df["Estado"].isin(filtro_estado)]
+        filtro_estado = st.multiselect("Estado", estados, default=default)
+        df_view = df[df["Estado"].isin(filtro_estado)]
 
         col1, col2 = st.columns([4, 1])
         with col1:
@@ -156,38 +155,35 @@ if menu == "🔍 Vista rápida":
         with col2:
             st.download_button(
                 "📥 Descargar Excel",
-                data=generar_excel(df_filtrado),
+                data=generar_excel(df_view),
                 file_name=f"MasterRecord_{date.today()}.xlsx",
                 use_container_width=True
             )
 
         if search:
-            df_filtrado = df_filtrado[
-                df_filtrado.astype(str)
+            df_view = df_view[
+                df_view.astype(str)
                 .apply(lambda x: x.str.contains(search, case=False, na=False))
                 .any(axis=1)
             ]
 
-        st.dataframe(
-            df_filtrado,
-            use_container_width=True,
-            hide_index=True
-        )
+        st.dataframe(df_view, use_container_width=True, hide_index=True)
 
         # =============================
-        # VISTA PREVIA + ACCIONES ADMIN
+        # VISTA PREVIA
         # =============================
-        if not df_filtrado.empty:
+        if not df_view.empty:
             st.divider()
             st.subheader("📎 Vista previa")
 
-            idx = st.selectbox(
+            selected_idx = st.selectbox(
                 "Selecciona una promoción",
-                df_filtrado.index,
-                format_func=lambda i: df_filtrado.loc[i, "Promo"]
+                df_view.index,
+                format_func=lambda i: df_view.loc[i, "Promo"]
             )
 
-            archivo = df_filtrado.loc[idx, "Archivo_Path"]
+            st.session_state.selected_idx = selected_idx
+            archivo = df_view.loc[selected_idx, "Archivo_Path"]
 
             if isinstance(archivo, str) and archivo and os.path.exists(archivo):
                 if st.button("👁 Ver archivo"):
@@ -203,26 +199,31 @@ if menu == "🔍 Vista rápida":
             else:
                 st.info("Esta promoción no tiene archivo adjunto.")
 
+            # =============================
+            # ACCIONES ADMIN (ELIMINAR)
+            # =============================
+            if st.session_state.is_admin:
+                st.divider()
+                st.subheader("🛠 Acciones administrativas")
+
+                st.warning("⚠️ Esta acción no se puede deshacer")
+
+                confirm_delete = st.checkbox("Confirmar eliminación")
+
+                if confirm_delete:
+                    if st.button("🗑 Eliminar promoción", type="primary"):
+                        idx = st.session_state.selected_idx
+                        if idx in df.index:
+                            df = df.drop(idx)
+                            df.to_csv(PROMOS_FILE, index=False)
+                            st.session_state.selected_idx = None
+                            st.success("Promoción eliminada correctamente ✅")
+                            st.rerun()
+                        else:
+                            st.error("No se pudo identificar la promoción.")
+
 # =============================
-# ACCIONES ADMIN
-# =============================
-if st.session_state.is_admin:
-    st.divider()
-    st.subheader("🛠 Acciones administrativas")
-
-    st.warning("⚠️ Esta acción no se puede deshacer")
-
-    confirm_delete = st.checkbox("Confirmar eliminación")
-
-    if confirm_delete:
-        if st.button("🗑 Eliminar promoción", type="primary"):
-            df = df.drop(idx)
-            df.to_csv(PROMOS_FILE, index=False)
-            st.success("Promoción eliminada correctamente")
-            st.rerun()
-
-# =============================
-# NUEVA PROMOCIÓN (ADMIN)
+# NUEVA PROMOCIÓN
 # =============================
 elif menu == "➕ Nueva promoción":
 
@@ -249,17 +250,14 @@ elif menu == "➕ Nueva promoción":
         with c6:
             tw_f = st.date_input("TW Fin")
 
-        archivo = st.file_uploader(
-            "Adjuntar flyer / PDF (opcional)",
-            ["pdf", "png", "jpg", "jpeg"]
-        )
+        archivo = st.file_uploader("Adjuntar flyer / PDF (opcional)",
+                                   ["pdf", "png", "jpg", "jpeg"])
 
         notas = st.text_area("Notas / Restricciones")
 
         submit = st.form_submit_button("✅ Registrar promoción")
 
         if submit:
-
             if not promo or not hotels or not rate:
                 st.error("Completa los campos obligatorios.")
                 st.stop()

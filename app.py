@@ -250,6 +250,9 @@ elif menu == "➕ Nueva promoción":
 # =============================
 # UPSELL
 # =============================
+# =============================
+# UPSELL
+# =============================
 elif menu == "📈 Upsell":
     st.subheader("📈 Upsell")
 
@@ -287,33 +290,25 @@ elif menu == "📈 Upsell":
         # =============================
         # OCUPACIÓN DINÁMICA
         # =============================
-        adultos = st.number_input(
-            "Adultos",
-            min_value=1,
-            max_value=4,
-            step=1,
-            value=2
-        )
+        if hotel == "DREPM":
+            adultos = st.number_input(
+                "Adultos",
+                min_value=1,
+                max_value=4,
+                step=1,
+                value=2
+            )
 
-       if hotel == "DREPM":
-    adultos = st.number_input(
-        "Adultos",
-        min_value=1,
-        max_value=4,
-        step=1,
-        value=2
-    )
+            ninos = st.number_input(
+                "Niños",
+                min_value=0,
+                max_value=4,
+                step=1,
+                value=0
+            )
 
-    ninos = st.number_input(
-        "Niños",
-        min_value=0,
-        max_value=4,
-        step=1,
-        value=0
-    )
-
-    with st.expander("👶 Política de niños (referencia)"):
-        st.markdown("""
+            with st.expander("👶 Política de niños (referencia)"):
+                st.markdown("""
 **Edades**
 - 0 – 2 años: sin costo (infantes)
 - 3 – 12 años: aplica cargo adicional
@@ -331,16 +326,20 @@ elif menu == "📈 Upsell":
 (*) Información de referencia. Sujeta a reglas de Revenue y PMS,
 así como a categoría de habitación.
 """)
+        else:
+            adultos = st.number_input(
+                "Adultos",
+                min_value=1,
+                max_value=4,
+                step=1,
+                value=2
+            )
+            st.caption("ℹ️ Resort solo adultos (18+)")
 
-else:
-    adultos = st.number_input(
-        "Adultos",
-        min_value=1,
-        max_value=4,
-        step=1,
-        value=2
-    )
-    st.caption("ℹ️ Resort solo adultos (18+)")
+        periodo = st.selectbox(
+            "Periodo",
+            ["Regular", "Holiday"]
+        )
 
         calcular = st.button("Calcular Upsell")
 

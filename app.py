@@ -250,8 +250,8 @@ elif menu == "➕ Nueva promoción":
         with c6:
             tw_f = st.date_input("TW Fin")
 
-        archivo = st.file_uploader("Adjuntar flyer / PDF (opcional)",
-                                   ["pdf", "png", "jpg", "jpeg"])
+        archivo = st.file_uploader("Adjuntar soporte (flyer / PDF / email / Excel)",
+                                   ["pdf", "png", "jpg", "jpeg", "xlsx", "xls", "eml", "msg"])
 
         notas = st.text_area("Notas / Restricciones")
 

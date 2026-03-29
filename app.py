@@ -38,11 +38,10 @@ PROPERTIES = [
 MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 
 # =============================
-# CSS (ESTILOS + COLORES ESTADO)
+# ESTILOS
 # =============================
 st.markdown("""
 <style>
-/* Badge READ ONLY */
 .readonly {
     position: fixed;
     top: 90px;
@@ -54,31 +53,11 @@ st.markdown("""
     font-weight: 600;
     border: 1px solid #cbd5e1;
 }
-
-/* ===== COLORES PARA MULTISELECT ESTADO ===== */
-
-/* ACTIVA - Verde */
-span[data-baseweb="tag"]:has(span:contains("Activa")) {
-    background-color: #16a34a !important;
-    color: #ffffff !important;
-}
-
-/* FUTURA - Naranja */
-span[data-baseweb="tag"]:has(span:contains("Futura")) {
-    background-color: #f59e0b !important;
-    color: #ffffff !important;
-}
-
-/* EXPIRADA - Rojo */
-span[data-baseweb="tag"]:has(span:contains("Expirada")) {
-    background-color: #dc2626 !important;
-    color: #ffffff !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
 # =============================
-# FUNCIONES AUXILIARES
+# FUNCIONES
 # =============================
 def cargar_promos():
     if os.path.exists(PROMOS_FILE):
@@ -164,14 +143,26 @@ if menu == "🔍 Vista rápida":
         df = df.copy()
         df["Estado"] = df.apply(calcular_estado, axis=1)
 
-        estados = ["Activa", "Futura", "Expirada"]
-        default = ["Activa"] if not st.session_state.is_admin else estados
+        # ===== SEMÁFORO VISUAL =====
+        estados_ui = {
+            "🟢 Activa": "Activa",
+            "🟠 Futura": "Futura",
+            "🔴 Expirada": "Expirada"
+        }
 
-        filtro_estado = st.multiselect(
-            "Estado",
-            estados,
-            default=default
+        default_ui = (
+            ["🟢 Activa"]
+            if not st.session_state.is_admin
+            else list(estados_ui.keys())
         )
+
+        filtro_estado_ui = st.multiselect(
+            "Estado",
+            list(estados_ui.keys()),
+            default=default_ui
+        )
+
+        filtro_estado = [estados_ui[e] for e in filtro_estado_ui]
 
         df_view = df[df["Estado"].isin(filtro_estado)]
 

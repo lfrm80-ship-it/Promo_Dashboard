@@ -125,14 +125,14 @@ with st.sidebar:
 # =============================
 # HEADER
 # =============================
-st.markdown(
-    "<h3 style='text-align:center;'>📊 Master Record Playa Mujeres</h3>",
-    unsafe_allow_html=True
-)
+st.markdown("""
+#### 📊 Master Record Playa Mujeres
+""", unsafe_allow_html=True)
 
 if not st.session_state.is_admin:
-    st.markdown("<div class='readonly'>READ ONLY</div>", unsafe_allow_html=True)
+    st.markdown("⚠️ **READ ONLY**", unsafe_allow_html=True)
 
+# ✅ CARGA DE PROMOCIONES (CRÍTICO)
 df = cargar_promos()
 
 # =============================

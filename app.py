@@ -64,33 +64,20 @@ st.markdown("""
 # =============================
 def cargar_promos():
     if os.path.exists(PROMOS_FILE):
-        df = pd.read_csv(PROMOS_FILE)
+        try:
+            # ✅ CSV separado por ; (Excel LATAM)
+            df = pd.read_csv(PROMOS_FILE, sep=";")
+        except Exception:
+            # 🔁 fallback por si acaso
+            df = pd.read_csv(PROMOS_FILE)
+
         for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
+
         return df
+
     return pd.DataFrame()
-
-def generar_excel(df):
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        df.to_excel(writer, index=False)
-    return buffer.getvalue()
-
-def calcular_estado(row):
-    hoy = date.today()
-    tw_i = row.get("TW_Inicio")
-    tw_f = row.get("TW_Fin")
-
-    if pd.isna(tw_i) or pd.isna(tw_f):
-        return "Expirada"
-    if tw_i <= hoy <= tw_f:
-        return "Activa"
-    elif hoy < tw_i:
-        return "Futura"
-    else:
-        return "Expirada"
-
 # =============================
 # SIDEBAR
 # =============================

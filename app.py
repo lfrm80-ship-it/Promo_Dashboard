@@ -271,3 +271,6 @@ elif menu == "📈 Upsell":
     with col2:
         if calcular:
             st.info("Aquí mostraremos las categorías superiores y el precio adicional.")
+            adultos = st.number_input("Adultos", min_value=1, step=1, value=2)
+ninos = st.number_input("Niños", min_value=0, step=1, value=0)
+

@@ -95,12 +95,14 @@ with st.sidebar:
     st.image("HIC.png", use_container_width=True)
     st.divider()
 
-   
-menu = st.radio(
-    "Navegación",
-    ["🔍 Vista rápida", "📈 Upsell"] +
-    (["➕ Nueva promoción"] if st.session_state.is_admin else [])
-)
+    menu = st.radio(
+        "Navegación",
+        ["🔍 Vista rápida", "📈 Upsell"] +
+        (["➕ Nueva promoción"] if st.session_state.is_admin else [])
+    )
+
+    st.divider()
+    st.caption
 
 
     st.divider()

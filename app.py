@@ -248,7 +248,7 @@ elif menu == "➕ Nueva promoción":
             st.rerun()
 
 # =============================
-# UPSELL (PLACEHOLDER)
+# UPSELL
 # =============================
 elif menu == "📈 Upsell":
     st.subheader("📈 Upsell")
@@ -256,21 +256,53 @@ elif menu == "📈 Upsell":
     col1, col2 = st.columns([1, 2])
 
     with col1:
-        hotel = st.selectbox("Hotel", ["DREPM", "SECPM"])
-        habitacion = st.selectbox("Habitación actual", [
-            "JS Garden View",
-            "JS Pool View",
-            "JS Ocean View"
-        ])
-        tarifa = st.number_input("Tarifa actual por noche", min_value=0)
-        noches = st.number_input("Noches", min_value=1)
-        periodo = st.selectbox("Periodo", ["Regular", "Holiday"])
+        hotel = st.selectbox(
+            "Hotel",
+            ["DREPM", "SECPM"]
+        )
+
+        habitacion = st.selectbox(
+            "Habitación actual",
+            [
+                "JS Garden View",
+                "JS Pool View",
+                "JS Ocean View"
+            ]
+        )
+
+        tarifa = st.number_input(
+            "Tarifa actual por noche",
+            min_value=0,
+            step=10,
+            value=200
+        )
+
+        noches = st.number_input(
+            "Noches",
+            min_value=1,
+            step=1,
+            value=1
+        )
+
+        # ✅ OCUPACIÓN (adultos only)
+        adultos = st.number_input(
+            "Adultos",
+            min_value=1,
+            max_value=4,
+            step=1,
+            value=2
+        )
+
+        periodo = st.selectbox(
+            "Periodo",
+            ["Regular", "Holiday"]
+        )
 
         calcular = st.button("Calcular Upsell")
 
     with col2:
         if calcular:
-            st.info("Aquí mostraremos las categorías superiores y el precio adicional.")
-            adultos = st.number_input("Adultos", min_value=1, step=1, value=2)
-ninos = st.number_input("Niños", min_value=0, step=1, value=0)
-
+            st.info(
+                "Aquí mostraremos las categorías superiores y el precio adicional "
+                "considerando tarifa, noches y ocupación."
+            )

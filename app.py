@@ -234,6 +234,20 @@ elif menu == "➕ Nueva promoción":
 # =============================
 # UPSELL ✅
 # =============================
+
+habitacion_actual = st.selectbox(
+    "Habitación actual",
+    HABITACIONES
+)
+
+# Solo mostrar opciones superiores
+idx_actual = HABITACIONES.index(habitacion_actual)
+opciones_upsell = HABITACIONES[idx_actual + 1:]
+
+habitacion_destino = st.selectbox(
+    "Upsell a",
+    opciones_upsell if opciones_upsell else ["No hay opciones disponibles"]
+)
 elif menu == "📈 Upsell":
     st.subheader("📈 Upsell")
 

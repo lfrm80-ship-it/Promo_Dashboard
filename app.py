@@ -52,7 +52,6 @@ def cargar_promos():
         return df
     return pd.DataFrame()
 
-
 def generar_excel(df):
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:

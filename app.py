@@ -316,7 +316,12 @@ elif menu == "➕ Nueva promoción":
                 })
 
             df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
-            df.to_csv(PROMOS_FILE, index=False)
 
-            st.success("🎉 Promoción registrada correctamente")
-            st.rerun()
+# 🔒 PROTECCIÓN ANTI CSV VACÍO
+if len(df) == 0:
+    st.error("⚠️ ERROR: Intento de guardar CSV vacío. Operación cancelada.")
+    st.stop()
+
+df.to_csv(PROMOS_FILE, index=False)
+st.success("🎉 Promoción registrada correctamente")
+st.rerun()

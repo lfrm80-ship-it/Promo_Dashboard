@@ -104,6 +104,24 @@ with st.sidebar:
     st.divider()
     st.caption("Acceso administrativo")
 
+    # -------- ADMIN ACCESS --------
+    if st.session_state.is_admin:
+        st.success("🟢 Modo ADMIN activo")
+        if st.button("Salir de Admin"):
+            st.session_state.is_admin = False
+            st.session_state.selected_idx = None
+            st.rerun()
+    else:
+        with st.expander("🔒 Entrar como Admin"):
+            pwd = st.text_input("Contraseña", type="password")
+            if st.button("Entrar"):
+                if pwd == ADMIN_PASSWORD:
+                    st.session_state.is_admin = True
+                    st.rerun()
+                else:
+                    st.error("Contraseña incorrecta")
+
+
 # =============================
 # HEADER
 # =============================

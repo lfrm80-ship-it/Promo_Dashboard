@@ -252,8 +252,22 @@ elif menu == "➕ Nueva promoción":
 # =============================
 elif menu == "📈 Upsell":
     st.subheader("📈 Upsell")
-    st.info(
-        "Esta pestaña queda lista.\n\n"
-        "Aquí se desarrollará la calculadora de Upsell "
-        "para Front Desk y Reservas."
-    )
+
+    col1, col2 = st.columns([1, 2])
+
+    with col1:
+        hotel = st.selectbox("Hotel", ["DREPM", "SECPM"])
+        habitacion = st.selectbox("Habitación actual", [
+            "JS Garden View",
+            "JS Pool View",
+            "JS Ocean View"
+        ])
+        tarifa = st.number_input("Tarifa actual por noche", min_value=0)
+        noches = st.number_input("Noches", min_value=1)
+        periodo = st.selectbox("Periodo", ["Regular", "Holiday"])
+
+        calcular = st.button("Calcular Upsell")
+
+    with col2:
+        if calcular:
+            st.info("Aquí mostraremos las categorías superiores y el precio adicional.")

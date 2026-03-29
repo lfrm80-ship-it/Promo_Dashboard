@@ -64,19 +64,31 @@ st.markdown("""
 # =============================
 def cargar_promos():
     if os.path.exists(PROMOS_FILE):
-        try:
-            # ✅ CSV separado por ; (Excel LATAM)
-            df = pd.read_csv(PROMOS_FILE, sep=";")
-        except Exception:
-            # 🔁 fallback por si acaso
-            df = pd.read_csv(PROMOS_FILE)
+        st.subheader("🔎 DEBUG CSV")
 
-        for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
-            if col in df.columns:
-                df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
+        # Leer el archivo como texto crudo
+        with open(PROMOS_FILE, "r", encoding="utf-8", errors="ignore") as f:
+            preview = f.readlines()[:10]
+
+        st.write("Primeras líneas del archivo:")
+        for line in preview:
+            st.text(line)
+
+        # Intento 1: autodetectar separador
+        try:
+            df = pd.read_csv(PROMOS_FILE, sep=None, engine="python")
+            st.write("Leído con autodetección (engine=python)")
+        except Exception as e:
+            st.error(f"Error autodetección: {e}")
+            df = pd.DataFrame()
+
+        st.write("Filas detectadas:", len(df))
+        st.write("Columnas detectadas:", df.columns.tolist())
+        st.dataframe(df.head())
 
         return df
 
+    st.error("Archivo NO encontrado")
     return pd.DataFrame()
 # =============================
 # SIDEBAR

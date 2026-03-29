@@ -163,10 +163,20 @@ elif menu == "➕ Nueva promoción":
 
         st.divider()
 
-        bw_i = st.date_input("BW Inicio")
-        bw_f = st.date_input("BW Fin")
-        tw_i = st.date_input("TW Inicio")
-        tw_f = st.date_input("TW Fin")
+       col_bw_i, col_bw_f, col_tw_i, col_tw_f = st.columns(4)
+
+with col_bw_i:
+    bw_i = st.date_input("BW Inicio")
+
+with col_bw_f:
+    bw_f = st.date_input("BW Fin")
+
+with col_tw_i:
+    tw_i = st.date_input("TW Inicio")
+
+with col_tw_f:
+    tw_f = st.date_input("TW Fin")
+
 
         imagen_file = st.file_uploader(
             "Adjuntar imagen (PNG / JPG)",

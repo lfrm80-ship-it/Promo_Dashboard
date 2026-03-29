@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import io
-from datetime import date
+from datetime import datetime, date
 
 # =============================
 # CONFIGURACIÓN GENERAL
@@ -36,7 +36,7 @@ PROPERTIES = [
 MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 
 # =============================
-# FUNCIONES
+# FUNCIONES PROMOS
 # =============================
 def cargar_promos():
     if os.path.exists(PROMOS_FILE):
@@ -69,187 +69,6 @@ def calcular_estado(row):
     return "Expirada"
 
 # =============================
-# SIDEBAR
-# =============================
-with st.sidebar:
-    st.image("HIC.png", use_container_width=True)
-    st.divider()
-
-    menu = st.radio(
-        "Navegación",
-        ["🔍 Vista rápida", "📈 Upsell"] +
-        (["➕ Nueva promoción"] if st.session_state.is_admin else [])
-    )
-
-    # 🔽 BAJAMOS EL BLOQUE DE ADMIN
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.divider()
-    st.caption("Acceso administrativo")
-
-    if st.session_state.is_admin:
-        st.success("🟢 Modo ADMIN activo")
-        if st.button("Salir de Admin"):
-            st.session_state.is_admin = False
-            st.rerun()
-    else:
-        with st.expander("🔒 Entrar como Admin"):
-            pwd = st.text_input("Contraseña", type="password")
-            if st.button("Entrar"):
-                if pwd == ADMIN_PASSWORD:
-                    st.session_state.is_admin = True
-                    st.rerun()
-                else:
-                    st.error("Contraseña incorrecta")
-
-# =============================
-# HEADER
-# =============================
-st.markdown("### 📊 Master Record Playa Mujeres")
-
-if not st.session_state.is_admin:
-    st.markdown("⚠️ **READ ONLY**")
-
-# =============================
-# CARGA PROMOS
-# =============================
-df = cargar_promos()
-
-# =============================
-# VISTA RÁPIDA
-# =============================
-if menu == "🔍 Vista rápida":
-
-    if df.empty:
-        st.info("No hay promociones registradas.")
-    else:
-        df_view = df.copy()
-        df_view["Estado"] = df_view.apply(calcular_estado, axis=1)
-        st.dataframe(df_view, use_container_width=True, hide_index=True)
-
-        st.download_button(
-            "📥 Descargar Excel",
-            generar_excel(df_view),
-            f"MasterRecord_{date.today()}.xlsx"
-        )
-
-# =============================
-# NUEVA PROMOCIÓN
-# =============================
-elif menu == "➕ Nueva promoción":
-
-    with st.form("new_promo", clear_on_submit=True):
-
-        # =============================
-        # CARGA MANUAL
-        # =============================
-        st.subheader("📝 Carga manual")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            promo = st.text_input("Promoción")
-            hotels = st.multiselect("Hotel", PROPERTIES)
-            market = st.selectbox("Market", MARKETS)
-
-        with col2:
-            rate = st.text_input("Rate Plan")
-            discount = st.number_input("Descuento (%)", 0, 100)
-
-        st.divider()
-
-        # =============================
-        # FECHAS EN UNA SOLA LÍNEA
-        # =============================
-        c_bw_i, c_bw_f, c_tw_i, c_tw_f = st.columns(4)
-        with c_bw_i:
-            bw_i = st.date_input("BW Inicio")
-        with c_bw_f:
-            bw_f = st.date_input("BW Fin")
-        with c_tw_i:
-            tw_i = st.date_input("TW Inicio")
-        with c_tw_f:
-            tw_f = st.date_input("TW Fin")
-
-        # =============================
-        # IMAGEN
-        # =============================
-        imagen_file = st.file_uploader(
-            "Adjuntar imagen (PNG / JPG)",
-            ["png", "jpg", "jpeg"]
-        )
-
-        notas = st.text_area("Notas / Restricciones")
-
-        st.divider()
-
-        # =============================
-        # EXCEL (HASTA ABAJO)
-        # =============================
-        st.subheader("📥 Carga masiva desde Excel (opcional)")
-        excel_file = st.file_uploader(
-            "Subir archivo Excel (.xlsx / .xls)",
-            ["xlsx", "xls"]
-        )
-
-        submit = st.form_submit_button("✅ Guardar")
-
-        # =============================
-        # GUARDADO
-        # =============================
-        if submit:
-
-            # ---- EXCEL ----
-            if excel_file is not None:
-                df_excel = pd.read_excel(excel_file)
-
-                if df_excel.empty:
-                    st.error("El Excel está vacío.")
-                    st.stop()
-
-                df = pd.concat([df, df_excel], ignore_index=True)
-
-            # ---- MANUAL ----
-            elif promo and hotels and rate:
-
-                archivo_path = ""
-                if imagen_file:
-                    archivo_path = os.path.join(MEDIA_DIR, imagen_file.name)
-                    with open(archivo_path, "wb") as f:
-                        f.write(imagen_file.getbuffer())
-
-                rows = []
-                for h in hotels:
-                    rows.append({
-                        "Hotel": h,
-                        "Promo": promo,
-                        "Market": market,
-                        "Rate_Plan": rate,
-                        "Descuento": discount,
-                        "BW_Inicio": bw_i,
-                        "BW_Fin": bw_f,
-                        "TW_Inicio": tw_i,
-                        "TW_Fin": tw_f,
-                        "Archivo_Path": archivo_path,
-                        "Notas": notas
-                    })
-
-                df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
-
-            else:
-                st.error("Sube un Excel o completa el formulario manual.")
-                st.stop()
-
-            # ---- PROTECCIÓN CSV ----
-            if len(df) == 0:
-                st.error("Error: el CSV quedaría vacío.")
-                st.stop()
-
-            df.to_csv(PROMOS_FILE, index=False)
-            st.success("✅ Promociones guardadas correctamente")
-            st.rerun()
-
-from datetime import datetime, date
-
-# =============================
 # REGLAS OK RM – NIÑOS
 # =============================
 OK_RM_RULES = {
@@ -264,7 +83,7 @@ OK_RM_RULES = {
     2027: {
         "ok_rm": [
             ("2027-03-20", "2027-04-11"),
-            ("2027-12-21", "2028-01-04")  # Holiday cross-year
+            ("2027-12-21", "2028-01-04")
         ],
         "regular": {"net": 71, "pub": 95},
         "ok": {"net": 118, "pub": 157}
@@ -287,9 +106,133 @@ def detectar_ok_rm(fecha_llegada: date):
 
     return "REGULAR", reglas["regular"]
 
+# =============================
+# SIDEBAR
+# =============================
+with st.sidebar:
+    st.image("HIC.png", use_container_width=True)
+    st.divider()
+
+    menu = st.radio(
+        "Navegación",
+        ["🔍 Vista rápida", "➕ Nueva promoción", "📈 Upsell"]
+        if st.session_state.is_admin
+        else ["🔍 Vista rápida", "📈 Upsell"]
+    )
+
+    st.divider()
+    st.caption("Acceso administrativo")
+
+    if st.session_state.is_admin:
+        st.success("🟢 Modo ADMIN activo")
+        if st.button("Salir de Admin"):
+            st.session_state.is_admin = False
+            st.rerun()
+    else:
+        with st.expander("🔒 Entrar como Admin"):
+            pwd = st.text_input("Contraseña", type="password")
+            if st.button("Entrar"):
+                if pwd == ADMIN_PASSWORD:
+                    st.session_state.is_admin = True
+                    st.rerun()
+                else:
+                    st.error("Contraseña incorrecta")
 
 # =============================
-# UPSELL
+# HEADER
+# =============================
+st.markdown("### 📊 Master Record Playa Mujeres")
+if not st.session_state.is_admin:
+    st.markdown("⚠️ **READ ONLY**")
+
+# =============================
+# DATA
+# =============================
+df = cargar_promos()
+
+# =============================
+# VISTA RÁPIDA
+# =============================
+if menu == "🔍 Vista rápida":
+    if df.empty:
+        st.info("No hay promociones registradas.")
+    else:
+        df_view = df.copy()
+        df_view["Estado"] = df_view.apply(calcular_estado, axis=1)
+        st.dataframe(df_view, use_container_width=True, hide_index=True)
+
+        st.download_button(
+            "📥 Descargar Excel",
+            generar_excel(df_view),
+            f"MasterRecord_{date.today()}.xlsx"
+        )
+
+# =============================
+# NUEVA PROMOCIÓN
+# =============================
+elif menu == "➕ Nueva promoción":
+    with st.form("new_promo", clear_on_submit=True):
+
+        st.subheader("📝 Carga manual")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            promo = st.text_input("Promoción")
+            hotels = st.multiselect("Hotel", PROPERTIES)
+            market = st.selectbox("Market", MARKETS)
+
+        with col2:
+            rate = st.text_input("Rate Plan")
+            discount = st.number_input("Descuento (%)", 0, 100)
+
+        st.divider()
+
+        c_bw_i, c_bw_f, c_tw_i, c_tw_f = st.columns(4)
+        bw_i = c_bw_i.date_input("BW Inicio")
+        bw_f = c_bw_f.date_input("BW Fin")
+        tw_i = c_tw_i.date_input("TW Inicio")
+        tw_f = c_tw_f.date_input("TW Fin")
+
+        imagen_file = st.file_uploader("Adjuntar imagen", ["png", "jpg", "jpeg"])
+        notas = st.text_area("Notas / Restricciones")
+
+        st.divider()
+
+        excel_file = st.file_uploader("📥 Carga masiva desde Excel", ["xlsx", "xls"])
+        submit = st.form_submit_button("✅ Guardar")
+
+        if submit:
+            if excel_file is not None:
+                df_excel = pd.read_excel(excel_file)
+                df = pd.concat([df, df_excel], ignore_index=True)
+
+            elif promo and hotels and rate:
+                rows = []
+                for h in hotels:
+                    rows.append({
+                        "Hotel": h,
+                        "Promo": promo,
+                        "Market": market,
+                        "Rate_Plan": rate,
+                        "Descuento": discount,
+                        "BW_Inicio": bw_i,
+                        "BW_Fin": bw_f,
+                        "TW_Inicio": tw_i,
+                        "TW_Fin": tw_f,
+                        "Notas": notas
+                    })
+                df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+
+            else:
+                st.error("Completa los campos.")
+                st.stop()
+
+            df.to_csv(PROMOS_FILE, index=False)
+            st.success("✅ Promoción guardada")
+            st.rerun()
+
+# =============================
+# UPSELL ✅
 # =============================
 elif menu == "📈 Upsell":
     st.subheader("📈 Upsell")
@@ -298,13 +241,34 @@ elif menu == "📈 Upsell":
 
     with col1:
         hotel = st.selectbox("Hotel", ["DREPM", "SECPM"])
+        tarifa = st.number_input("Tarifa por noche (USD)", value=500, step=50)
+        noches = st.number_input("Noches", value=1)
+        fecha = st.date_input("Fecha de llegada", value=date(2026, 4, 1))
 
-        habitacion = st.selectbox(
-            "Habitación actual",
-            ["JS Garden View", "JS Pool View", "JS Ocean View", "JS Swim Out"]
-        )
+        if hotel == "DREPM":
+            adultos = st.number_input("Adultos", 1, 4, 2)
+            ninos = st.number_input("Niños", 0, 4, 0)
+        else:
+            adultos = st.number_input("Adultos", 1, 3, 2)
+            ninos = 0
+            st.caption("ℹ️ Solo adultos")
 
-        tarifa_actual = st.number_input(
-            "Tarifa actual por noche (USD)",
-            min_value=0,
-            step=50,
+        calcular = st.button("Calcular Upsell")
+
+    with col2:
+        if calcular:
+            temporada, precios = detectar_ok_rm(fecha)
+            if precios:
+                st.success(f"Temporada: {temporada}")
+                if ninos > 0:
+                    net, pub = precios["net"], precios["pub"]
+                    st.markdown(f"""
+**Cargos por niño**
+- NET: ${net} USD / ${round(net * TC_MXN):,} MXN  
+- PUBLIC: ${pub} USD / ${round(pub * TC_MXN):,} MXN
+""")
+
+                st.markdown("### Upsell habitación (ejemplo)")
+                st.markdown(f"Incremento estimado: **${75 * noches} USD**")
+            else:
+                st.info("Sin reglas para esta fecha.")

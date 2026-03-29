@@ -38,10 +38,11 @@ PROPERTIES = [
 MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 
 # =============================
-# ESTILOS
+# CSS (ESTILOS + COLORES ESTADO)
 # =============================
 st.markdown("""
 <style>
+/* Badge READ ONLY */
 .readonly {
     position: fixed;
     top: 90px;
@@ -53,11 +54,31 @@ st.markdown("""
     font-weight: 600;
     border: 1px solid #cbd5e1;
 }
+
+/* ===== COLORES PARA MULTISELECT ESTADO ===== */
+
+/* ACTIVA - Verde */
+span[data-baseweb="tag"]:has(span:contains("Activa")) {
+    background-color: #16a34a !important;
+    color: #ffffff !important;
+}
+
+/* FUTURA - Naranja */
+span[data-baseweb="tag"]:has(span:contains("Futura")) {
+    background-color: #f59e0b !important;
+    color: #ffffff !important;
+}
+
+/* EXPIRADA - Rojo */
+span[data-baseweb="tag"]:has(span:contains("Expirada")) {
+    background-color: #dc2626 !important;
+    color: #ffffff !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # =============================
-# FUNCIONES
+# FUNCIONES AUXILIARES
 # =============================
 def cargar_promos():
     if os.path.exists(PROMOS_FILE):
@@ -146,7 +167,12 @@ if menu == "🔍 Vista rápida":
         estados = ["Activa", "Futura", "Expirada"]
         default = ["Activa"] if not st.session_state.is_admin else estados
 
-        filtro_estado = st.multiselect("Estado", estados, default=default)
+        filtro_estado = st.multiselect(
+            "Estado",
+            estados,
+            default=default
+        )
+
         df_view = df[df["Estado"].isin(filtro_estado)]
 
         col1, col2 = st.columns([4, 1])
@@ -167,10 +193,14 @@ if menu == "🔍 Vista rápida":
                 .any(axis=1)
             ]
 
-        st.dataframe(df_view, use_container_width=True, hide_index=True)
+        st.dataframe(
+            df_view,
+            use_container_width=True,
+            hide_index=True
+        )
 
         # =============================
-        # VISTA PREVIA
+        # VISTA PREVIA + ACCIONES ADMIN
         # =============================
         if not df_view.empty:
             st.divider()
@@ -187,20 +217,15 @@ if menu == "🔍 Vista rápida":
 
             if isinstance(archivo, str) and archivo and os.path.exists(archivo):
                 if st.button("👁 Ver archivo"):
-                    if archivo.lower().endswith(".pdf"):
-                        with open(archivo, "rb") as f:
-                            st.download_button(
-                                "📥 Descargar PDF",
-                                f,
-                                file_name=os.path.basename(archivo)
-                            )
-                    else:
+                    if archivo.lower().endswith((".png", ".jpg", ".jpeg")):
                         st.image(archivo, use_container_width=True)
+                    else:
+                        st.info("Este archivo no se puede previsualizar.")
             else:
                 st.info("Esta promoción no tiene archivo adjunto.")
 
             # =============================
-            # ACCIONES ADMIN (ELIMINAR)
+            # ELIMINAR PROMOCIÓN (ADMIN)
             # =============================
             if st.session_state.is_admin:
                 st.divider()
@@ -250,8 +275,10 @@ elif menu == "➕ Nueva promoción":
         with c6:
             tw_f = st.date_input("TW Fin")
 
-        archivo = st.file_uploader("Adjuntar soporte (flyer / PDF / email / Excel)",
-                                   ["pdf", "png", "jpg", "jpeg", "xlsx", "xls", "eml", "msg"])
+        archivo = st.file_uploader(
+            "Adjuntar imagen (PNG / JPG)",
+            ["png", "jpg", "jpeg"]
+        )
 
         notas = st.text_area("Notas / Restricciones")
 

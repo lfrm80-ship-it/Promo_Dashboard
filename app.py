@@ -250,14 +250,14 @@ elif menu == "➕ Nueva promoción":
 # =============================
 # UPSELL
 # =============================
-# =============================
-# UPSELL
-# =============================
 elif menu == "📈 Upsell":
     st.subheader("📈 Upsell")
 
     col1, col2 = st.columns([1, 2])
 
+    # =================================
+    # COLUMN IZQUIERDA – INPUTS
+    # =================================
     with col1:
         hotel = st.selectbox(
             "Hotel",
@@ -269,14 +269,15 @@ elif menu == "📈 Upsell":
             [
                 "JS Garden View",
                 "JS Pool View",
-                "JS Ocean View"
+                "JS Ocean View",
+                "JS Swim Out"
             ]
         )
 
         tarifa = st.number_input(
             "Tarifa actual por noche",
             min_value=0,
-            step=10,
+            step=50,
             value=500
         )
 
@@ -288,9 +289,9 @@ elif menu == "📈 Upsell":
         )
 
         # =============================
-        # OCUPACIÓN DINÁMICA
+        # OCUPACIÓN SEGÚN HOTEL
         # =============================
-        if hotel == "DREPM":
+        if hotel == "DREPM":  # Familias
             adultos = st.number_input(
                 "Adultos",
                 min_value=1,
@@ -307,30 +308,65 @@ elif menu == "📈 Upsell":
                 value=0
             )
 
+            # -----------------------------
+            # POLÍTICA DE NIÑOS
+            # -----------------------------
             with st.expander("👶 Política de niños (referencia)"):
                 st.markdown("""
 **Edades**
-- 0 – 2 años: sin costo (infantes)
-- 3 – 12 años: aplica cargo adicional
-- 13 años en adelante: se consideran adultos
+- **0 – 2 años:** sin costo (infantes)
+- **3 – 12 años:** aplica cargo adicional
+- **13 años en adelante:** se consideran adultos
 
-**Temporada Regular**
-- 1er niño: sin costo
-- 2do niño: $25 USD / noche
-
-**Temporada Holiday**
-- Niño: $40 USD / noche
-
-**🏊 Swim Out** NO - Acepta niños
+**🏊 Swim Out**
+- Acepta niños
 
 (*) Información de referencia. Sujeta a reglas de Revenue y PMS,
-así como a categoría de habitación.
+así como a la categoría de habitación.
 """)
-        else:
+
+            # -----------------------------
+            # CARGOS POR NIÑO – NET / PUBLIC
+            # -----------------------------
+            if ninos > 0:
+                with st.expander("💵 Cargos por niño – NET / PUBLIC (Referencia)"):
+                    st.markdown("""
+### Temporada **Regular** (OK RM)
+
+| Tipo | USD | MXN |
+|-----|-----|-----|
+| **NET** | $67 | $1,240 |
+| **PUBLIC** | $89 | $1,653 |
+
+---
+
+### Temporada **Holiday** (OK RM)
+
+| Tipo | USD | MXN |
+|-----|-----|-----|
+| **NET** | $111 | $2,054 |
+| **PUBLIC** | $148 | $2,738 |
+
+---
+
+### Fechas **OK RM**
+
+**2026**
+- 26 Mar – 13 Abr  
+  USD **$148** | MXN **$2,738**
+
+**2027**
+- 20 Mar – 11 Abr  
+  USD **$157** | MXN **$2,904.50**
+
+(*) Valores de referencia. Sujetos a validación final en PMS / Revenue.
+""")
+
+        else:  # SECPM – Solo Adultos
             adultos = st.number_input(
                 "Adultos",
                 min_value=1,
-                max_value=4,
+                max_value=3,
                 step=1,
                 value=2
             )
@@ -343,9 +379,13 @@ así como a categoría de habitación.
 
         calcular = st.button("Calcular Upsell")
 
+    # =================================
+    # COLUMNA DERECHA – RESULTADOS
+    # =================================
     with col2:
         if calcular:
             st.info(
-                "Aquí mostraremos las categorías superiores y el precio adicional "
-                "considerando tarifa, noches y ocupación."
+                "Aquí mostraremos las **categorías superiores disponibles** y el "
+                "**precio adicional estimado**, considerando tarifa, noches, "
+                "ocupación y periodo."
             )

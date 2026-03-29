@@ -359,7 +359,6 @@ if ninos > 0:
 
 (*) Valores **referenciales**. No sustituyen el cálculo final del PMS.
 """)
-``
 
     # =================================
     # COLUMNA DERECHA – RESULTADOS

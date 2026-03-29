@@ -203,20 +203,23 @@ if menu == "🔍 Vista rápida":
             else:
                 st.info("Esta promoción no tiene archivo adjunto.")
 
-            # =============================
-            # ACCIONES ADMIN
-            # =============================
-            if st.session_state.is_admin:
-                st.divider()
-                st.subheader("🛠 Acciones administrativas")
+# =============================
+# ACCIONES ADMIN
+# =============================
+if st.session_state.is_admin:
+    st.divider()
+    st.subheader("🛠 Acciones administrativas")
 
-                if st.button("🗑 Eliminar promoción"):
-                    st.warning("⚠️ Esta acción no se puede deshacer")
-                    if st.checkbox("Confirmar eliminación"):
-                        df = df.drop(idx)
-                        df.to_csv(PROMOS_FILE, index=False)
-                        st.success("Promoción eliminada correctamente")
-                        st.rerun()
+    st.warning("⚠️ Esta acción no se puede deshacer")
+
+    confirm_delete = st.checkbox("Confirmar eliminación")
+
+    if confirm_delete:
+        if st.button("🗑 Eliminar promoción", type="primary"):
+            df = df.drop(idx)
+            df.to_csv(PROMOS_FILE, index=False)
+            st.success("Promoción eliminada correctamente")
+            st.rerun()
 
 # =============================
 # NUEVA PROMOCIÓN (ADMIN)

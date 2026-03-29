@@ -295,17 +295,25 @@ elif menu == "📈 Upsell":
             value=2
         )
 
-        if hotel == "DREPM":
-            ninos = st.number_input(
-                "Niños",
-                min_value=0,
-                max_value=4,
-                step=1,
-                value=0
-            )
+       if hotel == "DREPM":
+    adultos = st.number_input(
+        "Adultos",
+        min_value=1,
+        max_value=4,
+        step=1,
+        value=2
+    )
 
-           with st.expander("👶 Política de niños (referencia)"):
-    st.markdown("""
+    ninos = st.number_input(
+        "Niños",
+        min_value=0,
+        max_value=4,
+        step=1,
+        value=0
+    )
+
+    with st.expander("👶 Política de niños (referencia)"):
+        st.markdown("""
 **Edades**
 - 0 – 2 años: sin costo (infantes)
 - 3 – 12 años: aplica cargo adicional
@@ -324,6 +332,15 @@ elif menu == "📈 Upsell":
 así como a categoría de habitación.
 """)
 
+else:
+    adultos = st.number_input(
+        "Adultos",
+        min_value=1,
+        max_value=4,
+        step=1,
+        value=2
+    )
+    st.caption("ℹ️ Resort solo adultos (18+)")
 
         calcular = st.button("Calcular Upsell")
 

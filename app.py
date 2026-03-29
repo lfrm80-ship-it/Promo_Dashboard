@@ -139,101 +139,114 @@ elif menu == "➕ Nueva promoción":
 
     with st.form("new_promo", clear_on_submit=True):
 
-    st.subheader("📝 Carga manual")
+        # =============================
+        # CARGA MANUAL
+        # =============================
+        st.subheader("📝 Carga manual")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        promo = st.text_input("Promoción")
-        hotels = st.multiselect("Hotel", PROPERTIES)
-        market = st.selectbox("Market", MARKETS)
+        col1, col2 = st.columns(2)
+        with col1:
+            promo = st.text_input("Promoción")
+            hotels = st.multiselect("Hotel", PROPERTIES)
+            market = st.selectbox("Market", MARKETS)
 
-    with col2:
-        rate = st.text_input("Rate Plan")
-        discount = st.number_input("Descuento (%)", 0, 100)
+        with col2:
+            rate = st.text_input("Rate Plan")
+            discount = st.number_input("Descuento (%)", 0, 100)
 
-    st.divider()
+        st.divider()
 
-    # ✅ Fechas en una sola línea
-    c_bw_i, c_bw_f, c_tw_i, c_tw_f = st.columns(4)
-    with c_bw_i:
-        bw_i = st.date_input("BW Inicio")
-    with c_bw_f:
-        bw_f = st.date_input("BW Fin")
-    with c_tw_i:
-        tw_i = st.date_input("TW Inicio")
-    with c_tw_f:
-        tw_f = st.date_input("TW Fin")
+        # =============================
+        # FECHAS EN UNA SOLA LÍNEA
+        # =============================
+        c_bw_i, c_bw_f, c_tw_i, c_tw_f = st.columns(4)
+        with c_bw_i:
+            bw_i = st.date_input("BW Inicio")
+        with c_bw_f:
+            bw_f = st.date_input("BW Fin")
+        with c_tw_i:
+            tw_i = st.date_input("TW Inicio")
+        with c_tw_f:
+            tw_f = st.date_input("TW Fin")
 
-    # Imagen
-    imagen_file = st.file_uploader(
-        "Adjuntar imagen (PNG / JPG)",
-        ["png", "jpg", "jpeg"]
-    )
+        # =============================
+        # IMAGEN
+        # =============================
+        imagen_file = st.file_uploader(
+            "Adjuntar imagen (PNG / JPG)",
+            ["png", "jpg", "jpeg"]
+        )
 
-    notas = st.text_area("Notas / Restricciones")
+        notas = st.text_area("Notas / Restricciones")
 
-    st.divider()
+        st.divider()
 
-    # ✅ AHORA SÍ: Excel hasta ABAJO
-    st.subheader("📥 Carga masiva desde Excel (opcional)")
-    excel_file = st.file_uploader(
-        "Subir archivo Excel (.xlsx / .xls)",
-        ["xlsx", "xls"]
-    )
+        # =============================
+        # EXCEL (HASTA ABAJO)
+        # =============================
+        st.subheader("📥 Carga masiva desde Excel (opcional)")
+        excel_file = st.file_uploader(
+            "Subir archivo Excel (.xlsx / .xls)",
+            ["xlsx", "xls"]
+        )
 
-    submit = st.form_submit_button("✅ Guardar")
+        submit = st.form_submit_button("✅ Guardar")
 
-    if submit:
+        # =============================
+        # GUARDADO
+        # =============================
+        if submit:
 
-        # ===== EXCEL =====
-        if excel_file is not None:
-            df_excel = pd.read_excel(excel_file)
+            # ---- EXCEL ----
+            if excel_file is not None:
+                df_excel = pd.read_excel(excel_file)
 
-            if df_excel.empty:
-                st.error("El Excel está vacío.")
+                if df_excel.empty:
+                    st.error("El Excel está vacío.")
+                    st.stop()
+
+                df = pd.concat([df, df_excel], ignore_index=True)
+
+            # ---- MANUAL ----
+            elif promo and hotels and rate:
+
+                archivo_path = ""
+                if imagen_file:
+                    archivo_path = os.path.join(MEDIA_DIR, imagen_file.name)
+                    with open(archivo_path, "wb") as f:
+                        f.write(imagen_file.getbuffer())
+
+                rows = []
+                for h in hotels:
+                    rows.append({
+                        "Hotel": h,
+                        "Promo": promo,
+                        "Market": market,
+                        "Rate_Plan": rate,
+                        "Descuento": discount,
+                        "BW_Inicio": bw_i,
+                        "BW_Fin": bw_f,
+                        "TW_Inicio": tw_i,
+                        "TW_Fin": tw_f,
+                        "Archivo_Path": archivo_path,
+                        "Notas": notas
+                    })
+
+                df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+
+            else:
+                st.error("Sube un Excel o completa el formulario manual.")
                 st.stop()
 
-            df = pd.concat([df, df_excel], ignore_index=True)
+            # ---- PROTECCIÓN CSV ----
+            if len(df) == 0:
+                st.error("Error: el CSV quedaría vacío.")
+                st.stop()
 
-        # ===== MANUAL =====
-        elif promo and hotels and rate:
-
-            archivo_path = ""
-            if imagen_file:
-                archivo_path = os.path.join(MEDIA_DIR, imagen_file.name)
-                with open(archivo_path, "wb") as f:
-                    f.write(imagen_file.getbuffer())
-
-            rows = []
-            for h in hotels:
-                rows.append({
-                    "Hotel": h,
-                    "Promo": promo,
-                    "Market": market,
-                    "Rate_Plan": rate,
-                    "Descuento": discount,
-                    "BW_Inicio": bw_i,
-                    "BW_Fin": bw_f,
-                    "TW_Inicio": tw_i,
-                    "TW_Fin": tw_f,
-                    "Archivo_Path": archivo_path,
-                    "Notas": notas
-                })
-
-            df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
-
-        else:
-            st.error("Sube un Excel o completa el formulario manual.")
-            st.stop()
-
-        # 🔒 Protección CSV
-        if len(df) == 0:
-            st.error("Error: el CSV quedaría vacío.")
-            st.stop()
-
-        df.to_csv(PROMOS_FILE, index=False)
-        st.success("✅ Promociones guardadas correctamente")
-        st.rerun()
+            df.to_csv(PROMOS_FILE, index=False)
+            st.success("✅ Promociones guardadas correctamente")
+            st.rerun()
+``
 
 # =============================
 # UPSELL (PLACEHOLDER)

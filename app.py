@@ -246,6 +246,9 @@ if menu == "📈 Upsell":
 
     col1, col2 = st.columns([1, 2])
 
+    # -----------------------------
+    # INPUTS
+    # -----------------------------
     with col1:
         hotel = st.selectbox("Hotel", ["DREPM", "SECPM"])
         tarifa = st.number_input("Tarifa por noche (USD)", value=500, step=50)
@@ -267,15 +270,18 @@ if menu == "📈 Upsell":
         else:
             adultos = st.number_input("Adultos", 1, 3, 2)
             ninos = 0
-            st.caption("ℹ️ Resort solo adultos")
+            st.caption("ℹ️ Resort solo adultos (18+)")
 
         calcular = st.button("Calcular Upsell")
 
+    # -----------------------------
+    # RESULTADOS
+    # -----------------------------
     with col2:
         if calcular:
             temporada, precios = detectar_ok_rm(fecha)
 
-            st.success(f"Temporada: {temporada}")
+            st.success(f"Temporada: **{temporada}**")
 
             st.markdown(f"""
 ### 🏨 Upsell de habitación
@@ -283,14 +289,29 @@ if menu == "📈 Upsell":
 **A:** {habitacion_destino}
 """)
 
-            if ninos > 0:
+            # -------- Cargos por niño ------
+            if hotel == "DREPM" and ninos > 0:
                 net, pub = precios["net"], precios["pub"]
+
                 st.markdown(f"""
-**Cargos por niño**
-- NET: ${net} USD / ${round(net * TC_MXN):,} MXN  
-- PUBLIC: ${pub} USD / ${round(pub * TC_MXN):,} MXN
+### 👶 Cargos por niño (3–12 años)
+
+- **NET:** {net} USD / {round(net * TC_MXN):,} MXN  
+- **PUBLIC:** {pub} USD / {round(pub * TC_MXN):,} MXN  
 """)
 
+                # -------- Edades visibles ------
+                st.markdown("""
+### 👶 Edades de niños (referencia)
+
+- **0–2 años:** Gratis  
+- **3–12 años:** Aplica cargo  
+- **13 años en adelante:** Se consideran adultos  
+
+🏊 **Swim Out:** No acepta niños
+""")
+
+            # -------- Upsell estimado ------
             incremento = 75 * noches
             st.markdown(f"""
 ### 💰 Upsell estimado

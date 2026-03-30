@@ -172,7 +172,7 @@ elif menu == "➕ Registro y Modificación":
     if not st.session_state.is_admin:
         st.error("Requiere privilegios de Administrador.")
     else:
-        t1, t2 = st.tabs(["🚀 Nueva Campaña", "📝 Extender/Modificar Fechas"])
+        t1, t2 = st.tabs(["🚀 Nueva Campaña", "📝 Extender / Modificar Fechas"])
 
         # -------------------------------------------------
         # TAB 1: NUEVA CAMPAÑA
@@ -182,7 +182,7 @@ elif menu == "➕ Registro y Modificación":
                 st.subheader("Datos de la Promoción")
 
                 c1, c2 = st.columns(2)
-                p_nom = c1.text_input("Nombre de la Promo")
+                p_nom = c1.text_input("Nombre de la Promo (ej: Kids Stay Free)")
                 p_htl = c2.multiselect("Hoteles", ["DREPM", "SECPM"])
 
                 c3, c4, c5 = st.columns(3)
@@ -245,6 +245,32 @@ elif menu == "➕ Registro y Modificación":
 
                         st.success("Registro completado y respaldo generado.")
                         st.rerun()
+
+        # -------------------------------------------------
+        # TAB 2: EXTENDER / MODIFICAR FECHAS
+        # -------------------------------------------------
+        with t2:
+            st.subheader("Extender / Modificar Vigencias")
+
+            if df.empty:
+                st.info("No hay promociones registradas para modificar.")
+            else:
+                promo_sel = st.selectbox(
+                    "Selecciona la Promoción",
+                    sorted(df["Promo"].unique())
+                )
+
+                idx = df[df["Promo"] == promo_sel].index[0]
+
+                with st.form("modificar_fechas"):
+                    st.markdown("**Booking Window (BW)**")
+                    bw1, bw2 = st.columns(2)
+                    new_bw_i = bw1.date_input("BW Inicio", df.at[idx, "BW_Inicio"])
+                    new_bw_f = bw2.date_input("BW Fin", df.at[idx, "BW_Fin"])
+
+                    st.markdown("**Travel Window (TW)**")
+                    tw1, tw2 = st.columns(2)
+                    new_tw_i = tw1.date_input("TW Inicio", df.at[idx, "TW_Inicio"])
 
 # =====================================================
 # MÓDULO 3: UPSELL FD

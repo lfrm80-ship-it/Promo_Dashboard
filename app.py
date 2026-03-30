@@ -174,7 +174,7 @@ elif menu == "➕ Registro y Modificación":
     else:
         t1, t2 = st.tabs(["🚀 Nueva Campaña", "📝 Extender/Modificar Fechas"])
 
-        with t1:
+       with t1:
     with st.form("new_promo", clear_on_submit=True):
         st.subheader("Datos de la Promoción")
 
@@ -211,9 +211,9 @@ elif menu == "➕ Registro y Modificación":
         st.divider()
 
         # -------------------------
-        # Carga de archivo (Imagen / PDF / Excel)
+        # Carga de archivo
         # -------------------------
-        st.markdown("**Soporte / Material de la Promoción (opcional)**")
+        st.markdown("**Soporte de la Promoción (opcional)**")
         archivo = st.file_uploader(
             "Subir Imagen, PDF o Excel",
             type=["png", "jpg", "jpeg", "pdf", "xlsx"]
@@ -240,19 +240,17 @@ elif menu == "➕ Registro y Modificación":
                 } for h in p_htl])
 
                 df = pd.concat([df, nuevos], ignore_index=True)
-
                 guardar_datos_y_respaldar(df, f"Alta: {p_nom}")
 
-                # ✅ Guardado opcional del archivo (si existe)
+                # Guardado opcional del archivo
                 if archivo is not None:
                     soporte_dir = os.path.join(BASE_DIR, "soportes_promos")
                     os.makedirs(soporte_dir, exist_ok=True)
-
-                    ruta_archivo = os.path.join(
+                    ruta = os.path.join(
                         soporte_dir,
                         f"{p_nom.replace(' ', '_')}_{archivo.name}"
                     )
-                    with open(ruta_archivo, "wb") as f:
+                    with open(ruta, "wb") as f:
                         f.write(archivo.getbuffer())
 
                 st.success("Registro completado y respaldo generado.")

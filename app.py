@@ -117,48 +117,56 @@ elif menu == "➕ Registro de Promoción":
                     st.rerun()
 
 # =====================================================
-# MÓDULO: UPSELL (LAYOUT COMPACTO + LÓGICA ADULTS ONLY)
+# MÓDULO: UPSELL (LAYOUT HORIZONTAL + TARIFA ORIGINAL)
 # =====================================================
 elif menu == "📈 Upsell":
     st.title("📈 Calculadora de Upsell")
     CAT_VALS = {"JS Garden View": 0, "JS Pool View": 45, "JS Ocean View": 90, "JS Swim Out": 150}
     
     with st.container(border=True):
-        # Ajuste dinámico de columnas según el hotel
+        # Selección de Hotel primero para definir el layout
         h_sel = st.selectbox("Hotel", ["DREPM", "SECPM"], index=0)
         
-        # Si es SECPM, eliminamos la columna de niños del layout
-        cols = st.columns([1.5, 1.2, 1.2, 0.8, 0.8, 1, 1.2]) if h_sel == "DREPM" else st.columns([1.5, 1.2, 1.2, 0.8, 1, 1.2])
-        
-        f_sel = cols[0].date_input("Llegada", date.today())
-        h_orig = cols[1].selectbox("De:", list(CAT_VALS.keys()))
-        posibles = [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]]
-        h_dest = cols[2].selectbox("A:", posibles if posibles else ["Máxima"])
-        
-        ads = cols[3].number_input("Adt", 1, 4, 2)
-        
-        # Lógica Condicional: Solo muestra Niños si NO es SECPM
+        # Layout dinámico: DREPM (con niños) vs SECPM (solo adultos)
         if h_sel == "DREPM":
+            cols = st.columns([1.5, 1.2, 1.2, 0.7, 0.7, 0.7, 1.2, 1.2])
+            f_sel = cols[0].date_input("Llegada", date.today())
+            h_orig = cols[1].selectbox("De:", list(CAT_VALS.keys()))
+            h_dest = cols[2].selectbox("A:", [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]])
+            ads = cols[3].number_input("Adt", 1, 4, 2)
             nns = cols[4].number_input("Chd", 0, 4, 0)
             nits = cols[5].number_input("Noches", 1, 30, 1)
-            btn_calc = cols[6].button("🚀 Calcular", use_container_width=True)
+            t_orig = cols[6].number_input("Tarifa Orig.", min_value=1.0, value=500.0)
+            btn_calc = cols[7].button("🚀 Calcular", use_container_width=True)
         else:
-            nns = 0 # Forzado a 0 para SECPM
+            # SECPM: Layout sin columna de niños (Adults Only)
+            cols = st.columns([1.5, 1.2, 1.2, 0.8, 0.8, 1.2, 1.2])
+            f_sel = cols[0].date_input("Llegada", date.today())
+            h_orig = cols[1].selectbox("De:", list(CAT_VALS.keys()))
+            h_dest = cols[2].selectbox("A:", [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]])
+            ads = cols[3].number_input("Adt", 1, 4, 2)
             nits = cols[4].number_input("Noches", 1, 30, 1)
-            btn_calc = cols[5].button("🚀 Calcular", use_container_width=True)
+            t_orig = cols[5].number_input("Tarifa Orig.", min_value=1.0, value=500.0)
+            btn_calc = cols[6].button("🚀 Calcular", use_container_width=True)
+            nns = 0
 
     if btn_calc:
         temp, p_kid = detectar_temporada(f_sel)
+        # Cálculo de diferencia por noche aplicando factor de temporada si aplica
         dif_noche = (CAT_VALS.get(h_dest, 0) - CAT_VALS[h_orig]) * (1.25 if temp == "OK RM" else 1)
         total_up = dif_noche * nits
+        gran_total = t_orig + total_up
         
         res1, res2 = st.columns([1, 1.5])
         with res1:
             st.markdown(f"""
                 <div style="background-color:#f8f9fa; padding:15px; border-radius:10px; border-left: 5px solid #00338d; border: 1px solid #ddd;">
-                    <p style="margin:0; font-size:0.9em;">Total Upgrade</p>
+                    <p style="margin:0; font-size:0.9em; color:#666;">Monto del Upgrade</p>
                     <h2 style="margin:0; color:#00338d;">${total_up:,.2f} USD</h2>
-                    <p style="margin:0; color:#666;">≈ {(total_up * TC_VAL):,.2f} MXN</p>
+                    <p style="margin:0; font-size:1.1em;">≈ {(total_up * TC_VAL):,.2f} MXN</p>
+                    <hr style="margin:10px 0;">
+                    <p style="margin:0; font-size:0.9em; color:#666;">Total de la Estancia</p>
+                    <h3 style="margin:0;">${gran_total:,.2f} USD</h3>
                 </div>
             """, unsafe_allow_html=True)
 
@@ -170,9 +178,9 @@ elif menu == "📈 Upsell":
                 ed2.metric("Menores (3-12)", f"${p_kid} USD")
                 ed3.metric("Juniors (13+)", "Adulto")
                 if nns > 0 and "Swim Out" in h_dest:
-                    st.error("🚫 No se permiten menores en categorías Swim Out.")
+                    st.error("🚫 Restricción: No se permiten menores en Swim Out.")
             else:
-                st.info("✨ Propiedad Adults Only: Cálculo basado únicamente en adultos y categoría.")
+                st.info("✨ Secrets es Adults Only. El cálculo ignora menores por política de marca.")
 # =====================================================
 # MÓDULO: WOH (CON CALCULADORA DE PUNTOS)
 # =====================================================

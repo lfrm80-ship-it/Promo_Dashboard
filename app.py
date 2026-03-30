@@ -297,7 +297,7 @@ elif menu == "➕ Nueva promoción":
             st.rerun()
 
 # =====================================================
-# UPSELL (VERSIÓN FINAL PULIDA Y SIN ERRORES)
+# UPSELL (CON DOBLE MONEDA USD/MXN)
 # =====================================================
 elif menu == "📈 Upsell":
     st.subheader("📈 Calculadora de Upsell Profesional")
@@ -310,8 +310,8 @@ elif menu == "📈 Upsell":
     }
     
     HABITACIONES = list(UPSELL_VALUES.keys())
+    TC_VAL = 18.5  # Tipo de Cambio solicitado
 
-    # Contenedor principal para organizar las columnas
     col1, col2 = st.columns(2)
 
     with col1:
@@ -345,65 +345,66 @@ elif menu == "📈 Upsell":
 
     with col2:
         if btn_calcular:
-            # Lógica de Inicialización
             pub_val = 0
-            net_val = 0
             
-            # Validaciones de Seguridad
             if ninos > 0 and "Swim Out" in hab_destino:
                 st.error("❌ **RESTRICCIÓN:** No se permiten menores en categorías **Swim Out**.")
             elif hab_destino == "Máxima categoría":
                 st.warning("La reserva ya está en la categoría más alta.")
             else:
-                # Cálculo de Temporada y Precios
                 temporada, precios_temp = detectar_ok_rm(fecha_sel)
                 
-                # Diferencial Upsell con ajuste de temporada
+                # Diferencial Upsell
                 dif_noche = (UPSELL_VALUES[hab_destino] - UPSELL_VALUES[hab_actual])
                 if temporada == "OK RM":
                     dif_noche *= 1.25 
                 
-                total_upsell = dif_noche * noches_sel
-                total_final = tarifa_orig + total_upsell
+                total_upsell_usd = dif_noche * noches_sel
+                total_final_usd = tarifa_orig + total_upsell_usd
+                
+                # Conversiones MXN
+                total_upsell_mxn = total_upsell_usd * TC_VAL
+                total_final_mxn = total_final_usd * TC_VAL
 
                 # --- DISEÑO DE RESULTADOS ---
-                # Badge de Temporada
                 color_bg = "#d4edda" if temporada == "REGULAR" else "#fff3cd"
                 st.markdown(f"""
                     <div style="background-color:{color_bg}; padding:10px; border-radius:10px; text-align:center; border: 1px solid #ddd;">
-                        <h4 style="margin:0; color:#333;">📅 Temporada: {temporada}</h4>
+                        <h4 style="margin:0; color:#333;">📅 Temporada: {temporada} (TC: {TC_VAL})</h4>
                     </div>
                 """, unsafe_allow_html=True)
                 
                 st.write("") 
 
-                # Métricas de Dinero
+                # Métricas con doble moneda
                 m1, m2 = st.columns(2)
-                m1.metric("Costo Upgrade", f"${total_upsell:,.2f} USD")
-                m2.metric("Total Estancia", f"${total_final:,.2f} USD")
+                m1.metric("Costo Upgrade", f"${total_upsell_usd:,.2f} USD")
+                m1.caption(f"≈ **${total_upsell_mxn:,.2f} MXN**")
+                
+                m2.metric("Total Estancia", f"${total_final_usd:,.2f} USD")
+                m2.caption(f"≈ **${total_final_mxn:,.2f} MXN**")
 
                 st.divider()
 
-                # Detalles exclusivos para Dreams (DREPM)
                 if hotel_sel == "DREPM":
                     pub_val = precios_temp['pub']
-                    net_val = precios_temp['net']
-                    
                     st.markdown("#### 👶 Detalle de Menores")
                     d1, d2 = st.columns(2)
-                    d1.markdown(f"**NET (Costo)**\n\n<span style='font-size:22px;'>${net_val}</span>", unsafe_allow_html=True)
-                    d2.markdown(f"**PUB (Venta)**\n\n<span style='font-size:22px;'>${pub_val}</span>", unsafe_allow_html=True)
-                    st.caption(f"Venta en MXN: ${round(pub_val * TC_MXN):,} (TC: {TC_MXN})")
+                    d1.markdown(f"**Venta (USD)**\n\n<span style='font-size:22px;'>${pub_val}</span>", unsafe_allow_html=True)
+                    d2.markdown(f"**Venta (MXN)**\n\n<span style='font-size:22px;'>${round(pub_val * TC_VAL):,}</span>", unsafe_allow_html=True)
                     st.write("")
 
                 # Resumen Final para Copiar
-                with st.expander("📋 Resumen para el Cliente / Front Desk", expanded=True):
-                    txt_resumen = f"Upgrade: {hab_actual} ➡️ {hab_destino}\n"
-                    txt_resumen += f"Costo Adicional: ${total_upsell:,.2f} USD\n"
-                    txt_resumen += f"Total Final: ${total_final:,.2f} USD\n"
+                with st.expander("📋 Resumen para el Cliente", expanded=True):
+                    txt_resumen = (
+                        f"Upgrade Confirmado: {hab_destino}\n"
+                        f"-----------------------------------\n"
+                        f"Costo Adicional: ${total_upsell_usd:,.2f} USD (${total_upsell_mxn:,.2f} MXN)\n"
+                        f"Total a pagar: ${total_final_usd:,.2f} USD (${total_final_mxn:,.2f} MXN)\n"
+                    )
                     if hotel_sel == "DREPM":
-                        txt_resumen += f"Extra Child (3-12): ${pub_val} USD/noche"
+                        txt_resumen += f"Cargo extra por menor: ${pub_val} USD (${round(pub_val * TC_VAL):,} MXN) p/noche"
                     
                     st.code(txt_resumen, language="text")
         else:
-            st.info("Configura los datos y presiona 'Calcular' para ver el desglose.")
+            st.info("Configura los datos y presiona 'Calcular' para ver el desglose en USD y MXN.")

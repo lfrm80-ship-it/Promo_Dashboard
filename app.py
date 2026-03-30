@@ -117,40 +117,39 @@ elif menu == "➕ Registro de Promoción":
                     st.rerun()
 
 # =====================================================
-# MÓDULO: UPSELL (ULTRA-COMPACTO OPERATIVO)
+# MÓDULO: UPSELL (ORDEN OPERATIVO ACTUALIZADO)
 # =====================================================
 elif menu == "📈 Upsell":
     st.title("📈 Calculadora de Upsell")
     CAT_VALS = {"JS Garden View": 0, "JS Pool View": 45, "JS Ocean View": 90, "JS Swim Out": 150}
     
     with st.container(border=True):
-        # Creamos una fila base para determinar el Hotel primero
-        # Usamos columnas muy ajustadas para que parezca una sola línea continua
+        # Ajustamos el ancho de las columnas para el nuevo orden
+        row_main = st.columns([1, 1.2, 1, 1, 1.1, 0.6, 0.6, 0.8, 1])
         
-        # Definimos el layout base: Si es DREPM necesitamos 8 espacios, si es SECPM solo 7
-        # Pero para que no "salte" la interfaz, usaremos un selector inicial pequeño
-        
-        row_main = st.columns([1, 1.2, 1, 1, 0.6, 0.6, 0.8, 1, 1])
-        
+        # 1. Datos del Hotel y Estancia
         h_sel = row_main[0].selectbox("Hotel", ["DREPM", "SECPM"], index=0)
         f_sel = row_main[1].date_input("Llegada", date.today())
+        
+        # 2. Categorías (El "Upgrade")
         h_orig = row_main[2].selectbox("De:", list(CAT_VALS.keys()))
         h_dest = row_main[3].selectbox("A:", [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]])
         
-        # Lógica de ocupación de espacios para Adultos, Niños, Noches y Precio
-        ads = row_main[4].number_input("Adt", 1, 4, 2)
+        # 3. Tarifas (Movido antes de la ocupación)
+        t_orig = row_main[4].number_input("Tarifa Orig.", min_value=1.0, value=500.0)
+        
+        # 4. Ocupación y Noches
+        ads = row_main[5].number_input("Adt", 1, 4, 2)
         
         if h_sel == "DREPM":
-            nns = row_main[5].number_input("Chd", 0, 4, 0) # Columna de niños activa
-            nits = row_main[6].number_input("Nts", 1, 30, 1)
-            t_orig = row_main[7].number_input("Tarifa Orig.", min_value=1.0, value=500.0)
+            nns = row_main[6].number_input("Chd", 0, 4, 0)
+            nits = row_main[7].number_input("Nts", 1, 30, 1)
             btn_calc = row_main[8].button("🚀 Calcular", use_container_width=True)
         else:
-            nns = 0 # Secrets es Adultos Solamente
-            # En SECPM, "reutilizamos" el espacio de niños o dejamos un hueco para no mover los botones
-            row_main[5].markdown("<p style='text-align:center; padding-top:35px; color:gray;'>N/A</p>", unsafe_allow_html=True)
-            nits = row_main[6].number_input("Nts", 1, 30, 1)
-            t_orig = row_main[7].number_input("Tarifa Orig.", min_value=1.0, value=500.0)
+            nns = 0
+            # Espacio reservado para mantener alineación en SECPM
+            row_main[6].markdown("<p style='text-align:center; padding-top:35px; color:gray;'>N/A</p>", unsafe_allow_html=True)
+            nits = row_main[7].number_input("Nts", 1, 30, 1)
             btn_calc = row_main[8].button("🚀 Calcular", use_container_width=True)
 
     if btn_calc:
@@ -174,15 +173,15 @@ elif menu == "📈 Upsell":
 
         with res2:
             if h_sel == "DREPM":
-                st.markdown("### 👶 Edades (Check-in)")
+                st.markdown("### 👶 Edades y Políticas")
                 ed1, ed2, ed3 = st.columns(3)
                 ed1.metric("Infantes", "0-2 años")
                 ed2.metric("Niños", f"3-12 (${p_kid})")
                 ed3.metric("Juniors", "13+ (Adulto)")
                 if nns > 0 and "Swim Out" in h_dest:
-                    st.error("⚠️ Categoría Swim Out: Solo Adultos.")
+                    st.error("⚠️ Categoría Swim Out: Solo adultos permitidos.")
             else:
-                st.info("💡 Secrets: Política de solo adultos aplicada al cálculo.")
+                st.info("✨ Secrets: Propiedad Adults Only. Menores no permitidos.")
 # =====================================================
 # MÓDULO: WOH (CON CALCULADORA DE PUNTOS)
 # =====================================================

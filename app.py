@@ -341,9 +341,9 @@ elif menu == "📈 Upsell":
 
         btn_calcular = st.button("🚀 Calcular Upgrade", use_container_width=True)
 
-    with col2:
+   with col2:
         if btn_calcular:
-            # --- INICIALIZACIÓN DE VARIABLES PARA EVITAR ERRORES ---
+            # 1. CÁLCULO DE LÓGICA (Solo una vez)
             pub_val = 0
             net_val = 0
             
@@ -362,44 +362,48 @@ elif menu == "📈 Upsell":
                 total_upsell = dif_noche * noches_sel
                 total_final = tarifa_orig + total_upsell
 
-                st.success(f"**Temporada:** {temporada}")
+                # --- DISEÑO PROFESIONAL ---
+                # Usamos un encabezado tipo "Badge" para la temporada
+                color_badge = "#d4edda" if temporada == "REGULAR" else "#fff3cd"
+                st.markdown(f"""
+                    <div style="background-color:{color_badge}; padding:10px; border-radius:10px; text-align:center;">
+                        <h4 style="margin:0; color:#155724;">📅 Temporada: {temporada}</h4>
+                    </div>
+                """, unsafe_allow_html=True)
                 
-                m1, m2 = st.columns(2)
-                m1.metric("Costo Upgrade", f"${total_upsell:,.2f} USD")
-                m2.metric("Total Final", f"${total_final:,.2f} USD")
+                st.write("") # Espaciador
 
-                st.markdown("---")
-                
-                # --- LÓGICA DE MOSTRAR MENORES SOLO SI APLICA ---
-                # --- INTERFAZ DE RESULTADOS ---
-                st.success(f"**Temporada:** {temporada}")
-                
+                # Métricas principales
                 m1, m2 = st.columns(2)
-                m1.metric("Costo Upgrade", f"${total_upsell:,.2f} USD")
-                m2.metric("Total Final", f"${total_final:,.2f} USD")
+                m1.metric("Incremento Total", f"${total_upsell:,.2f} USD")
+                m2.metric("Nueva Tarifa Final", f"${total_final:,.2f} USD")
 
-                # Solo mostramos información de menores si es Dreams (DREPM)
+                st.divider()
+
+                # --- SECCIÓN DINÁMICA DE MENORES (Solo Dreams) ---
                 if hotel_sel == "DREPM":
-                    st.markdown("---")
-                    st.markdown("#### 👶 Tarifas de Menores")
                     pub_val = precios_temp['pub']
                     net_val = precios_temp['net']
+                    
+                    st.markdown("#### 👶 Detalle de Menores")
+                    c1, c2 = st.columns(2)
+                    c1.markdown(f"**NET (Costo)**\n\n<span style='font-size:20px;'>${net_val} <small>USD</small></span>", unsafe_allow_html=True)
+                    c2.markdown(f"**PUB (Venta)**\n\n<span style='font-size:20px;'>${pub_val} <small>USD</small></span>", unsafe_allow_html=True)
+                    st.caption(f"Equivalente MXN (Venta): ${round(pub_val * TC_MXN):,} MXN")
+                    st.write("")
 
-                    cNet, cPub = st.columns(2)
-                    with cNet:
-                        st.markdown(f"**COSTO NETO**\n- **USD:** ${net_val}\n- **MXN:** ${round(net_val * TC_MXN):,}")
-                    with cPub:
-                        st.markdown(f"**TARIFA PÚBLICA**\n- **USD:** ${pub_val}\n- **MXN:** ${round(pub_val * TC_MXN):,}")
-                    st.info("Regla: 0-2 años Gratis | 3-12 con cargo | 13+ Adulto")
-                
-                # Para SECPM ya no mostramos nada, saltamos directo al resumen
-                st.markdown("---")
-                st.caption(f"Tipo de Cambio: **{TC_MXN}**")
+                # --- RESUMEN FINAL ---
+                with st.expander("📋 Ver Resumen para Copiar", expanded=True):
+                    resumen = f"Upgrade: {hab_actual} ➡️ {hab_destino}\n"
+                    resumen += f"Costo Adicional: ${total_upsell:,.2f} USD\n"
+                    resumen += f"Total a Pagar: ${total_final:,.2f} USD\n"
+                    if hotel_sel == "DREPM":
+                        resumen += f"Extra Child (3-12): ${pub_val} USD/noche"
+                    
+                    st.code(resumen, language="text")
+                    st.caption(f"Tipo de cambio: {TC_MXN} | Sujeto a cambios sin previo aviso.")
 
-                # --- RESUMEN DE COPIADO ---
-                st.markdown("#### 📝 Resumen")
-                resumen = f"Upgrade a {hab_destino}\nTotal Upgrade: ${total_upsell:,.2f} USD"
-                if hotel_sel == "DREPM":
-                    resumen += f"\nExtra Child (3-12): ${pub_val} USD por noche."
-                
-                st.code(resumen, language="text")
+        else:
+            # Estado vacío (Placeholder)
+            st.info("Esperando datos para calcular...")
+            st.image("https://cdn-icons-png.flaticon.com/512/6462/6462817.png", width=100) # Un icono sutil

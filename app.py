@@ -297,13 +297,19 @@ elif menu == "➕ Nueva promoción":
             st.rerun()
 
 # =====================================================
-# UPSELL (COMPLETO – 100% AISLADO)
+# UPSELL (COMPLETO Y AISLADO)
 # =====================================================
 elif menu == "📈 Upsell":
     st.subheader("📈 Upsell")
 
-    HABITACIONES = ["JS Garden View", "JS Pool View", "JS Ocean View", "JS Swim Out"]
+    HABITACIONES = [
+        "JS Garden View",
+        "JS Pool View",
+        "JS Ocean View",
+        "JS Swim Out"
+    ]
 
+    # ✅ col1 y col2 SOLO existen aquí
     col1, col2 = st.columns(2)
 
     # -----------------------------
@@ -320,7 +326,10 @@ elif menu == "📈 Upsell":
 
         idx = HABITACIONES.index(habitacion_actual)
         opciones = HABITACIONES[idx + 1:]
-        habitacion_destino = t.selectbox("A", opciones if opciones else ["N/A"])
+        habitacion_destino = t.selectbox(
+            "A",
+            opciones if opciones else ["N/A"]
+        )
 
         cO1, cO2 = st.columns(2)
         if hotel == "DREPM":
@@ -337,26 +346,26 @@ elif menu == "📈 Upsell":
 
         calcular = st.button("Calcular Upsell", use_container_width=True)
 
-# -----------------------------
-# RESULTADOS
-# -----------------------------
-with col2:
-    if calcular:
-        temporada, precios = detectar_ok_rm(fecha)
+    # -----------------------------
+    # RESULTADOS
+    # -----------------------------
+    with col2:
+        if calcular:
+            temporada, precios = detectar_ok_rm(fecha)
 
-        if not precios:
-            st.warning("No hay reglas de temporada configuradas.")
-        else:
-            st.success(f"Temporada: {temporada}")
+            if not precios:
+                st.warning("No hay reglas de temporada configuradas.")
+            else:
+                st.success(f"Temporada: {temporada}")
 
-            st.markdown(
-                f"🏨 **Upsell:** {habitacion_actual} → {habitacion_destino}"
-            )
-
-            if hotel == "DREPM" and ninos > 0:
-                net, pub = precios["net"], precios["pub"]
                 st.markdown(
-                    f"""
+                    f"🏨 **Upsell:** {habitacion_actual} → {habitacion_destino}"
+                )
+
+                if hotel == "DREPM" and ninos > 0:
+                    net, pub = precios["net"], precios["pub"]
+                    st.markdown(
+                        f"""
 👶 **Niños**
 - NET: {net} USD / {round(net * TC_MXN):,} MXN  
 - PUBLIC: {pub} USD / {round(pub * TC_MXN):,} MXN  
@@ -368,19 +377,18 @@ Edades:
 
 🏊 Swim Out **NO acepta niños**
 """
-                )
+                    )
 
-            # ✅ UPSWELL + TARIFA TOTAL (MEJORA FINAL)
-            incremento = 75 * noches
-            tarifa_total = tarifa + incremento
+                incremento = 75 * noches
+                tarifa_total = tarifa + incremento
 
-            st.markdown(
-                f"""
+                st.markdown(
+                    f"""
 ### 💰 Resumen económico
 - **Tarifa actual:** ${tarifa} USD  
 - **Upsell estimado:** ${incremento} USD  
 - ✅ **Nueva tarifa total:** **${tarifa_total} USD**
 """
-            )
-    else:
-        st.info("⬅️ Ingresa los datos y presiona **Calcular Upsell**")
+                )
+        else:
+            st.info("⬅️ Ingresa los datos y presiona **Calcular Upsell**")

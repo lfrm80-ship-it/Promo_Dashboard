@@ -212,7 +212,7 @@ elif menu == "➕ Nueva promoción":
                 st.rerun()
 
 # =====================================================
-# MÓDULO: UPSELL (VERSIÓN REDISEÑADA Y SEGURA)
+# MÓDULO: UPSELL (VERSIÓN CON EDADES RESTAURADAS)
 # =====================================================
 elif menu == "📈 Upsell":
     st.subheader("📈 Calculadora de Upsell Profesional")
@@ -235,23 +235,29 @@ elif menu == "📈 Upsell":
         hotel_sel = c_hotel.selectbox("Hotel", ["DREPM", "SECPM"])
         fecha_sel = c_fecha.date_input("Fecha de llegada", value=date.today())
         
-        # Fila 2: EL CAMBIO QUE PEDISTE (De habitación a habitación en una línea)
+        # Fila 2: Categorías en una sola línea
         st.write("**Selección de Categorías**")
         c_orig, c_flecha, c_dest = st.columns([4, 1, 4])
         
-        hab_actual = c_orig.selectbox("Original", HABITACIONES, label_visibility="collapsed")
+        hab_actual = c_orig.selectbox("Original", HABITACIONES, label_visibility="collapsed", key="hab_orig")
         c_flecha.markdown("<h3 style='text-align: center; margin-top: 0;'>➡️</h3>", unsafe_allow_html=True)
         
-        # Filtrar solo categorías superiores para el destino
         idx_act = HABITACIONES.index(hab_actual)
         posibles = HABITACIONES[idx_act + 1:]
-        hab_destino = c_dest.selectbox("Upgrade", posibles if posibles else ["Máxima"], label_visibility="collapsed")
+        hab_destino = c_dest.selectbox("Upgrade", posibles if posibles else ["Máxima"], label_visibility="collapsed", key="hab_dest")
         
         # Fila 3: Ocupación
         c_a, c_n = st.columns(2)
         adultos = c_a.number_input("Adultos", 1, 4, 2)
-        ninos = c_n.number_input("Niños", 0, 4, 0) if hotel_sel == "DREPM" else 0
         
+        # Lógica de Niños (Solo Dreams)
+        if hotel_sel == "DREPM":
+            ninos = c_n.number_input("Niños (0-12)", 0, 4, 0)
+        else:
+            ninos = 0
+            c_n.write("") # Espaciador
+            c_n.caption("Solo adultos (18+)")
+
         # Fila 4: Tarifa y Noches
         c_tar, c_noc = st.columns(2)
         tarifa_orig = c_tar.number_input("Tarifa Original (USD)", min_value=1, value=500)
@@ -261,38 +267,52 @@ elif menu == "📈 Upsell":
 
     with col2:
         if btn_calc:
+            # 1. Validaciones Críticas de Front Desk
             if ninos > 0 and "Swim Out" in hab_destino:
-                st.error("❌ **Restricción:** No se permiten menores en categorías **Swim Out**.")
+                st.error("❌ **RESTRICCIÓN OPERATIVA:** No se permiten menores en categorías **Swim Out**.")
             elif hab_destino == "Máxima":
-                st.warning("La reserva ya se encuentra en la categoría más alta disponible.")
+                st.warning("La reserva ya está en la categoría más alta.")
             else:
+                # 2. Cálculos de Temporada y Upgrade
                 temp, precios = detectar_ok_rm(fecha_sel)
-                dif = (UPSELL_VALUES[hab_destino] - UPSELL_VALUES[hab_actual])
+                dif_noche = (UPSELL_VALUES[hab_destino] - UPSELL_VALUES[hab_actual])
                 
-                # Aplicar recargo si es temporada especial
                 if temp == "OK RM": 
-                    dif *= 1.25
+                    dif_noche *= 1.25
                 
-                up_usd = dif * noches
+                up_usd = dif_noche * noches
                 tot_usd = tarifa_orig + up_usd
                 
-                # Visualización de resultados
-                st.info(f"📅 **Temporada:** {temp}")
+                # 3. Visualización de Resultados
+                color_bg = "#d4edda" if temp == "REGULAR" else "#fff3cd"
+                st.markdown(f"<div style='background-color:{color_bg}; padding:10px; border-radius:10px; text-align:center; border: 1px solid #ddd;'><h4 style='margin:0; color:#333;'>📅 Temporada: {temp} (TC: {TC_VAL})</h4></div>", unsafe_allow_html=True)
                 
+                st.write("")
                 m1, m2 = st.columns(2)
                 m1.metric("Costo Upgrade", f"${up_usd:,.2f} USD", f"≈ {up_usd*TC_VAL:,.2f} MXN")
                 m2.metric("Total Estancia", f"${tot_usd:,.2f} USD", f"≈ {tot_usd*TC_VAL:,.2f} MXN")
-                
+
+                # 4. POLÍTICA DE EDADES (RESTAURADA)
                 if hotel_sel == "DREPM":
                     st.divider()
-                    st.markdown(f"**Costo Menor (3-12):** ${precios['pub']} USD (≈ {precios['pub']*TC_VAL:,.2f} MXN)")
+                    st.markdown("#### 👶 Política y Costos de Menores")
+                    e1, e2, e3 = st.columns(3)
+                    
+                    pub_val = precios.get('pub', 0)
+                    
+                    with e1: 
+                        st.info("**Infantes**\n\n0-2 años: $0")
+                    with e2: 
+                        st.success(f"**Menores**\n\n3-12 años: ${pub_val} USD\n(≈ {round(pub_val*TC_VAL):,} MXN)")
+                    with e3: 
+                        st.warning("**Juniors**\n\n13+ años: Adulto")
                 
-                # Bloque para copiar/pegar rápido
+                # 5. Resumen para copiar
                 with st.expander("📋 Resumen para el Cliente"):
-                    resumen = f"Upgrade: {hab_actual} ➡️ {hab_destino}\nTotal Upgrade: ${up_usd:,.2f} USD (${up_usd*TC_VAL:,.2f} MXN)"
+                    resumen = f"Hotel: {hotel_sel}\nUpgrade: {hab_actual} ➡️ {hab_destino}\nCosto Total: ${up_usd:,.2f} USD (${up_usd*TC_VAL:,.2f} MXN)"
                     st.code(resumen, language="text")
         else:
-            st.info("Configura los datos y presiona el botón para calcular.")
+            st.info("Ingresa los datos de la reserva y presiona 'Calcular'.")
 # =====================================================
 # WOH
 # =====================================================

@@ -245,82 +245,60 @@ if menu == "📈 Upsell":
 
     col1, col2 = st.columns([1, 2])
 
-    # =============================
-    # INPUTS (COLUMNA IZQUIERDA)
-    # =============================
-    with col1:
-        st.subheader("📍 Contexto")
-        hotel = st.selectbox("Hotel", ["DREPM", "SECPM"])
-        fecha = st.date_input("Fecha de llegada", value=date(2026, 4, 1))
+  # =============================
+# INPUTS (COLUMNA IZQUIERDA)
+# =============================
+with col1:
+    # -----------------------------
+    # CONTEXTO
+    # -----------------------------
+    st.subheader("📍 Contexto")
+    hotel = st.selectbox("Hotel", ["DREPM", "SECPM"])
+    fecha = st.date_input("Fecha de llegada", value=date(2026, 4, 1))
 
-        st.divider()
+    st.divider()
 
-        st.subheader("🏨 Estancia actual")
-        habitacion_actual = st.selectbox("Habitación actual", HABITACIONES)
-        idx = HABITACIONES.index(habitacion_actual)
-        opciones_upsell = HABITACIONES[idx + 1:]
+    # -----------------------------
+    # ESTANCIA ACTUAL
+    # -----------------------------
+    st.subheader("🏨 Estancia actual")
 
-        if hotel == "DREPM":
-            adultos = st.number_input("Adultos", 1, 4, 2)
-            ninos = st.number_input("Niños", 0, 4, 0)
-        else:
-            adultos = st.number_input("Adultos", 1, 3, 2)
-            ninos = 0
-            st.caption("ℹ️ Resort solo adultos (18+)")
+    # ---- De → A en una sola línea ----
+    col_from, col_arrow, col_to = st.columns([3, 1, 3])
 
-        st.divider()
+    with col_from:
+        habitacion_actual = st.selectbox("De", HABITACIONES)
 
-        st.subheader("⬆️ Upsell")
+    with col_arrow:
+        st.markdown("<br>➡️", unsafe_allow_html=True)
+
+    idx = HABITACIONES.index(habitacion_actual)
+    opciones_upsell = HABITACIONES[idx + 1:]
+
+    with col_to:
         habitacion_destino = st.selectbox(
-            "Upsell a",
+            "A",
             opciones_upsell if opciones_upsell else ["No hay opciones disponibles"]
         )
 
-        st.divider()
+    # -----------------------------
+    # OCUPACIÓN
+    # -----------------------------
+    if hotel == "DREPM":
+        adultos = st.number_input("Adultos", 1, 4, 2)
+        ninos = st.number_input("Niños", 0, 4, 0)
+    else:
+        adultos = st.number_input("Adultos", 1, 3, 2)
+        ninos = 0
+        st.caption("ℹ️ Resort solo adultos (18+)")
 
-        st.subheader("💰 Impacto económico")
-        tarifa = st.number_input("Tarifa por noche (USD)", value=500, step=50)
-        noches = st.number_input("Noches", value=1)
+    st.divider()
 
-        calcular = st.button("Calcular Upsell")
+    # -----------------------------
+    # IMPACTO ECONÓMICO
+    # -----------------------------
+    st.subheader("💰 Impacto económico")
+    tarifa = st.number_input("Tarifa por noche (USD)", value=500, step=50)
+    noches = st.number_input("Noches", value=1)
 
-    # =============================
-    # RESULTADOS (COLUMNA DERECHA)
-    # =============================
-    with col2:
-        if calcular:
-            temporada, precios = detectar_ok_rm(fecha)
-
-            st.success(f"Temporada: **{temporada}**")
-
-            st.markdown(f"""
-### 🏨 Upsell de habitación
-**De:** {habitacion_actual}  
-**A:** {habitacion_destino}
-""")
-
-            if hotel == "DREPM" and ninos > 0:
-                net, pub = precios["net"], precios["pub"]
-
-                st.markdown(f"""
-### 👶 Cargos por niño (3–12 años)
-
-- **NET:** {net} USD / {round(net * TC_MXN):,} MXN  
-- **PUBLIC:** {pub} USD / {round(pub * TC_MXN):,} MXN  
-""")
-
-                st.markdown("""
-### 👶 Edades de niños (referencia)
-
-- **0–2 años:** Gratis  
-- **3–12 años:** Aplica cargo  
-- **13 años en adelante:** Se consideran adultos  
-
-🏊 **Swim Out:** No acepta niños
-""")
-
-            incremento = 75 * noches
-            st.markdown(f"""
-### 💰 Upsell estimado
-Incremento total: **${incremento} USD**
-""")
+    calcular = st.button("Calcular Upsell")

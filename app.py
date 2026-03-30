@@ -117,62 +117,53 @@ elif menu == "➕ Registro de Promoción":
                     st.rerun()
 
 # =====================================================
-# MÓDULO: UPSELL (LIMPIO + EDADES DE NIÑOS)
+# MÓDULO: UPSELL (LAYOUT EN UNA SOLA LÍNEA)
 # =====================================================
 elif menu == "📈 Upsell":
     st.title("📈 Calculadora de Upsell")
     CAT_VALS = {"JS Garden View": 0, "JS Pool View": 45, "JS Ocean View": 90, "JS Swim Out": 150}
     
-    col1, col2 = st.columns([1.2, 1])
-    with col1:
-        with st.container(border=True):
-            st.subheader("📋 Datos de la Reserva")
-            h_sel = st.selectbox("Hotel", ["DREPM", "SECPM"])
-            f_sel = st.date_input("Fecha de llegada")
-            
-            cl1, cl2, cl3 = st.columns([4, 1, 4])
-            h_orig = cl1.selectbox("Categoría Original", list(CAT_VALS.keys()))
-            cl2.markdown("<h3 style='text-align:center; margin-top:25px;'>➡️</h3>", unsafe_allow_html=True)
-            posibles = [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]]
-            h_dest = cl3.selectbox("Upgrade a", posibles if posibles else ["Máxima"])
-            
-            cu1, cu2, cu3 = st.columns(3)
-            ads = cu1.number_input("Adultos", 1, 4, 2)
-            nns = cu2.number_input("Niños (0-12)", 0, 4, 0) if h_sel == "DREPM" else 0
-            nits = cu3.number_input("Noches", 1, 30, 1)
-            
-            tarifa_orig = st.number_input("Tarifa Original (Total USD)", min_value=1.0, value=500.0)
-            btn_calc = st.button("🚀 Calcular Upgrade", use_container_width=True)
+    # Una sola línea de inputs para máxima eficiencia
+    with st.container(border=True):
+        row1 = st.columns([1.5, 1.5, 1.2, 1.2, 0.8, 0.8, 1, 1.2])
+        
+        h_sel = row1[0].selectbox("Hotel", ["DREPM", "SECPM"])
+        f_sel = row1[1].date_input("Llegada", date.today())
+        h_orig = row1[2].selectbox("De:", list(CAT_VALS.keys()))
+        posibles = [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]]
+        h_dest = row1[3].selectbox("A:", posibles if posibles else ["Máxima"])
+        
+        ads = row1[4].number_input("Adt", 1, 4, 2)
+        nns = row1[5].number_input("Chd", 0, 4, 0) if h_sel == "DREPM" else 0
+        nits = row1[6].number_input("Noches", 1, 30, 1)
+        btn_calc = row1[7].button("🚀 Calcular", use_container_width=True)
 
-    with col2:
-        if btn_calc:
-            temp, p_kid = detectar_temporada(f_sel)
-            dif_noche = (CAT_VALS.get(h_dest, 0) - CAT_VALS[h_orig]) * (1.25 if temp == "OK RM" else 1)
-            total_up = dif_noche * nits
-            
+    if btn_calc:
+        temp, p_kid = detectar_temporada(f_sel)
+        dif_noche = (CAT_VALS.get(h_dest, 0) - CAT_VALS[h_orig]) * (1.25 if temp == "OK RM" else 1)
+        total_up = dif_noche * nits
+        
+        # Resultados y Edades en columnas paralelas
+        res1, res2 = st.columns([1, 1.5])
+        
+        with res1:
             st.markdown(f"""
-                <div style="background-color:#f8f9fa; padding:20px; border-radius:10px; border-left: 5px solid #00338d; border: 1px solid #ddd;">
-                    <p style="margin:0; color:#666;">Temporada: <b>{temp}</b></p>
-                    <h2 style="margin:10px 0; color:#00338d;">${total_up:,.2f} USD</h2>
-                    <p style="font-size:1.2em; margin:0;">≈ {(total_up * TC_VAL):,.2f} MXN</p>
-                    <hr>
-                    <p style="margin:0;">Total Estancia: <b>${(tarifa_orig + total_up):,.2f} USD</b></p>
+                <div style="background-color:#f8f9fa; padding:15px; border-radius:10px; border-left: 5px solid #00338d; border: 1px solid #ddd;">
+                    <p style="margin:0; font-size:0.9em;">Total Upgrade</p>
+                    <h2 style="margin:0; color:#00338d;">${total_up:,.2f} USD</h2>
+                    <p style="margin:0; color:#666;">≈ {(total_up * TC_VAL):,.2f} MXN</p>
                 </div>
             """, unsafe_allow_html=True)
-            
-            # --- INFO DE EDADES PARA FRONT/RESERVAS ---
-            st.divider()
-            st.subheader("👶 Desglose de Edades")
-            ed1, ed2, ed3 = st.columns(3)
-            ed1.info("**Infantes**\n\n0 a 2 años: $0")
-            ed2.success(f"**Menores**\n\n3 a 12 años: ${p_kid} USD")
-            ed3.warning("**Juniors**\n\n13+ años: Adulto")
-            
-            if nns > 0 and "Swim Out" in h_dest:
-                st.error("🚫 **AVISO:** No se permiten menores en categorías Swim Out.")
-        else:
-            st.info("Ingresa los datos y presiona calcular para ver el desglose operativo.")
 
+        with res2:
+            st.markdown("### 👶 Política de Menores")
+            ed1, ed2, ed3 = st.columns(3)
+            ed1.metric("Infantes (0-2)", "$0 USD")
+            ed2.metric("Menores (3-12)", f"${p_kid} USD")
+            ed3.metric("Juniors (13+)", "Adulto")
+        
+        if nns > 0 and "Swim Out" in h_dest:
+            st.error("🚫 No se permiten menores en categorías Swim Out.")
 # =====================================================
 # MÓDULO: WOH (CON CALCULADORA DE PUNTOS)
 # =====================================================

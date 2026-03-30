@@ -249,71 +249,51 @@ if menu == "📈 Upsell":
     # -----------------------------
     # INPUTS
     # -----------------------------
-    with col1:
-        hotel = st.selectbox("Hotel", ["DREPM", "SECPM"])
-        tarifa = st.number_input("Tarifa por noche (USD)", value=500, step=50)
-        noches = st.number_input("Noches", value=1)
-        fecha = st.date_input("Fecha de llegada", value=date(2026, 4, 1))
+  with col1:
+    # =============================
+    # CONTEXTO
+    # =============================
+    st.subheader("📍 Contexto")
+    hotel = st.selectbox("Hotel", ["DREPM", "SECPM"])
+    fecha = st.date_input("Fecha de llegada", value=date(2026, 4, 1))
 
-        habitacion_actual = st.selectbox("Habitación actual", HABITACIONES)
-        idx = HABITACIONES.index(habitacion_actual)
-        opciones_upsell = HABITACIONES[idx + 1:]
+    st.divider()
 
-        habitacion_destino = st.selectbox(
-            "Upsell a",
-            opciones_upsell if opciones_upsell else ["No hay opciones disponibles"]
-        )
+    # =============================
+    # ESTANCIA ACTUAL
+    # =============================
+    st.subheader("🏨 Estancia actual")
 
-        if hotel == "DREPM":
-            adultos = st.number_input("Adultos", 1, 4, 2)
-            ninos = st.number_input("Niños", 0, 4, 0)
-        else:
-            adultos = st.number_input("Adultos", 1, 3, 2)
-            ninos = 0
-            st.caption("ℹ️ Resort solo adultos (18+)")
+    habitacion_actual = st.selectbox("Habitación actual", HABITACIONES)
+    idx = HABITACIONES.index(habitacion_actual)
+    opciones_upsell = HABITACIONES[idx + 1:]
 
-        calcular = st.button("Calcular Upsell")
+    if hotel == "DREPM":
+        adultos = st.number_input("Adultos", 1, 4, 2)
+        ninos = st.number_input("Niños", 0, 4, 0)
+    else:
+        adultos = st.number_input("Adultos", 1, 3, 2)
+        ninos = 0
+        st.caption("ℹ️ Resort solo adultos (18+)")
 
-    # -----------------------------
-    # RESULTADOS
-    # -----------------------------
-    with col2:
-        if calcular:
-            temporada, precios = detectar_ok_rm(fecha)
+    st.divider()
 
-            st.success(f"Temporada: **{temporada}**")
+    # =============================
+    # UPSELL
+    # =============================
+    st.subheader("⬆️ Upsell")
+    habitacion_destino = st.selectbox(
+        "Upsell a",
+        opciones_upsell if opciones_upsell else ["No hay opciones disponibles"]
+    )
 
-            st.markdown(f"""
-### 🏨 Upsell de habitación
-**De:** {habitacion_actual}  
-**A:** {habitacion_destino}
-""")
+    st.divider()
 
-            # -------- Cargos por niño ------
-            if hotel == "DREPM" and ninos > 0:
-                net, pub = precios["net"], precios["pub"]
+    # =============================
+    # IMPACTO ECONÓMICO
+    # =============================
+    st.subheader("💰 Impacto económico")
+    tarifa = st.number_input("Tarifa por noche (USD)", value=500, step=50)
+    noches = st.number_input("Noches", value=1)
 
-                st.markdown(f"""
-### 👶 Cargos por niño (3–12 años)
-
-- **NET:** {net} USD / {round(net * TC_MXN):,} MXN  
-- **PUBLIC:** {pub} USD / {round(pub * TC_MXN):,} MXN  
-""")
-
-                # -------- Edades visibles ------
-                st.markdown("""
-### 👶 Edades de niños (referencia)
-
-- **0–2 años:** Gratis  
-- **3–12 años:** Aplica cargo  
-- **13 años en adelante:** Se consideran adultos  
-
-🏊 **Swim Out:** No acepta niños
-""")
-
-            # -------- Upsell estimado ------
-            incremento = 75 * noches
-            st.markdown(f"""
-### 💰 Upsell estimado
-Incremento total: **${incremento} USD**
-""")
+    calcular = st.button("Calcular Upsell")

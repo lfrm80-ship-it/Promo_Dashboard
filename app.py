@@ -117,42 +117,44 @@ elif menu == "➕ Registro de Promoción":
                     st.rerun()
 
 # =====================================================
-# MÓDULO: UPSELL (LAYOUT HORIZONTAL + TARIFA ORIGINAL)
+# MÓDULO: UPSELL (ULTRA-COMPACTO OPERATIVO)
 # =====================================================
 elif menu == "📈 Upsell":
     st.title("📈 Calculadora de Upsell")
     CAT_VALS = {"JS Garden View": 0, "JS Pool View": 45, "JS Ocean View": 90, "JS Swim Out": 150}
     
     with st.container(border=True):
-        # Selección de Hotel primero para definir el layout
-        h_sel = st.selectbox("Hotel", ["DREPM", "SECPM"], index=0)
+        # Creamos una fila base para determinar el Hotel primero
+        # Usamos columnas muy ajustadas para que parezca una sola línea continua
         
-        # Layout dinámico: DREPM (con niños) vs SECPM (solo adultos)
+        # Definimos el layout base: Si es DREPM necesitamos 8 espacios, si es SECPM solo 7
+        # Pero para que no "salte" la interfaz, usaremos un selector inicial pequeño
+        
+        row_main = st.columns([1, 1.2, 1, 1, 0.6, 0.6, 0.8, 1, 1])
+        
+        h_sel = row_main[0].selectbox("Hotel", ["DREPM", "SECPM"], index=0)
+        f_sel = row_main[1].date_input("Llegada", date.today())
+        h_orig = row_main[2].selectbox("De:", list(CAT_VALS.keys()))
+        h_dest = row_main[3].selectbox("A:", [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]])
+        
+        # Lógica de ocupación de espacios para Adultos, Niños, Noches y Precio
+        ads = row_main[4].number_input("Adt", 1, 4, 2)
+        
         if h_sel == "DREPM":
-            cols = st.columns([1.5, 1.2, 1.2, 0.7, 0.7, 0.7, 1.2, 1.2])
-            f_sel = cols[0].date_input("Llegada", date.today())
-            h_orig = cols[1].selectbox("De:", list(CAT_VALS.keys()))
-            h_dest = cols[2].selectbox("A:", [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]])
-            ads = cols[3].number_input("Adt", 1, 4, 2)
-            nns = cols[4].number_input("Chd", 0, 4, 0)
-            nits = cols[5].number_input("Noches", 1, 30, 1)
-            t_orig = cols[6].number_input("Tarifa Orig.", min_value=1.0, value=500.0)
-            btn_calc = cols[7].button("🚀 Calcular", use_container_width=True)
+            nns = row_main[5].number_input("Chd", 0, 4, 0) # Columna de niños activa
+            nits = row_main[6].number_input("Nts", 1, 30, 1)
+            t_orig = row_main[7].number_input("Tarifa Orig.", min_value=1.0, value=500.0)
+            btn_calc = row_main[8].button("🚀 Calcular", use_container_width=True)
         else:
-            # SECPM: Layout sin columna de niños (Adults Only)
-            cols = st.columns([1.5, 1.2, 1.2, 0.8, 0.8, 1.2, 1.2])
-            f_sel = cols[0].date_input("Llegada", date.today())
-            h_orig = cols[1].selectbox("De:", list(CAT_VALS.keys()))
-            h_dest = cols[2].selectbox("A:", [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]])
-            ads = cols[3].number_input("Adt", 1, 4, 2)
-            nits = cols[4].number_input("Noches", 1, 30, 1)
-            t_orig = cols[5].number_input("Tarifa Orig.", min_value=1.0, value=500.0)
-            btn_calc = cols[6].button("🚀 Calcular", use_container_width=True)
-            nns = 0
+            nns = 0 # Secrets es Adultos Solamente
+            # En SECPM, "reutilizamos" el espacio de niños o dejamos un hueco para no mover los botones
+            row_main[5].markdown("<p style='text-align:center; padding-top:35px; color:gray;'>N/A</p>", unsafe_allow_html=True)
+            nits = row_main[6].number_input("Nts", 1, 30, 1)
+            t_orig = row_main[7].number_input("Tarifa Orig.", min_value=1.0, value=500.0)
+            btn_calc = row_main[8].button("🚀 Calcular", use_container_width=True)
 
     if btn_calc:
         temp, p_kid = detectar_temporada(f_sel)
-        # Cálculo de diferencia por noche aplicando factor de temporada si aplica
         dif_noche = (CAT_VALS.get(h_dest, 0) - CAT_VALS[h_orig]) * (1.25 if temp == "OK RM" else 1)
         total_up = dif_noche * nits
         gran_total = t_orig + total_up
@@ -161,26 +163,26 @@ elif menu == "📈 Upsell":
         with res1:
             st.markdown(f"""
                 <div style="background-color:#f8f9fa; padding:15px; border-radius:10px; border-left: 5px solid #00338d; border: 1px solid #ddd;">
-                    <p style="margin:0; font-size:0.9em; color:#666;">Monto del Upgrade</p>
+                    <p style="margin:0; font-size:0.9em; color:#666;">Upgrade Total</p>
                     <h2 style="margin:0; color:#00338d;">${total_up:,.2f} USD</h2>
                     <p style="margin:0; font-size:1.1em;">≈ {(total_up * TC_VAL):,.2f} MXN</p>
                     <hr style="margin:10px 0;">
-                    <p style="margin:0; font-size:0.9em; color:#666;">Total de la Estancia</p>
+                    <p style="margin:0; font-size:0.9em; color:#666;">Gran Total Estancia</p>
                     <h3 style="margin:0;">${gran_total:,.2f} USD</h3>
                 </div>
             """, unsafe_allow_html=True)
 
         with res2:
             if h_sel == "DREPM":
-                st.markdown("### 👶 Política de Menores")
+                st.markdown("### 👶 Edades (Check-in)")
                 ed1, ed2, ed3 = st.columns(3)
-                ed1.metric("Infantes (0-2)", "$0 USD")
-                ed2.metric("Menores (3-12)", f"${p_kid} USD")
-                ed3.metric("Juniors (13+)", "Adulto")
+                ed1.metric("Infantes", "0-2 años")
+                ed2.metric("Niños", f"3-12 (${p_kid})")
+                ed3.metric("Juniors", "13+ (Adulto)")
                 if nns > 0 and "Swim Out" in h_dest:
-                    st.error("🚫 Restricción: No se permiten menores en Swim Out.")
+                    st.error("⚠️ Categoría Swim Out: Solo Adultos.")
             else:
-                st.info("✨ Secrets es Adults Only. El cálculo ignora menores por política de marca.")
+                st.info("💡 Secrets: Política de solo adultos aplicada al cálculo.")
 # =====================================================
 # MÓDULO: WOH (CON CALCULADORA DE PUNTOS)
 # =====================================================

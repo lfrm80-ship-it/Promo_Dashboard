@@ -297,10 +297,10 @@ elif menu == "➕ Nueva promoción":
             st.rerun()
 
 # =====================================================
-# UPSELL (CON DESGLOSE DE EDADES Y POLÍTICAS)
+# UPSELL (EDICIÓN FRONT DESK: NET VS PUB)
 # =====================================================
 elif menu == "📈 Upsell":
-    st.subheader("📈 Calculadora de Upsell Inteligente")
+    st.subheader("📈 Calculadora de Upsell (Front Desk Focus)")
 
     UPSELL_VALUES = {
         "JS Garden View": 0,
@@ -343,55 +343,67 @@ elif menu == "📈 Upsell":
 
     with col2:
         if btn_calcular:
-            # 1. VALIDACIÓN DE POLÍTICAS
             if ninos > 0 and "Swim Out" in hab_destino:
-                st.error("❌ **RESTRICCIÓN:** No se permiten menores en categorías **Swim Out** por razones de seguridad (acceso directo a agua).")
-            
+                st.error("❌ **RESTRICCIÓN:** No se permiten menores en categorías **Swim Out**.")
             elif hab_destino == "Máxima categoría":
                 st.warning("La reserva ya está en la categoría más alta.")
-                
             else:
-                temporada, precios_temporada = detectar_ok_rm(fecha_sel)
+                temporada, precios_temp = detectar_ok_rm(fecha_sel)
                 
-                # Diferencial con ajuste de temporada
+                # Diferencial Upsell
                 dif_noche = (UPSELL_VALUES[hab_destino] - UPSELL_VALUES[hab_actual])
                 if temporada == "OK RM":
-                    dif_noche *= 1.25 # Recargo del 25% en fechas críticas
+                    dif_noche *= 1.25 
                 
                 total_upsell = dif_noche * noches_sel
                 total_final = tarifa_orig + total_upsell
 
-                # 2. RESULTADOS VISUALES
+                # INTERFAZ DE RESULTADOS
                 st.success(f"**Temporada:** {temporada}")
                 
                 m1, m2 = st.columns(2)
-                m1.metric("Costo Upgrade", f"${total_upsell:,.2f} USD", f"${dif_noche:,.2f} / noche")
-                m2.metric("Total Estancia", f"${total_final:,.2f} USD")
+                m1.metric("Costo Upgrade", f"${total_upsell:,.2f} USD")
+                m2.metric("Total Final", f"${total_final:,.2f} USD")
 
-                # 3. DESGLOSE DE EDADES (EL "POR MENOR")
+                # --- SECCIÓN FRONT DESK: COSTOS DE MENORES ---
                 st.markdown("---")
-                st.markdown("#### 👶 Política de Menores (DREPM)")
+                st.markdown("#### 👶 Tarifas de Menores (DREPM)")
                 
-                # Creamos una tabla limpia para las edades
-                tabla_edades = pd.DataFrame({
-                    "Rango": ["0 - 2.11 años", "3 - 12.11 años", "13+ años"],
-                    "Estatus": ["Infante", "Menor", "Adulto"],
-                    "Costo Extra": ["Gratis", f"${precios_temporada['pub']} USD", "Tarifa Adulto"]
-                })
-                st.table(tabla_edades)
+                if hotel_sel == "DREPM":
+                    # Extraemos valores de NET y PUB del diccionario global
+                    net_val = precios_temp['net']
+                    pub_val = precios_temp['pub']
 
-                with st.expander("📄 Notas de Operación"):
-                    st.write(f"**TC Aplicado:** {TC_MXN} MXN")
-                    st.write(f"**Monto en Pesos:** ${total_upsell * TC_MXN:,.2f} MXN")
-                    st.caption("Nota: El cargo por menor aplica si se excede la ocupación base o si no estaba prepagado.")
+                    # Layout de comparación rápida
+                    cNet, cPub = st.columns(2)
+                    
+                    with cNet:
+                        st.markdown(f"""
+                        **COSTO NETO (Costo)**
+                        - **USD:** ${net_val}
+                        - **MXN:** ${round(net_val * TC_MXN):,}
+                        """)
+                    
+                    with cPub:
+                        st.markdown(f"""
+                        **TARIFA PÚBLICA (Venta)**
+                        - **USD:** ${pub_val}
+                        - **MXN:** ${round(pub_val * TC_MXN):,}
+                        """)
 
-                # 4. RESUMEN PARA COPIAR
-                st.info("💡 **Tip:** Copia el texto de abajo para enviarlo al cliente.")
+                    st.info(f"**Regla de Oro:** 0-2 años Gratis | 3-12 con cargo | 13+ Adulto")
+                else:
+                    st.warning("Secrets Playa Mujeres: No se permiten menores de 18 años.")
+
+                # TIPO DE CAMBIO
+                st.caption(f"Tipo de Cambio aplicado: **{TC_MXN}**")
+
+                # RESUMEN PARA COPIAR
                 resumen = (
-                    f"Upgrade Confirmado: {hab_destino}\n"
-                    f"Costo adicional: ${total_upsell:,.2f} USD\n"
-                    f"Nota: Menores de 0-2 años sin costo. Menores de 3-12 con cargo de ${precios_temporada['pub']} USD/noche."
+                    f"Upgrade a {hab_destino}\n"
+                    f"Total Upgrade: ${total_upsell:,.2f} USD\n"
+                    f"Extra Child (3-12): ${pub_val} USD por noche."
                 )
                 st.code(resumen, language="text")
         else:
-            st.info("Ingresa los datos para generar la cotización de Upsell.")
+            st.info("Ingresa los datos para generar la cotización.")

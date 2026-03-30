@@ -8,7 +8,6 @@ from datetime import datetime, date
 # =====================================================
 st.set_page_config(page_title="HIC Master Record", layout="wide", page_icon="🏨")
 
-# Variables de entorno y rutas
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROMOS_FILE = os.path.join(BASE_DIR, "promociones_produccion.csv")
@@ -78,44 +77,47 @@ if menu == "🔍 Vista rápida":
         f1, f2 = st.columns(2)
         h_f = f1.multiselect("Hotel", df["Hotel"].unique())
         t_f = f2.text_input("Buscar promo...")
-
         df_f = df.copy()
         if h_f: df_f = df_f[df_f["Hotel"].isin(h_f)]
         if t_f: df_f = df_f[df_f.astype(str).apply(lambda x: t_f.lower() in x.str.lower().any(), axis=1)]
-
         st.dataframe(df_f, use_container_width=True, hide_index=True)
 
 # =====================================================
-# MÓDULO: REGISTRO (CON UPLOADER)
+# MÓDULO: REGISTRO (UPLOADER RESTAURADO)
 # =====================================================
 elif menu == "➕ Registro de Promoción":
     st.title("➕ Nueva Promoción")
     if not st.session_state.is_admin:
-        st.warning("Acceso restringido.")
+        st.warning("Acceso restringido a Administradores.")
     else:
         with st.form("reg_form", clear_on_submit=True):
             c1, c2 = st.columns([2, 1])
-            nombre = c1.text_input("Nombre Promo")
-            hoteles = c2.multiselect("Hoteles", ["DREPM", "SECPM", "ZOE VR"])
+            nombre = c1.text_input("Nombre de la Promoción")
+            hoteles = c2.multiselect("Hoteles aplicables", ["DREPM", "SECPM", "ZOE VR"])
+            
+            m1, m2, m3 = st.columns(3)
+            mercado = m1.selectbox("Mercado", ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"])
+            rate_code = m2.text_input("Rate Plan Code")
+            dscto = m3.number_input("Descuento %", 0, 100, 0)
             
             d1, d2, d3, d4 = st.columns(4)
-            bw_i, bw_f = d1.date_input("BW Ini"), d2.date_input("BW Fin")
-            tw_i, tw_f = d3.date_input("TW Ini"), d4.date_input("TW Fin")
+            bw_i, bw_f = d1.date_input("BW Inicio"), d2.date_input("BW Fin")
+            tw_i, tw_f = d3.date_input("TW Inicio"), d4.date_input("TW Fin")
             
             st.divider()
-            archivo = st.file_uploader("Adjuntar Evidencia (PDF/JPG/Excel)", type=["pdf", "jpg", "png", "xlsx"])
-            notas = st.text_area("Notas")
+            archivo = st.file_uploader("Adjuntar JPEG, PDF o Excel", type=["pdf", "jpg", "png", "xlsx"])
+            notas = st.text_area("Notas / Restricciones")
             
-            if st.form_submit_button("🚀 Guardar"):
+            if st.form_submit_button("🚀 Guardar en Master Record"):
                 if nombre and hoteles:
-                    nuevas = pd.DataFrame([{"Hotel": h, "Promo": nombre, "BW_Inicio": bw_i, "BW_Fin": bw_f, "TW_Inicio": tw_i, "TW_Fin": tw_f, "Notas": notas} for h in hoteles])
+                    nuevas = pd.DataFrame([{"Hotel": h, "Promo": nombre, "Market": mercado, "Rate_Plan": rate_code, "Descuento": dscto, "BW_Inicio": bw_i, "BW_Fin": bw_f, "TW_Inicio": tw_i, "TW_Fin": tw_f, "Notas": notas} for h in hoteles])
                     df = pd.concat([df, nuevas], ignore_index=True)
                     guardar_datos(df)
-                    st.success("Guardado")
+                    st.success("✅ Promoción registrada exitosamente.")
                     st.rerun()
 
 # =====================================================
-# MÓDULO: UPSELL (CON EDADES Y PUNTOS)
+# MÓDULO: UPSELL (LIMPIO + EDADES DE NIÑOS)
 # =====================================================
 elif menu == "📈 Upsell":
     st.title("📈 Calculadora de Upsell")
@@ -124,67 +126,78 @@ elif menu == "📈 Upsell":
     col1, col2 = st.columns([1.2, 1])
     with col1:
         with st.container(border=True):
+            st.subheader("📋 Datos de la Reserva")
             h_sel = st.selectbox("Hotel", ["DREPM", "SECPM"])
-            f_sel = st.date_input("Fecha")
+            f_sel = st.date_input("Fecha de llegada")
+            
             cl1, cl2, cl3 = st.columns([4, 1, 4])
-            h_orig = cl1.selectbox("De:", list(CAT_VALS.keys()), label_visibility="collapsed")
-            cl2.markdown("<h3 style='text-align:center;'>➡️</h3>", unsafe_allow_html=True)
-            h_dest = cl3.selectbox("A:", [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]], label_visibility="collapsed")
+            h_orig = cl1.selectbox("Categoría Original", list(CAT_VALS.keys()))
+            cl2.markdown("<h3 style='text-align:center; margin-top:25px;'>➡️</h3>", unsafe_allow_html=True)
+            posibles = [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]]
+            h_dest = cl3.selectbox("Upgrade a", posibles if posibles else ["Máxima"])
             
             cu1, cu2, cu3 = st.columns(3)
             ads = cu1.number_input("Adultos", 1, 4, 2)
             nns = cu2.number_input("Niños (0-12)", 0, 4, 0) if h_sel == "DREPM" else 0
             nits = cu3.number_input("Noches", 1, 30, 1)
-            btn_calc = st.button("🚀 Calcular", use_container_width=True)
+            
+            tarifa_orig = st.number_input("Tarifa Original (Total USD)", min_value=1.0, value=500.0)
+            btn_calc = st.button("🚀 Calcular Upgrade", use_container_width=True)
 
     with col2:
         if btn_calc:
             temp, p_kid = detectar_temporada(f_sel)
-            dif = (CAT_VALS[h_dest] - CAT_VALS[h_orig]) * (1.25 if temp == "OK RM" else 1)
-            total = dif * nits
+            dif_noche = (CAT_VALS.get(h_dest, 0) - CAT_VALS[h_orig]) * (1.25 if temp == "OK RM" else 1)
+            total_up = dif_noche * nits
             
-            st.markdown(f"""<div style="background-color:#f8f9fa; padding:20px; border-radius:10px; border-left: 5px solid #00338d; border: 1px solid #ddd;">
-                <h4>Total Upgrade: ${total:,.2f} USD</h4>
-                <p>≈ {(total * TC_VAL):,.2f} MXN</p>
-                </div>""", unsafe_allow_html=True)
+            st.markdown(f"""
+                <div style="background-color:#f8f9fa; padding:20px; border-radius:10px; border-left: 5px solid #00338d; border: 1px solid #ddd;">
+                    <p style="margin:0; color:#666;">Temporada: <b>{temp}</b></p>
+                    <h2 style="margin:10px 0; color:#00338d;">${total_up:,.2f} USD</h2>
+                    <p style="font-size:1.2em; margin:0;">≈ {(total_up * TC_VAL):,.2f} MXN</p>
+                    <hr>
+                    <p style="margin:0;">Total Estancia: <b>${(tarifa_orig + total_up):,.2f} USD</b></p>
+                </div>
+            """, unsafe_allow_html=True)
             
-            if h_sel == "DREPM":
-                st.info(f"👶 Niño (3-12): ${p_kid} USD")
-            
+            # --- INFO DE EDADES PARA FRONT/RESERVAS ---
             st.divider()
-            st.subheader("💎 Puntos WOH por este pago")
-            pb = total * 5
-            st.write(f"**Member:** {int(pb):,} | **Explorist:** {int(pb*1.2):,} | **Globalist:** {int(pb*1.3):,}")
+            st.subheader("👶 Desglose de Edades")
+            ed1, ed2, ed3 = st.columns(3)
+            ed1.info("**Infantes**\n\n0 a 2 años: $0")
+            ed2.success(f"**Menores**\n\n3 a 12 años: ${p_kid} USD")
+            ed3.warning("**Juniors**\n\n13+ años: Adulto")
+            
+            if nns > 0 and "Swim Out" in h_dest:
+                st.error("🚫 **AVISO:** No se permiten menores en categorías Swim Out.")
+        else:
+            st.info("Ingresa los datos y presiona calcular para ver el desglose operativo.")
 
 # =====================================================
-# MÓDULO: WOH (CON BARRA DE CÁLCULO POR NOCHES)
+# MÓDULO: WOH (CON CALCULADORA DE PUNTOS)
 # =====================================================
 elif menu == "🏨 WOH":
     st.title("🏨 World of Hyatt")
-    tab1, tab2 = st.tabs(["🏅 Status", "🧮 Calculadora de Estancia"])
+    tab1, tab2 = st.tabs(["🏅 Status y Niveles", "🧮 Calculadora de Puntos"])
     
     with tab1:
         st.table({"Nivel": ["Member", "Discoverist", "Explorist", "Globalist"], "Noches": ["0", "10", "30", "60"], "Bono": ["0%", "10%", "20%", "30%"]})
-        st.write("🚩 **20 Noches:** 2 Club Access | **30 Noches:** 1 Cat 1-4 Free Night")
+        st.write("🚩 **20 Noches:** 2 Club Access | **30 Noches:** 1 Free Night (Cat 1-4)")
         st.write("🚩 **40 Noches:** 1 Guest of Honor | **60 Noches:** My Hyatt Concierge")
 
     with tab2:
-        st.subheader("🧮 ¿Cuántos puntos generará el huésped?")
-        # LA BARRA DE CÁLCULO RESTAURADA
+        st.subheader("🧮 Calculadora de Puntos por Estancia")
         with st.container(border=True):
             cw1, cw2 = st.columns(2)
-            monto_noche = cw1.number_input("Tarifa por noche (USD)", min_value=0, value=250)
-            num_noches = cw2.number_input("Número de noches", min_value=1, value=1)
+            tarifa_noche = cw1.number_input("Tarifa por noche (USD)", min_value=0, value=250)
+            total_noches = cw2.number_input("Número de noches ", min_value=1, value=1)
             
-            total_estancia = monto_noche * num_noches
-            puntos_base = total_estancia * 5
+            monto_total = tarifa_noche * total_noches
+            p_base = monto_total * 5
             
             st.divider()
-            st.write(f"**Proyección de puntos por una estancia de ${total_estancia:,.2f} USD:**")
-            
             c_p1, c_p2, c_p3, c_p4 = st.columns(4)
-            c_p1.metric("Member", f"{int(puntos_base):,}")
-            c_p2.metric("Discoverist", f"{int(puntos_base * 1.1):,}")
-            c_p3.metric("Explorist", f"{int(puntos_base * 1.2):,}")
-            c_p4.metric("Globalist", f"{int(puntos_base * 1.3):,}")
-            st.caption("Nota: El cálculo se basa en el gasto elegible antes de impuestos.")
+            c_p1.metric("Member", f"{int(p_base):,}")
+            c_p2.metric("Discoverist", f"{int(p_base * 1.1):,}")
+            c_p3.metric("Explorist", f"{int(p_base * 1.2):,}")
+            c_p4.metric("Globalist", f"{int(p_base * 1.3):,}")

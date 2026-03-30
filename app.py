@@ -143,7 +143,7 @@ with st.sidebar:
 df = cargar_promos()
 
 # =====================================================
-# VISTA RÁPIDA
+# VISTA RÁPIDA (ACTUALIZADA CON EDICIÓN PARA ADMIN)
 # =====================================================
 if menu == "🔍 Vista rápida":
     if df.empty:
@@ -151,23 +151,64 @@ if menu == "🔍 Vista rápida":
     else:
         df_view = df.copy()
         df_view["Estado"] = df_view.apply(calcular_estado, axis=1)
-        st.subheader("🔎 Filtros de Búsqueda")
-        c1, c2, c3, c4 = st.columns(4)
-        f_hotel = c1.multiselect("Hotel", df_view["Hotel"].unique())
-        f_estado = c2.multiselect("Estado", ["Activa", "Futura", "Expirada"])
-        f_market = c3.multiselect("Market", df_view["Market"].unique())
-        f_texto = c4.text_input("Buscar texto")
 
+        st.subheader("🔎 Filtros y Gestión")
+        c1, c2, c3, c4 = st.columns(4)
+        f_hotel = c1.multiselect("Hotel", df_view["Hotel"].dropna().unique())
+        f_estado = c2.multiselect("Estado", ["Activa", "Futura", "Expirada"])
+        f_market = c3.multiselect("Market", df_view["Market"].dropna().unique())
+        f_texto = c4.text_input("Buscar promoción específica")
+
+        # Aplicar Filtros
         if f_hotel: df_view = df_view[df_view["Hotel"].isin(f_hotel)]
         if f_estado: df_view = df_view[df_view["Estado"].isin(f_estado)]
         if f_market: df_view = df_view[df_view["Market"].isin(f_market)]
         if f_texto:
             txt = f_texto.lower()
-            df_view = df_view[df_view.apply(lambda r: txt in " ".join(r.astype(str)).lower(), axis=1)]
+            df_view = df_view[df_view.apply(lambda r: txt in str(r["Promo"]).lower(), axis=1)]
 
+        # --- SECCIÓN DE EDICIÓN (SOLO ADMIN) ---
+        if st.session_state.is_admin and not df_view.empty:
+            with st.expander("📝 Panel de Edición Rápida (Solo Admin)", expanded=False):
+                st.warning("Selecciona una promoción para modificar sus fechas o detalles.")
+                
+                # Elegir cuál editar de los resultados filtrados
+                promo_to_edit = st.selectbox(
+                    "Selecciona la promoción a editar:", 
+                    df_view["Promo"].unique(),
+                    key="selector_edit"
+                )
+                
+                # Extraer datos actuales
+                idx = df[df["Promo"] == promo_to_edit].index[0]
+                row = df.iloc[idx]
+
+                with st.form("edit_form"):
+                    col_ed1, col_ed2 = st.columns(2)
+                    new_bw_f = col_ed1.date_input("Nueva fecha fin BW", value=row["BW_Fin"])
+                    new_tw_f = col_ed2.date_input("Nueva fecha fin TW", value=row["TW_Fin"])
+                    
+                    new_notes = st.text_area("Actualizar Notas", value=row["Notas"])
+                    
+                    if st.form_submit_button("Actualizar y Crear Backup"):
+                        # Actualizar el DataFrame original
+                        df.at[idx, "BW_Fin"] = new_bw_f
+                        df.at[idx, "TW_Fin"] = new_tw_f
+                        df.at[idx, "Notas"] = new_notes
+                        
+                        # Guardar (esto dispara el backup automático que ya configuramos)
+                        guardar_promos(df)
+                        st.success(f"✅ '{promo_to_edit}' actualizada correctamente.")
+                        st.rerun()
+
+        st.divider()
         st.dataframe(df_view, use_container_width=True, hide_index=True)
-        st.download_button("📥 Descargar Excel", generar_excel(df_view), f"MasterRecord_{date.today()}.xlsx")
-
+        
+        st.download_button(
+            "📥 Descargar Excel del Master Record",
+            generar_excel(df_view),
+            f"MasterRecord_{date.today()}.xlsx"
+        )
 # =====================================================
 # NUEVA PROMOCIÓN (ESCRIBE DATOS + BACKUP)
 # =====================================================

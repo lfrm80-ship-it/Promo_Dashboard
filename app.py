@@ -337,37 +337,41 @@ elif menu == "📈 Upsell":
 
         calcular = st.button("Calcular Upsell", use_container_width=True)
 
-    # -----------------------------
-    # RESULTADOS
-    # -----------------------------
-    with col2:
-        if calcular:
-            temporada, precios = detectar_ok_rm(fecha)
+  # -----------------------------
+# RESULTADOS
+# -----------------------------
+with col2:
+    if calcular:
+        temporada, precios = detectar_ok_rm(fecha)
 
-            if not precios:
-                st.warning("No hay reglas de temporada configuradas.")
-            else:
-                st.success(f"Temporada: {temporada}")
-                st.markdown(f"🏨 **Upsell:** {habitacion_actual} → {habitacion_destino}")
+        if not precios:
+            st.warning("No hay reglas de temporada configuradas.")
+        else:
+            st.success(f"Temporada: {temporada}")
 
-                if hotel == "DREPM" and ninos > 0:
-                    net, pub = precios["net"], precios["pub"]
-                    st.markdown(
-                        f"👶 **Niños:** NET {net} USD / {round(net * TC_MXN):,} MXN · "
-                        f"PUBLIC {pub} USD / {round(pub * TC_MXN):,} MXN\n\n"
-                        "Edades: 0–2 gratis · 3–12 con cargo · 13+ adulto\n\n"
-                        "🏊 Swim Out NO acepta niños"
-                    )
+            st.markdown(
+                f"🏨 **Upsell:** {habitacion_actual} → {habitacion_destino}"
+            )
 
-                incremento = 75 * noches
-tarifa_total = tarifa + incremento
+            if hotel == "DREPM" and ninos > 0:
+                net, pub = precios["net"], precios["pub"]
+                st.markdown(
+                    f"👶 **Niños:** NET {net} USD / {round(net * TC_MXN):,} MXN · "
+                    f"PUBLIC {pub} USD / {round(pub * TC_MXN):,} MXN\n\n"
+                    "Edades: 0–2 gratis · 3–12 con cargo · 13+ adulto\n\n"
+                    "🏊 Swim Out NO acepta niños"
+                )
 
-st.markdown(f"""
+            # ✅ UPSWELL + TARIFA TOTAL (MEJORA)
+            incremento = 75 * noches
+            tarifa_total = tarifa + incremento
+
+            st.markdown(
+                f"""
 ### 💰 Resumen económico
-
 - **Tarifa actual:** ${tarifa} USD  
 - **Upsell estimado:** ${incremento} USD  
 - ✅ **Nueva tarifa total:** **${tarifa_total} USD**
-""")
-        else:
-            st.info("⬅️ Ingresa datos y presiona **Calcular Upsell**")
+"""
+            )
+    else:

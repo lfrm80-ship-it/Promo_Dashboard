@@ -245,58 +245,56 @@ if menu == "📈 Upsell":
 
     col1, col2 = st.columns([1, 2])
 
-  # =============================
+# =============================
 # INPUTS (COLUMNA IZQUIERDA)
 # =============================
 with col1:
-    # -----------------------------
-    # CONTEXTO
-    # -----------------------------
-    st.subheader("📍 Contexto")
-    hotel = st.selectbox("Hotel", ["DREPM", "SECPM"])
-    fecha = st.date_input("Fecha de llegada", value=date(2026, 4, 1))
+
+    # =============================
+    # CONTEXTO + ESTANCIA (MISMA FILA)
+    # =============================
+    col_contexto, col_estancia = st.columns(2)
+
+    # -------- CONTEXTO --------
+    with col_contexto:
+        st.subheader("📍 Contexto")
+        hotel = st.selectbox("Hotel", ["DREPM", "SECPM"])
+        fecha = st.date_input("Fecha de llegada", value=date(2026, 4, 1))
+
+    # -------- ESTANCIA ACTUAL --------
+    with col_estancia:
+        st.subheader("🏨 Estancia actual")
+
+        col_from, col_arrow, col_to = st.columns([3, 1, 3])
+
+        with col_from:
+            habitacion_actual = st.selectbox("De", HABITACIONES)
+
+        with col_arrow:
+            st.markdown("<br>➡️", unsafe_allow_html=True)
+
+        idx = HABITACIONES.index(habitacion_actual)
+        opciones_upsell = HABITACIONES[idx + 1:]
+
+        with col_to:
+            habitacion_destino = st.selectbox(
+                "A",
+                opciones_upsell if opciones_upsell else ["No hay opciones"]
+            )
+
+        if hotel == "DREPM":
+            adultos = st.number_input("Adultos", 1, 4, 2)
+            ninos = st.number_input("Niños", 0, 4, 0)
+        else:
+            adultos = st.number_input("Adultos", 1, 3, 2)
+            ninos = 0
+            st.caption("ℹ️ Resort solo adultos (18+)")
 
     st.divider()
 
-    # -----------------------------
-    # ESTANCIA ACTUAL
-    # -----------------------------
-    st.subheader("🏨 Estancia actual")
-
-    # ---- De → A en una sola línea ----
-    col_from, col_arrow, col_to = st.columns([3, 1, 3])
-
-    with col_from:
-        habitacion_actual = st.selectbox("De", HABITACIONES)
-
-    with col_arrow:
-        st.markdown("<br>➡️", unsafe_allow_html=True)
-
-    idx = HABITACIONES.index(habitacion_actual)
-    opciones_upsell = HABITACIONES[idx + 1:]
-
-    with col_to:
-        habitacion_destino = st.selectbox(
-            "A",
-            opciones_upsell if opciones_upsell else ["No hay opciones disponibles"]
-        )
-
-    # -----------------------------
-    # OCUPACIÓN
-    # -----------------------------
-    if hotel == "DREPM":
-        adultos = st.number_input("Adultos", 1, 4, 2)
-        ninos = st.number_input("Niños", 0, 4, 0)
-    else:
-        adultos = st.number_input("Adultos", 1, 3, 2)
-        ninos = 0
-        st.caption("ℹ️ Resort solo adultos (18+)")
-
-    st.divider()
-
-    # -----------------------------
+    # =============================
     # IMPACTO ECONÓMICO
-    # -----------------------------
+    # =============================
     st.subheader("💰 Impacto económico")
     tarifa = st.number_input("Tarifa por noche (USD)", value=500, step=50)
     noches = st.number_input("Noches", value=1)

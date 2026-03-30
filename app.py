@@ -200,32 +200,16 @@ elif menu == "➕ Nueva promoción":
         tw_i = c3.date_input("TW Inicio")
         tw_f = c4.date_input("TW Fin")
 
-        # =============================
-        # ADJUNTOS (EVIDENCIA) ✅ MEJORADO
-        # =============================
-        st.subheader("📎 Adjuntos")
-
-        col_img, col_pdf, col_xls = st.columns(3)
-
-        with col_img:
-            imagen = st.file_uploader(
-                "Imagen",
-                ["png", "jpg", "jpeg"]
-            )
-
-        with col_pdf:
-            pdf = st.file_uploader(
-                "PDF",
-                ["pdf"]
-            )
-
-        with col_xls:
-            excel_referencia = st.file_uploader(
-                "Excel ref. (opcional)",
-                ["xlsx"]
-            )
-
-        notas = st.text_area("Notas")
+       
+# =============================
+# ADJUNTOS (UNA SOLA OPCIÓN)
+# =============================
+st.subheader("📎 Adjuntos")
+adjuntos = st.file_uploader(
+    "Subir archivos (Imagen / PDF / Excel)",
+    type=["png", "jpg", "jpeg", "pdf", "xlsx"],
+    accept_multiple_files=True
+)
 
         # =============================
         # CARGA MASIVA (MASTER)

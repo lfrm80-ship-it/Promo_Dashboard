@@ -129,16 +129,84 @@ with st.sidebar:
 df = cargar_promos()
 
 # =====================================================
-# VISTA RÁPIDA (READ ONLY)
+# VISTA RÁPIDA (READ ONLY + FILTROS)
 # =====================================================
 if menu == "🔍 Vista rápida":
+
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
-        df_v = df.copy()
-        df_v["Estado"] = df_v.apply(calcular_estado, axis=1)
-        st.dataframe(df_v, use_container_width=True, hide_index=True)
-        st.download_button("📥 Descargar Excel", generar_excel(df_v), "promos.xlsx")
+        # Trabajamos SIEMPRE sobre una copia
+        df_view = df.copy()
+
+        st.subheader("🔎 Filtros")
+
+        # -----------------------------
+        # FILTROS SUPERIORES
+        # -----------------------------
+        col_f1, col_f2, col_f3, col_f4 = st.columns(4)
+
+        with col_f1:
+            filtro_hotel = st.multiselect(
+                "Hotel",
+                sorted(df_view["Hotel"].dropna().unique())
+            )
+
+        with col_f2:
+            filtro_estado = st.multiselect(
+                "Estado",
+                ["Activa", "Futura", "Expirada"]
+            )
+
+        with col_f3:
+            filtro_market = st.multiselect(
+                "Market",
+                sorted(df_view["Market"].dropna().unique())
+            )
+
+        with col_f4:
+            busqueda = st.text_input(
+                "🔍 Buscar texto",
+                placeholder="Promo, Rate Plan, Notas…"
+            )
+
+        # -----------------------------
+        # APLICAR FILTROS
+        # -----------------------------
+        if filtro_hotel:
+            df_view = df_view[df_view["Hotel"].isin(filtro_hotel)]
+
+        if filtro_estado:
+            df_view = df_view[df_view["Estado"].isin(filtro_estado)]
+
+        if filtro_market:
+            df_view = df_view[df_view["Market"].isin(filtro_market)]
+
+        if busqueda:
+            texto = busqueda.lower()
+            df_view = df_view[
+                df_view.apply(
+                    lambda row: texto in " ".join(row.astype(str)).lower(),
+                    axis=1
+                )
+            ]
+
+        st.divider()
+
+        # -----------------------------
+        # RESULTADOS
+        # -----------------------------
+        st.dataframe(
+            df_view,
+            use_container_width=True,
+            hide_index=True
+        )
+
+        st.download_button(
+            "📥 Descargar Excel filtrado",
+            generar_excel(df_view),
+            f"MasterRecord_Filtrado_{date.today()}.xlsx"
+        )
 
 # =====================================================
 # NUEVA PROMOCIÓN (ÚNICA SECCIÓN QUE GUARDA)

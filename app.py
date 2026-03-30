@@ -185,6 +185,9 @@ elif menu == "➕ Nueva promoción":
     with st.form("new_promo"):
         st.subheader("➕ Nueva promoción")
 
+        # =============================
+        # CARGA MANUAL
+        # =============================
         promo = st.text_input("Promoción")
         hotels = st.multiselect("Hotel", PROPERTIES)
         market = st.selectbox("Market", MARKETS)
@@ -197,16 +200,68 @@ elif menu == "➕ Nueva promoción":
         tw_i = c3.date_input("TW Inicio")
         tw_f = c4.date_input("TW Fin")
 
+        # =============================
+        # ADJUNTOS (EVIDENCIA)
+        # =============================
+        st.subheader("📎 Adjuntos")
+        imagen = st.file_uploader("Imagen promocional", ["png", "jpg", "jpeg"])
+        pdf = st.file_uploader("PDF promocional", ["pdf"])
+        excel_referencia = st.file_uploader(
+            "Excel de referencia (opcional)",
+            ["xlsx"]
+        )
+
         notas = st.text_area("Notas")
-        excel = st.file_uploader("📥 Carga masiva Excel", ["xlsx"])
+
+        # =============================
+        # CARGA MASIVA (MASTER)
+        # =============================
+        st.subheader("📥 Carga masiva desde Excel")
+        excel = st.file_uploader(
+            "Archivo Excel para Master Record",
+            ["xlsx"]
+        )
 
         submit = st.form_submit_button("Guardar")
 
+        # =============================
+        # GUARDADO SEGURO
+        # =============================
         if submit:
-            if excel:
+
+            # ---- CASO 1: EXCEL MASTER ----
+            if excel is not None:
                 df_excel = pd.read_excel(excel)
+
+                if df_excel.empty:
+                    st.error("⛔ El Excel está vacío. No se guardó nada.")
+                    st.stop()
+
                 df = pd.concat([df, df_excel], ignore_index=True)
+
+            # ---- CASO 2: CARGA MANUAL ----
             elif promo and hotels:
+                os.makedirs("media", exist_ok=True)
+
+                image_path = ""
+                pdf_path = ""
+                excel_ref_path = ""
+
+                if imagen:
+                    image_path = os.path.join("media", imagen.name)
+                    with open(image_path, "wb") as f:
+                        f.write(imagen.getbuffer())
+
+                if pdf:
+                    pdf_path = os.path.join("media", pdf.name)
+                    with open(pdf_path, "wb") as f:
+                        f.write(pdf.getbuffer())
+
+                if excel_referencia:
+                    excel_ref_path = os.path.join("media", excel_referencia.name)
+                    with open(excel_ref_path, "wb") as f:
+                        f.write(excel_referencia.getbuffer())
+
                 rows = []
                 for h in hotels:
                     rows.append({
@@ -219,17 +274,21 @@ elif menu == "➕ Nueva promoción":
                         "BW_Fin": bw_f,
                         "TW_Inicio": tw_i,
                         "TW_Fin": tw_f,
+                        "Archivo_Imagen": image_path,
+                        "Archivo_PDF": pdf_path,
+                        "Archivo_Excel_Referencia": excel_ref_path,
                         "Notas": notas
                     })
+
                 df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+
             else:
-                st.error("Completa la información.")
+                st.error("⛔ Debes cargar un Excel o completar el formulario manual.")
                 st.stop()
 
             guardar_promos(df)
             st.success("✅ Promoción guardada correctamente")
             st.rerun()
-
 # =====================================================
 # UPSELL (COMPLETO – 100% AISLADO)
 # =====================================================

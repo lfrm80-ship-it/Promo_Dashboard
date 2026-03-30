@@ -29,16 +29,13 @@ if "is_admin" not in st.session_state:
 # 2. MOTOR DE DATOS Y RESPALDOS (REVENUE MANAGEMENT)
 # =====================================================
 def guardar_datos_y_respaldar(df, comentario="Actualización manual"):
-    """Guarda y genera respaldo con timestamp y log de cambios"""
     df.to_csv(PROMOS_FILE, index=False)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     df.to_csv(os.path.join(BACKUP_DIR, f"backup_{ts}.csv"), index=False)
-    # Log de Auditoría básico
     with open(os.path.join(BACKUP_DIR, "audit_log.txt"), "a") as f:
         f.write(f"{datetime.now()}: {comentario} - Filas: {len(df)}\n")
 
 def cargar_datos():
-    """Carga y normaliza fechas para evitar SyntaxErrors operativos"""
     if not os.path.exists(PROMOS_FILE):
         return pd.DataFrame(columns=[
             "Hotel", "Promo", "Market", "Rate_Plan", "Descuento", 
@@ -51,33 +48,31 @@ def cargar_datos():
     return df
 
 def detecting_rm_season(fecha):
-    """Lógica RM para temporadas críticas 2026"""
-    # Semana Santa y Navidad/Año Nuevo 2026
     premium_seasons = [
         (date(2026, 3, 26), date(2026, 4, 13)), 
         (date(2026, 12, 20), date(2026, 12, 31))
     ]
     for inicio, fin in premium_seasons:
-        if inicio <= fecha <= fin: return "PREMIUM", 148 # Niños temporada alta USD
-    return "REGULAR", 89 # Niños regular USD
+        if inicio <= fecha <= fin: return "PREMIUM", 148
+    return "REGULAR", 89
 
 def converting_to_excel(df):
-    """Genera archivo de Excel en memoria para descarga"""
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Master Record HIC')
-        # Autofit columnas
         worksheet = writer.sheets['Master Record HIC']
         for i, col in enumerate(df.columns):
             worksheet.set_column(i, i, max(df[col].astype(str).map(len).max(), len(col)) + 2)
     return output.getvalue()
 
 # =====================================================
-# 3. SIDEBAR Y CONTROL DE ACCESO
+# 3. SIDEBAR Y CONTROL DE ACCESO (LOGO RESTAURADO)
 # =====================================================
 with st.sidebar:
+    # --- LA IMAGEN QUE HACÍA FALTA ---
     st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6A7GfGq-o9f2A-V0uYmCqYFzP6oP2B4S-RA&s", width=200) 
     st.divider()
+    # Menú unificado
     menu = st.radio("Módulos HIC Master Record", ["🔍 Vista rápida y Filtros", "➕ Registro y Modificación", "📈 Upsell FD", "🏨 World of Hyatt"])
     st.divider()
     
@@ -96,19 +91,17 @@ with st.sidebar:
 df = cargar_datos()
 
 # =====================================================
-# MÓDULO 1: VISTA RÁPIDA (FILTROS Y DESCARGAS)
+# MÓDULO 1: VISTA RÁPIDA (FILTROS CORREGIDOS Y DESCARGAS)
 # =====================================================
 if menu == "🔍 Vista rápida y Filtros":
     st.title("🔎 Consulta Integral del Master Record")
     if df.empty:
         st.info("No hay promociones en la base de datos central.")
     else:
-        # Panel de Filtros y Buscador Global
+        # Panel de Filtros y Buscador
         fil_col1, fil_col2, fil_col3 = st.columns([1.2, 1.2, 2])
         h_fil = fil_col1.multiselect("Hoteles HIC", ["DREPM", "SECPM", "ZOE VR"], placeholder="Elegir propiedades...")
         m_fil = fil_col2.multiselect("Mercado Target", df["Market"].unique() if "Market" in df.columns else [], placeholder="Paises o Zonas...")
-        
-        # --- BUSCADOR CORREGIDO PARA EVITAR TypeError operativo ---
         t_global = fil_col3.text_input("Buscador Global (Promo o Rate Code)").strip()
 
         df_fil = df.copy()
@@ -117,12 +110,10 @@ if menu == "🔍 Vista rápida y Filtros":
         if t_global:
             # Fix robusto para el buscador global que dio error
             try:
-                # Convertimos todo a string y buscamos case-insensitive
                 mask = df_fil.astype(str).apply(lambda row: row.str.contains(t_global, case=False, na=False).any(), axis=1)
                 df_fil = df_fil[mask]
             except Exception as e:
                 st.error(f"Error técnico en el buscador: {e}")
-                # Fallback básico si falla el avanzado
                 if "Promo" in df_fil.columns:
                     df_fil = df_fil[df_fil["Promo"].str.contains(t_global, case=False, na=False)]
 
@@ -144,7 +135,7 @@ if menu == "🔍 Vista rápida y Filtros":
             with down_col2.expander("🛠️ Gestión de Respaldos de Distribución"):
                 respaldos = [f for f in os.listdir(BACKUP_DIR) if f.startswith("backup_") and f.endswith(".csv")]
                 if respaldos:
-                    respaldos.sort(reverse=True) # Mostrar más recientes primero
+                    respaldos.sort(reverse=True)
                     c_resp = st.selectbox("Elegir respaldo para descargar:", respaldos)
                     down_resp = BytesIO(converting_to_excel(pd.read_csv(os.path.join(BACKUP_DIR, c_resp))))
                     st.download_button(
@@ -188,7 +179,6 @@ elif menu == "➕ Registro y Modificación":
                 
                 if st.form_submit_button("🚀 Registrar en Master Record y Backup"):
                     if name_camp and prop_af:
-                        # Registro dinámico para múltiples hoteles
                         nuevos_datos = pd.DataFrame([{
                             "Hotel": h, "Promo": name_camp, "Market": mkt_geo, 
                             "Rate_Plan": rate_code, "Descuento": desc_p, 
@@ -204,7 +194,6 @@ elif menu == "➕ Registro y Modificación":
         # PESTAÑA: Modificar Existente (Extender Fechas)
         with tabs_gest[1]:
             st.subheader("Buscador de Promoción para Extender/Modificar")
-            # Buscador para elegir promo
             if not df.empty:
                 s_col1, s_col2 = st.columns(2)
                 h_sel = s_col1.multiselect("Hotel", df["Hotel"].unique(), placeholder="Elegir hotel...")
@@ -213,11 +202,13 @@ elif menu == "➕ Registro y Modificación":
                 df_s = df.copy()
                 if h_sel: df_s = df_s[df_s["Hotel"].isin(h_sel)]
                 if r_sel:
-                    mask = df_s.astype(str).apply(lambda row: row.str.contains(r_sel, case=False, na=False).any(), axis=1)
-                    df_s = df_s[mask]
+                    try:
+                        mask = df_s.astype(str).apply(lambda row: row.str.contains(r_sel, case=False, na=False).any(), axis=1)
+                        df_s = df_s[mask]
+                    except:
+                        pass
                 
                 if not df_s.empty:
-                    # Elegimos el registro específico a modificar
                     rows_for_mod = df_s.Promo.unique()
                     mod_promo = st.selectbox("Elegir Promo Específica a Modificar:", rows_for_mod)
                     idx_mod = df[df["Promo"] == mod_promo].index[0]
@@ -244,11 +235,10 @@ elif menu == "➕ Registro y Modificación":
                     st.warning("No se encontraron promociones con esos filtros de modificación.")
 
 # =====================================================
-# MÓDULO 3: UPSELL FD (DISEÑO PRO Y EDADES)
+# MÓDULO 3: UPSELL FD (DISEÑO PRO DE 2 RENGLONES)
 # =====================================================
 elif menu == "📈 Upsell FD":
     st.title("📈 Calculadora de Upsell Front Desk HIC")
-    # Valores operativos Hyatt Inclusive
     CAT_VALS = {"JS Garden View": 0, "JS Pool View": 45, "JS Ocean View": 90, "JS Swim Out": 150}
     
     with st.container(border=True):
@@ -336,7 +326,6 @@ elif menu == "🏨 World of Hyatt":
             tarifa_n = w_col1.number_input("Tarifa elegible por noche (USD)", min_value=0, value=300)
             noches_w = w_col2.number_input("Noches de estancia", min_value=1, value=4)
             
-            # Cálculo de puntos base (5 por USD elegible)
             puntos_base_totales = (tarifa_n * noches_w) * 5
             
             st.divider()

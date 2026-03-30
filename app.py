@@ -106,10 +106,24 @@ def detectar_ok_rm(fecha_llegada):
     return "REGULAR", reglas["regular"]
 
 # =====================================================
-# SIDEBAR
+# SIDEBAR (LOGO PEQUEÑO Y CENTRADO)
 # =====================================================
 with st.sidebar:
-    st.image("HIC.png", use_container_width=True)
+    # --- TRUCO DE CENTRADO Y TAMAÑO ---
+    # Creamos 3 columnas en el sidebar. La imagen va en la central (proporción 2).
+    # Las columnas laterales vacías (proporción 1) crean el efecto de tamaño y centrado sutil.
+    c1, c2, c3 = st.columns([1, 2, 1]) 
+    with c2:
+        # Aquí cargamos la imagen. Ya no usamos use_container_width=True
+        # para que no se estire. 
+        # Asegúrate de usar el nombre correcto del archivo de imagen que tienes.
+        # En la imagen de muestra se ve "InclusiveCollection_Stacked_RGB_FullColor.png" o similar.
+        # Reemplaza "HIC.png" con el nombre exacto de tu archivo si es necesario.
+        st.image("HIC.png") 
+
+    st.write("") # Espaciador sutil
+    
+    # Navegación
     menu = st.radio(
         "Navegación",
         ["🔍 Vista rápida", "➕ Nueva promoción", "📈 Upsell"]
@@ -120,16 +134,15 @@ with st.sidebar:
     st.divider()
     if st.session_state.is_admin:
         st.success("🟢 Modo ADMIN activo")
-        if st.button("Salir de Admin"):
+        if st.button("Salir de Admin", use_container_width=True): # Botón ancho para equilibrio visual
             st.session_state.is_admin = False
             st.rerun()
     else:
         with st.expander("🔒 Entrar como Admin"):
             pwd = st.text_input("Contraseña", type="password")
-            if st.button("Entrar") and pwd == ADMIN_PASSWORD:
+            if st.button("Entrar", use_container_width=True) and pwd == ADMIN_PASSWORD:
                 st.session_state.is_admin = True
                 st.rerun()
-
 # =====================================================
 # DATA (CARGA ÚNICA)
 # =====================================================

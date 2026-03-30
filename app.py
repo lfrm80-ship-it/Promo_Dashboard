@@ -77,28 +77,17 @@ def generar_excel(df):
 # 3. SIDEBAR Y LOGO (ELIMINADO ZVRIM)
 # =====================================================
 with st.sidebar:
-    # Logo oficial centrado
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Hyatt_logo.svg/512px-Hyatt_logo.svg.png", width=180)
-    st.markdown("<h2 style='text-align: center; color: #00338d;'>Master Record</h2>", unsafe_allow_html=True)
+    st.image("HIC.png", use_container_width=True)
+    st.markdown(
+        "<h2 style='text-align:center; color:#00338d;'>Master Record</h2>",
+        unsafe_allow_html=True
+    )
     st.divider()
-    
-    menu = st.radio("Navegación", 
-                    ["🔍 Vista rápida y Filtros", "➕ Registro y Modificación", "📈 Upsell FD", "🏨 World of Hyatt"])
-    st.divider()
-    
-    if st.session_state.is_admin:
-        st.success("🔓 MODO ADMINISTRADOR")
-        if st.button("Cerrar Sesión"):
-            st.session_state.is_admin = False
-            st.rerun()
-    else:
-        with st.expander("🔐 Acceso Distribución"):
-            pwd = st.text_input("Password", type="password")
-            if st.button("Login") and pwd == ADMIN_PASSWORD:
-                st.session_state.is_admin = True
-                st.rerun()
 
-df = cargar_datos()
+    menu = st.radio(
+        "Navegación",
+        ["🔍 Vista rápida y Filtros", "➕ Registro y Modificación", "📈 Upsell FD", "🏨 World of Hyatt"]
+    )
 
 # =====================================================
 # MÓDULO 1: VISTA RÁPIDA (FILTROS Y FIX TYPEERROR)

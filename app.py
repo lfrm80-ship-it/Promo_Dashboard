@@ -247,30 +247,92 @@ elif menu == "📈 Upsell FD":
                 st.error("⚠️ POLÍTICA: No se permiten menores en Swim Out.")
 
 # =====================================================
-# MÓDULO 4: WORLD OF HYATT (IMAGEN 6)
+# MÓDULO 4: WORLD OF HYATT (IMAGEN 6) – VERSIÓN MEJORADA
 # =====================================================
 elif menu == "🏨 World of Hyatt":
-    st.title("🏨 Programas de Lealtad Hyatt")
-    ta, tb = st.tabs(["🏆 Estatus y Beneficios", "🔢 Simulador de Puntos"])
-    
+    st.title("🏨 World of Hyatt – Programa de Lealtad")
+    st.caption("Visión operativa y estratégica de estatus, beneficios y generación de puntos")
+
+    ta, tb = st.tabs(["🏆 Estatus, Beneficios y Milestones", "🔢 Simulador de Puntos"])
+
+    # -------------------------------------------------
+    # TAB 1: ESTATUS Y BENEFICIOS
+    # -------------------------------------------------
     with ta:
-        st.subheader("Beneficios Operativos 2026 (Imagen 6)")
+        st.subheader("Estatus World of Hyatt – Beneficios Operativos 2026")
+
+        st.markdown("""
+        ### 🎯 ¿Cómo se interpreta este cuadro?
+        - Los **estatus** determinan prioridad operativa y beneficios al huésped.
+        - A mayor estatus, mayor **impacto en satisfacción, fidelidad y valor del cliente**.
+        """)
+
         st.table({
             "Estatus": ["Member", "Discoverist", "Explorist", "Globalist"],
-            "Noches Req.": [0, 10, 30, 60],
-            "Bono Puntos": ["--", "10%", "20%", "30%"],
-            "Late C/O": ["Sujeto", "2:00 PM", "2:00 PM", "4:00 PM"]
+            "Noches calificadas": [0, 10, 30, 60],
+            "Bono sobre puntos base": ["—", "10%", "20%", "30%"],
+            "Late Check-Out": [
+                "Sujeto a disponibilidad",
+                "Hasta 2:00 PM",
+                "Hasta 2:00 PM",
+                "Garantizado hasta 4:00 PM"
+            ],
+            "Impacto Operativo": [
+                "Básico",
+                "Preferencia moderada",
+                "Alta prioridad",
+                "Prioridad premium"
+            ]
         })
-        st.markdown("💡 *Guest of Honor:* Premio Milestone a las 40 noches.")
-        
+
+        st.divider()
+
+        # ---------------- Milestones ----------------
+        st.markdown("### 🌟 Premios por Milestone (No ligados a estatus)")
+
+        c1, c2, c3 = st.columns(3)
+
+        with c1:
+            st.info("🏅 **40 Noches**\n\nGuest of Honor\n\nPermite compartir beneficios Globalist con otro huésped.")
+
+        with c2:
+            st.warning("⭐ **Milestones Intermedios**\n\nBonos y premios incrementales acumulables.")
+
+        with c3:
+            st.success("🚀 **60+ Noches**\n\nMáximo aprovechamiento del programa y mayor rentabilidad del cliente.")
+
+        st.caption(
+            "💡 *Nota operativa:* Guest of Honor no es un estatus, es un premio Milestone y debe tratarse como beneficio compartido."
+        )
+
+    # -------------------------------------------------
+    # TAB 2: SIMULADOR DE PUNTOS
+    # -------------------------------------------------
     with tb:
-        st.subheader("Simulador de Puntos Base")
-        t_w = st.number_input("Tarifa elegible por noche (USD)", value=300)
-        n_w = st.number_input("Total de noches", value=4)
+        st.subheader("Simulador de Generación de Puntos Base")
+
+        st.markdown("""
+        Este simulador permite visualizar **el impacto real del estatus** en la acumulación de puntos,
+        útil para entender incentivos, upselling y valor del huésped frecuente.
+        """)
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+            t_w = st.number_input("Tarifa elegible por noche (USD)", value=300, step=50)
+        with c2:
+            n_w = st.number_input("Total de noches", value=4, step=1)
+
+        st.divider()
+
         p_base = (t_w * n_w) * 5
-        
+
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Member", f"{int(p_base):,}")
-        m2.metric("Discoverist", f"{int(p_base*1.1):,}")
-        m3.metric("Explorist", f"{int(p_base*1.2):,}")
-        m4.metric("Globalist", f"{int(p_base*1.3):,}")
+
+        m1.metric("Member", f"{int(p_base):,}", help="Sin bono adicional")
+        m2.metric("Discoverist", f"{int(p_base * 1.10):,}", help="+10% sobre puntos base")
+        m3.metric("Explorist", f"{int(p_base * 1.20):,}", help="+20% sobre puntos base")
+        m4.metric("Globalist", f"{int(p_base * 1.30):,}", help="+30% sobre puntos base")
+
+        st.caption("📊 Los puntos base se calculan a razón de **5 puntos por USD elegible**.")
+

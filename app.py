@@ -374,4 +374,4 @@ with col2:
 - ✅ **Nueva tarifa total:** **${tarifa_total} USD**
 """
             )
-    else:
+  

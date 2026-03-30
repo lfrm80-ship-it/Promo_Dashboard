@@ -432,5 +432,57 @@ elif menu == "📈 Upsell":
                         txt_resumen += f"Nota Menores: 0-2 gratis, 3-12 ${pub_val} USD (${round(pub_val * TC_VAL):,} MXN) p/noche."
                     
                     st.code(txt_resumen, language="text")
+
+        # === AQUÍ ES DONDE INSERTAS EL NUEVO BLOQUE ===
+elif menu == "🏨 WOH":
+    st.subheader("🏨 World of Hyatt - Programa de Lealtad")
+
+    # Tabs para organizar la info
+    tab_niveles, tab_milestones, tab_beneficios = st.tabs([
+        "🏅 Niveles y Status", 
+        "🎁 Milestone Rewards", 
+        "✨ Beneficios Clave"
+    ])
+
+    with tab_niveles:
+        st.markdown("### Requisitos para Status")
+        niveles_data = {
+            "Nivel": ["Member", "Discoverist", "Explorist", "Globalist"],
+            "Noches Req.": ["0", "10", "30", "60"],
+            "Bono Puntos": ["-", "10%", "20%", "30%"]
+        }
+        st.table(niveles_data)
+
+    with tab_milestones:
+        st.markdown("### 🎯 Premios por Hitos (Milestones)")
+        milestones = {
+            "20 Noches": "2 Club Access Awards O 2,000 Bonus Points",
+            "30 Noches": "1 Free Night (Cat 1-4) + Opción de puntos/créditos",
+            "40 Noches": "1 Guest of Honor Award + Suite Upgrade O 5,000 pts",
+            "60 Noches": "2 Guest of Honor + 2 Suite Upgrades + Cat 1-7 Free Night"
+        }
+        for noches, premio in milestones.items():
+            with st.expander(f"🚩 Al llegar a {noches}"):
+                st.write(f"**Premio:** {premio}")
+
+    with tab_beneficios:
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("#### 🕒 Check-out Extendido")
+            st.write("* **Discoverist/Explorist:** 2 PM\n* **Globalist:** 4 PM")
+        with c2:
+            st.markdown("#### 💎 Guest of Honor")
+            st.write("El Globalist puede otorgar sus beneficios a un tercero usando este premio.")
+
+    # Calculadora de puntos
+    st.divider()
+    st.markdown("### 🧮 Calculadora Rápida de Puntos")
+    col_u, col_s, col_r = st.columns([2, 2, 2])
+    monto = col_u.number_input("Gasto Elegible ($USD)", min_value=0, value=100)
+    status = col_s.selectbox("Status del Huésped", ["Member", "Discoverist", "Explorist", "Globalist"])
+    
+    bonos = {"Member": 1.0, "Discoverist": 1.1, "Explorist": 1.2, "Globalist": 1.3}
+    total_pts = (monto * 5) * bonos[status]
+    col_r.metric("Puntos Totales", f"{int(total_pts)} pts")
         else:
             st.info("Esperando datos para calcular...")

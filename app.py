@@ -297,7 +297,7 @@ elif menu == "➕ Nueva promoción":
             st.rerun()
 
 # =====================================================
-# UPSELL (EDICIÓN FRONT DESK: NET VS PUB)
+# UPSELL (CORREGIDO - FIX NAMEERROR)
 # =====================================================
 elif menu == "📈 Upsell":
     st.subheader("📈 Calculadora de Upsell (Front Desk Focus)")
@@ -343,6 +343,10 @@ elif menu == "📈 Upsell":
 
     with col2:
         if btn_calcular:
+            # --- INICIALIZACIÓN DE VARIABLES PARA EVITAR ERRORES ---
+            pub_val = 0
+            net_val = 0
+            
             if ninos > 0 and "Swim Out" in hab_destino:
                 st.error("❌ **RESTRICCIÓN:** No se permiten menores en categorías **Swim Out**.")
             elif hab_destino == "Máxima categoría":
@@ -358,52 +362,37 @@ elif menu == "📈 Upsell":
                 total_upsell = dif_noche * noches_sel
                 total_final = tarifa_orig + total_upsell
 
-                # INTERFAZ DE RESULTADOS
                 st.success(f"**Temporada:** {temporada}")
                 
                 m1, m2 = st.columns(2)
                 m1.metric("Costo Upgrade", f"${total_upsell:,.2f} USD")
                 m2.metric("Total Final", f"${total_final:,.2f} USD")
 
-                # --- SECCIÓN FRONT DESK: COSTOS DE MENORES ---
                 st.markdown("---")
-                st.markdown("#### 👶 Tarifas de Menores (DREPM)")
                 
+                # --- LÓGICA DE MOSTRAR MENORES SOLO SI APLICA ---
                 if hotel_sel == "DREPM":
-                    # Extraemos valores de NET y PUB del diccionario global
-                    net_val = precios_temp['net']
+                    st.markdown("#### 👶 Tarifas de Menores (DREPM)")
                     pub_val = precios_temp['pub']
+                    net_val = precios_temp['net']
 
-                    # Layout de comparación rápida
                     cNet, cPub = st.columns(2)
-                    
                     with cNet:
-                        st.markdown(f"""
-                        **COSTO NETO (Costo)**
-                        - **USD:** ${net_val}
-                        - **MXN:** ${round(net_val * TC_MXN):,}
-                        """)
-                    
+                        st.markdown(f"**COSTO NETO**\n- **USD:** ${net_val}\n- **MXN:** ${round(net_val * TC_MXN):,}")
                     with cPub:
-                        st.markdown(f"""
-                        **TARIFA PÚBLICA (Venta)**
-                        - **USD:** ${pub_val}
-                        - **MXN:** ${round(pub_val * TC_MXN):,}
-                        """)
-
-                    st.info(f"**Regla de Oro:** 0-2 años Gratis | 3-12 con cargo | 13+ Adulto")
+                        st.markdown(f"**TARIFA PÚBLICA**\n- **USD:** ${pub_val}\n- **MXN:** ${round(pub_val * TC_MXN):,}")
+                    st.info("Regla: 0-2 años Gratis | 3-12 con cargo | 13+ Adulto")
                 else:
-                    st.warning("Secrets Playa Mujeres: No se permiten menores de 18 años.")
+                    st.warning("🛡️ **Secrets Playa Mujeres:** Resort Solo Adultos. No se permiten menores.")
 
-                # TIPO DE CAMBIO
-                st.caption(f"Tipo de Cambio aplicado: **{TC_MXN}**")
+                st.caption(f"Tipo de Cambio: **{TC_MXN}**")
 
-                # RESUMEN PARA COPIAR
-                resumen = (
-                    f"Upgrade a {hab_destino}\n"
-                    f"Total Upgrade: ${total_upsell:,.2f} USD\n"
-                    f"Extra Child (3-12): ${pub_val} USD por noche."
-                )
+                # --- RESUMEN DE COPIADO INTELIGENTE ---
+                st.markdown("#### 📝 Resumen")
+                resumen = f"Upgrade a {hab_destino}\nTotal Upgrade: ${total_upsell:,.2f} USD"
+                if hotel_sel == "DREPM":
+                    resumen += f"\nExtra Child (3-12): ${pub_val} USD por noche."
+                
                 st.code(resumen, language="text")
         else:
             st.info("Ingresa los datos para generar la cotización.")

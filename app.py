@@ -297,10 +297,10 @@ elif menu == "➕ Nueva promoción":
             st.rerun()
 
 # =====================================================
-# UPSELL (CORREGIDO - FIX NAMEERROR)
+# UPSELL (VERSIÓN FINAL PULIDA Y SIN ERRORES)
 # =====================================================
 elif menu == "📈 Upsell":
-    st.subheader("📈 Calculadora de Upsell (Front Desk Focus)")
+    st.subheader("📈 Calculadora de Upsell Profesional")
 
     UPSELL_VALUES = {
         "JS Garden View": 0,
@@ -311,6 +311,7 @@ elif menu == "📈 Upsell":
     
     HABITACIONES = list(UPSELL_VALUES.keys())
 
+    # Contenedor principal para organizar las columnas
     col1, col2 = st.columns(2)
 
     with col1:
@@ -329,6 +330,7 @@ elif menu == "📈 Upsell":
 
         cO1, cO2 = st.columns(2)
         adultos = cO1.number_input("Adultos", 1, 4, 2)
+        
         if hotel_sel == "DREPM":
             ninos = cO2.number_input("Niños (0-12)", 0, 4, 0)
         else:
@@ -341,20 +343,22 @@ elif menu == "📈 Upsell":
 
         btn_calcular = st.button("🚀 Calcular Upgrade", use_container_width=True)
 
-   with col2:
+    with col2:
         if btn_calcular:
-            # 1. CÁLCULO DE LÓGICA (Solo una vez)
+            # Lógica de Inicialización
             pub_val = 0
             net_val = 0
             
+            # Validaciones de Seguridad
             if ninos > 0 and "Swim Out" in hab_destino:
                 st.error("❌ **RESTRICCIÓN:** No se permiten menores en categorías **Swim Out**.")
             elif hab_destino == "Máxima categoría":
                 st.warning("La reserva ya está en la categoría más alta.")
             else:
+                # Cálculo de Temporada y Precios
                 temporada, precios_temp = detectar_ok_rm(fecha_sel)
                 
-                # Diferencial Upsell
+                # Diferencial Upsell con ajuste de temporada
                 dif_noche = (UPSELL_VALUES[hab_destino] - UPSELL_VALUES[hab_actual])
                 if temporada == "OK RM":
                     dif_noche *= 1.25 
@@ -362,48 +366,44 @@ elif menu == "📈 Upsell":
                 total_upsell = dif_noche * noches_sel
                 total_final = tarifa_orig + total_upsell
 
-                # --- DISEÑO PROFESIONAL ---
-                # Usamos un encabezado tipo "Badge" para la temporada
-                color_badge = "#d4edda" if temporada == "REGULAR" else "#fff3cd"
+                # --- DISEÑO DE RESULTADOS ---
+                # Badge de Temporada
+                color_bg = "#d4edda" if temporada == "REGULAR" else "#fff3cd"
                 st.markdown(f"""
-                    <div style="background-color:{color_badge}; padding:10px; border-radius:10px; text-align:center;">
-                        <h4 style="margin:0; color:#155724;">📅 Temporada: {temporada}</h4>
+                    <div style="background-color:{color_bg}; padding:10px; border-radius:10px; text-align:center; border: 1px solid #ddd;">
+                        <h4 style="margin:0; color:#333;">📅 Temporada: {temporada}</h4>
                     </div>
                 """, unsafe_allow_html=True)
                 
-                st.write("") # Espaciador
+                st.write("") 
 
-                # Métricas principales
+                # Métricas de Dinero
                 m1, m2 = st.columns(2)
-                m1.metric("Incremento Total", f"${total_upsell:,.2f} USD")
-                m2.metric("Nueva Tarifa Final", f"${total_final:,.2f} USD")
+                m1.metric("Costo Upgrade", f"${total_upsell:,.2f} USD")
+                m2.metric("Total Estancia", f"${total_final:,.2f} USD")
 
                 st.divider()
 
-                # --- SECCIÓN DINÁMICA DE MENORES (Solo Dreams) ---
+                # Detalles exclusivos para Dreams (DREPM)
                 if hotel_sel == "DREPM":
                     pub_val = precios_temp['pub']
                     net_val = precios_temp['net']
                     
                     st.markdown("#### 👶 Detalle de Menores")
-                    c1, c2 = st.columns(2)
-                    c1.markdown(f"**NET (Costo)**\n\n<span style='font-size:20px;'>${net_val} <small>USD</small></span>", unsafe_allow_html=True)
-                    c2.markdown(f"**PUB (Venta)**\n\n<span style='font-size:20px;'>${pub_val} <small>USD</small></span>", unsafe_allow_html=True)
-                    st.caption(f"Equivalente MXN (Venta): ${round(pub_val * TC_MXN):,} MXN")
+                    d1, d2 = st.columns(2)
+                    d1.markdown(f"**NET (Costo)**\n\n<span style='font-size:22px;'>${net_val}</span>", unsafe_allow_html=True)
+                    d2.markdown(f"**PUB (Venta)**\n\n<span style='font-size:22px;'>${pub_val}</span>", unsafe_allow_html=True)
+                    st.caption(f"Venta en MXN: ${round(pub_val * TC_MXN):,} (TC: {TC_MXN})")
                     st.write("")
 
-                # --- RESUMEN FINAL ---
-                with st.expander("📋 Ver Resumen para Copiar", expanded=True):
-                    resumen = f"Upgrade: {hab_actual} ➡️ {hab_destino}\n"
-                    resumen += f"Costo Adicional: ${total_upsell:,.2f} USD\n"
-                    resumen += f"Total a Pagar: ${total_final:,.2f} USD\n"
+                # Resumen Final para Copiar
+                with st.expander("📋 Resumen para el Cliente / Front Desk", expanded=True):
+                    txt_resumen = f"Upgrade: {hab_actual} ➡️ {hab_destino}\n"
+                    txt_resumen += f"Costo Adicional: ${total_upsell:,.2f} USD\n"
+                    txt_resumen += f"Total Final: ${total_final:,.2f} USD\n"
                     if hotel_sel == "DREPM":
-                        resumen += f"Extra Child (3-12): ${pub_val} USD/noche"
+                        txt_resumen += f"Extra Child (3-12): ${pub_val} USD/noche"
                     
-                    st.code(resumen, language="text")
-                    st.caption(f"Tipo de cambio: {TC_MXN} | Sujeto a cambios sin previo aviso.")
-
+                    st.code(txt_resumen, language="text")
         else:
-            # Estado vacío (Placeholder)
-            st.info("Esperando datos para calcular...")
-            st.image("https://cdn-icons-png.flaticon.com/512/6462/6462817.png", width=100) # Un icono sutil
+            st.info("Configura los datos y presiona 'Calcular' para ver el desglose.")

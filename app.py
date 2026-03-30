@@ -201,13 +201,14 @@ elif menu == "➕ Nueva promoción":
         tw_f = c4.date_input("TW Fin")
 
         # =============================
-        # ADJUNTOS (UNA SOLA OPCIÓN ✅)
+        # ADJUNTOS (UNA SOLA OPCIÓN)
         # =============================
         st.subheader("📎 Adjuntos")
         adjuntos = st.file_uploader(
             "Subir archivos (Imagen / PDF / Excel)",
             type=["png", "jpg", "jpeg", "pdf", "xlsx"],
-            accept_multiple_files=True
+            accept_multiple_files=True,
+            key="adjuntos_unicos"
         )
 
         notas = st.text_area("Notas")
@@ -218,7 +219,8 @@ elif menu == "➕ Nueva promoción":
         st.subheader("📥 Carga masiva desde Excel")
         excel = st.file_uploader(
             "Archivo Excel para Master Record",
-            ["xlsx"]
+            ["xlsx"],
+            key="excel_master"
         )
 
         submit = st.form_submit_button("Guardar")
@@ -227,8 +229,8 @@ elif menu == "➕ Nueva promoción":
         # GUARDADO SEGURO (FIX DEFINITIVO)
         # =============================
         if submit:
+            st.info("Procesando información…")  # feedback visual inmediato
 
-            # 🔒 SIEMPRE leer el CSV real en disco
             df_actual = cargar_promos()
 
             # ---- Caso 1: Excel Master ----
@@ -290,11 +292,10 @@ elif menu == "➕ Nueva promoción":
                 st.error("⛔ Debes cargar un Excel o completar el formulario manual.")
                 st.stop()
 
-            # 🔒 Guardado protegido (nunca vacío)
             guardar_promos(df_actual)
-
             st.success("✅ Promoción guardada correctamente")
             st.rerun()
+
 # =====================================================
 # UPSELL (COMPLETO – 100% AISLADO)
 # =====================================================

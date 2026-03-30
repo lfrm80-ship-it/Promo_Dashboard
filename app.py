@@ -125,11 +125,11 @@ with st.sidebar:
     
     # Navegación
     menu = st.radio(
-        "Navegación",
-        ["🔍 Vista rápida", "➕ Nueva promoción", "📈 Upsell"]
-        if st.session_state.is_admin else
-        ["🔍 Vista rápida", "📈 Upsell"]
-    )
+    "Navegación",
+    ["🔍 Vista rápida", "➕ Nueva promoción", "📈 Upsell", "🏨 WOH"] # <--- Agrégalo aquí
+    if st.session_state.is_admin else
+    ["🔍 Vista rápida", "📈 Upsell", "🏨 WOH"] # <--- Y aquí para usuarios normales
+)
 
     st.divider()
     if st.session_state.is_admin:

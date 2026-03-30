@@ -297,13 +297,11 @@ elif menu == "➕ Nueva promoción":
             st.rerun()
 
 # =====================================================
-# UPSELL (MEJORADO CON LÓGICA DE NIVELES Y VALIDACIÓN)
+# UPSELL (CON DESGLOSE DE EDADES Y POLÍTICAS)
 # =====================================================
 elif menu == "📈 Upsell":
     st.subheader("📈 Calculadora de Upsell Inteligente")
 
-    # Definición de jerarquía y precios base de diferencia
-    # Puedes ajustar estos valores según el valor real de mercado
     UPSELL_VALUES = {
         "JS Garden View": 0,
         "JS Pool View": 45,
@@ -321,7 +319,6 @@ elif menu == "📈 Upsell":
         hotel_sel = cA.selectbox("Hotel", ["DREPM", "SECPM"])
         fecha_sel = cB.date_input("Fecha de estancia", value=date(2026, 4, 1))
 
-        # Selección de categorías
         f, a, t = st.columns([4, 1, 4])
         hab_actual = f.selectbox("Categoría Original", HABITACIONES)
         a.markdown("<br><center>➡️</center>", unsafe_allow_html=True)
@@ -330,16 +327,14 @@ elif menu == "📈 Upsell":
         posibles_destinos = HABITACIONES[idx_act + 1:]
         hab_destino = t.selectbox("Upgrade a", posibles_destinos if posibles_destinos else ["Máxima categoría"])
 
-        # Ocupación
         cO1, cO2 = st.columns(2)
         adultos = cO1.number_input("Adultos", 1, 4, 2)
         if hotel_sel == "DREPM":
-            ninos = cO2.number_input("Niños", 0, 4, 0)
+            ninos = cO2.number_input("Niños (0-12)", 0, 4, 0)
         else:
             ninos = 0
-            st.caption("ℹ️ Secrets: Solo adultos.")
+            st.caption("ℹ️ Secrets: Solo adultos (18+).")
 
-        # Tarifas
         cT, cN = st.columns(2)
         tarifa_orig = cT.number_input("Tarifa Original (Total USD)", min_value=1, value=500)
         noches_sel = cN.number_input("Noches", 1, 30, 1)
@@ -348,48 +343,55 @@ elif menu == "📈 Upsell":
 
     with col2:
         if btn_calcular:
-            # 1. VALIDACIÓN CRÍTICA: Niños en Swim Out
+            # 1. VALIDACIÓN DE POLÍTICAS
             if ninos > 0 and "Swim Out" in hab_destino:
-                st.error("❌ **ERROR DE POLÍTICA:** No se permiten menores en categorías Swim Out por seguridad.")
+                st.error("❌ **RESTRICCIÓN:** No se permiten menores en categorías **Swim Out** por razones de seguridad (acceso directo a agua).")
             
             elif hab_destino == "Máxima categoría":
-                st.warning("La habitación actual ya es la categoría más alta disponible en este módulo.")
+                st.warning("La reserva ya está en la categoría más alta.")
                 
             else:
-                # 2. LÓGICA DE NEGOCIO
                 temporada, precios_temporada = detectar_ok_rm(fecha_sel)
                 
-                # Diferencia de precio base entre las dos habitaciones
-                dif_noche = UPSELL_VALUES[hab_destino] - UPSELL_VALUES[hab_actual]
-                
-                # Ajuste si es temporada OK RM (ejemplo: recargo del 20% sobre el upsell base)
+                # Diferencial con ajuste de temporada
+                dif_noche = (UPSELL_VALUES[hab_destino] - UPSELL_VALUES[hab_actual])
                 if temporada == "OK RM":
-                    dif_noche *= 1.25
+                    dif_noche *= 1.25 # Recargo del 25% en fechas críticas
                 
                 total_upsell = dif_noche * noches_sel
                 total_final = tarifa_orig + total_upsell
 
-                # 3. INTERFAZ DE RESULTADOS
-                st.success(f"**Temporada detectada:** {temporada}")
+                # 2. RESULTADOS VISUALES
+                st.success(f"**Temporada:** {temporada}")
                 
                 m1, m2 = st.columns(2)
-                m1.metric("Costo Upgrade", f"${total_upsell:,.2f} USD", f"{dif_noche:,.2f} / noche")
-                m2.metric("Total con Upgrade", f"${total_final:,.2f} USD")
+                m1.metric("Costo Upgrade", f"${total_upsell:,.2f} USD", f"${dif_noche:,.2f} / noche")
+                m2.metric("Total Estancia", f"${total_final:,.2f} USD")
 
-                with st.expander("🔍 Ver desglose y tipos de cambio"):
-                    st.write(f"**Diferencial total:** ${total_upsell:,.2f} USD")
-                    st.write(f"**En Pesos (TC {TC_MXN}):** ${total_upsell * TC_MXN:,.2f} MXN")
-                    if ninos > 0:
-                        st.info(f"Recuerda: Niños 3-12 años pagan ${precios_temporada['pub']} USD (Public) adicionales si no están incluidos.")
+                # 3. DESGLOSE DE EDADES (EL "POR MENOR")
+                st.markdown("---")
+                st.markdown("#### 👶 Política de Menores (DREPM)")
+                
+                # Creamos una tabla limpia para las edades
+                tabla_edades = pd.DataFrame({
+                    "Rango": ["0 - 2.11 años", "3 - 12.11 años", "13+ años"],
+                    "Estatus": ["Infante", "Menor", "Adulto"],
+                    "Costo Extra": ["Gratis", f"${precios_temporada['pub']} USD", "Tarifa Adulto"]
+                })
+                st.table(tabla_edades)
+
+                with st.expander("📄 Notas de Operación"):
+                    st.write(f"**TC Aplicado:** {TC_MXN} MXN")
+                    st.write(f"**Monto en Pesos:** ${total_upsell * TC_MXN:,.2f} MXN")
+                    st.caption("Nota: El cargo por menor aplica si se excede la ocupación base o si no estaba prepagado.")
 
                 # 4. RESUMEN PARA COPIAR
-                st.markdown("---")
-                st.markdown("#### 📝 Resumen para el Cliente")
-                texto_resumen = (
-                    f"Nos complace ofrecerle un Upgrade de {hab_actual} a {hab_destino}.\n"
-                    f"Costo adicional total: ${total_upsell:,.2f} USD (${total_upsell * TC_MXN:,.2f} MXN).\n"
-                    f"Tarifa final de estancia: ${total_final:,.2f} USD."
+                st.info("💡 **Tip:** Copia el texto de abajo para enviarlo al cliente.")
+                resumen = (
+                    f"Upgrade Confirmado: {hab_destino}\n"
+                    f"Costo adicional: ${total_upsell:,.2f} USD\n"
+                    f"Nota: Menores de 0-2 años sin costo. Menores de 3-12 con cargo de ${precios_temporada['pub']} USD/noche."
                 )
-                st.code(texto_resumen, language="text")
+                st.code(resumen, language="text")
         else:
-            st.info("Configura los datos de la reserva y haz clic en calcular para ver la oferta de Upsell.")
+            st.info("Ingresa los datos para generar la cotización de Upsell.")

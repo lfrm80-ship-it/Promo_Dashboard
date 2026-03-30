@@ -7,14 +7,15 @@ from datetime import datetime, date
 # =====================================================
 # CONFIGURACIÓN GENERAL
 # =====================================================
-st.set_page_config(page_title="Master Record Playa Mujeres", layout="wide")
+st.set_page_config(
+    page_title="Master Record Playa Mujeres",
+    layout="wide"
+)
 
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROMOS_FILE = os.path.join(BASE_DIR, "promociones_produccion.csv")
-MEDIA_DIR = os.path.join(BASE_DIR, "media")
-os.makedirs(MEDIA_DIR, exist_ok=True)
 
 # =====================================================
 # SESSION STATE
@@ -33,7 +34,7 @@ PROPERTIES = [
 MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 
 # =====================================================
-# FUNCIONES PROMOCIONES (ÚNICO PUNTO DE I/O)
+# FUNCIONES DE PROMOCIONES (ÚNICA ESCRITURA)
 # =====================================================
 def cargar_promos():
     if not os.path.exists(PROMOS_FILE):
@@ -46,9 +47,8 @@ def cargar_promos():
 
 
 def guardar_promos(df):
-    # 🔒 PROTECCIÓN CRÍTICA
     if df is None or len(df) == 0:
-        st.error("⛔ Bloqueado: intento de guardar CSV vacío.")
+        st.error("⛔ Seguridad activada: intento de guardar CSV vacío BLOQUEADO.")
         st.stop()
     df.to_csv(PROMOS_FILE, index=False)
 
@@ -71,7 +71,7 @@ def calcular_estado(row):
     return "Expirada"
 
 # =====================================================
-# REGLAS OK RM (SOLO UPSELL – READ ONLY)
+# VARIABLES DE UPSWLL (AISLADAS – READ ONLY)
 # =====================================================
 OK_RM_RULES = {
     2026: {
@@ -106,11 +106,11 @@ with st.sidebar:
     menu = st.radio(
         "Navegación",
         ["🔍 Vista rápida", "➕ Nueva promoción", "📈 Upsell"]
-        if st.session_state.is_admin else
-        ["🔍 Vista rápida", "📈 Upsell"]
+        if st.session_state.is_admin
+        else ["🔍 Vista rápida", "📈 Upsell"]
     )
-
     st.divider()
+
     if st.session_state.is_admin:
         st.success("🟢 Modo ADMIN activo")
         if st.button("Salir de Admin"):
@@ -132,91 +132,46 @@ df = cargar_promos()
 # VISTA RÁPIDA (READ ONLY + FILTROS)
 # =====================================================
 if menu == "🔍 Vista rápida":
-
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
-        # Trabajamos SIEMPRE sobre una copia
         df_view = df.copy()
+        df_view["Estado"] = df_view.apply(calcular_estado, axis=1)
 
         st.subheader("🔎 Filtros")
 
-        # -----------------------------
-        # FILTROS SUPERIORES
-        # -----------------------------
-        col_f1, col_f2, col_f3, col_f4 = st.columns(4)
+        c1, c2, c3, c4 = st.columns(4)
 
-        with col_f1:
-            filtro_hotel = st.multiselect(
-                "Hotel",
-                sorted(df_view["Hotel"].dropna().unique())
-            )
+        with c1:
+            h = st.multiselect("Hotel", df_view["Hotel"].unique())
+        with c2:
+            e = st.multiselect("Estado", ["Activa", "Futura", "Expirada"])
+        with c3:
+            m = st.multiselect("Market", df_view["Market"].unique())
+        with c4:
+            t = st.text_input("Buscar")
 
-        with col_f2:
-            filtro_estado = st.multiselect(
-                "Estado",
-                ["Activa", "Futura", "Expirada"]
-            )
+        if h:
+            df_view = df_view[df_view["Hotel"].isin(h)]
+        if e:
+            df_view = df_view[df_view["Estado"].isin(e)]
+        if m:
+            df_view = df_view[df_view["Market"].isin(m)]
+        if t:
+            df_view = df_view[df_view.apply(lambda r: t.lower() in " ".join(r.astype(str)).lower(), axis=1)]
 
-        with col_f3:
-            filtro_market = st.multiselect(
-                "Market",
-                sorted(df_view["Market"].dropna().unique())
-            )
-
-        with col_f4:
-            busqueda = st.text_input(
-                "🔍 Buscar texto",
-                placeholder="Promo, Rate Plan, Notas…"
-            )
-
-        # -----------------------------
-        # APLICAR FILTROS
-        # -----------------------------
-        if filtro_hotel:
-            df_view = df_view[df_view["Hotel"].isin(filtro_hotel)]
-
-        if filtro_estado:
-            df_view = df_view[df_view["Estado"].isin(filtro_estado)]
-
-        if filtro_market:
-            df_view = df_view[df_view["Market"].isin(filtro_market)]
-
-        if busqueda:
-            texto = busqueda.lower()
-            df_view = df_view[
-                df_view.apply(
-                    lambda row: texto in " ".join(row.astype(str)).lower(),
-                    axis=1
-                )
-            ]
-
-        st.divider()
-
-        # -----------------------------
-        # RESULTADOS
-        # -----------------------------
-        st.dataframe(
-            df_view,
-            use_container_width=True,
-            hide_index=True
-        )
-
-        st.download_button(
-            "📥 Descargar Excel filtrado",
-            generar_excel(df_view),
-            f"MasterRecord_Filtrado_{date.today()}.xlsx"
-        )
+        st.dataframe(df_view, use_container_width=True, hide_index=True)
+        st.download_button("📥 Descargar Excel", generar_excel(df_view), "promos.xlsx")
 
 # =====================================================
-# NUEVA PROMOCIÓN (ÚNICA SECCIÓN QUE GUARDA)
+# NUEVA PROMOCIÓN (ÚNICO GUARDADO)
 # =====================================================
 elif menu == "➕ Nueva promoción":
     with st.form("new_promo"):
         promo = st.text_input("Promoción")
         hotels = st.multiselect("Hotel", PROPERTIES)
-        rate = st.text_input("Rate Plan")
         market = st.selectbox("Market", MARKETS)
+        rate = st.text_input("Rate Plan")
         discount = st.number_input("Descuento (%)", 0, 100)
 
         c1, c2, c3, c4 = st.columns(4)
@@ -226,66 +181,41 @@ elif menu == "➕ Nueva promoción":
         tw_f = c4.date_input("TW Fin")
 
         notas = st.text_area("Notas")
+        excel = st.file_uploader("📥 Carga masiva Excel", ["xlsx"])
+
         submit = st.form_submit_button("Guardar")
 
-        if submit and promo and hotels:
-            rows = []
-            for h in hotels:
-                rows.append({
-                    "Hotel": h,
-                    "Promo": promo,
-                    "Market": market,
-                    "Rate_Plan": rate,
-                    "Descuento": discount,
-                    "BW_Inicio": bw_i,
-                    "BW_Fin": bw_f,
-                    "TW_Inicio": tw_i,
-                    "TW_Fin": tw_f,
-                    "Notas": notas
-                })
+        if submit:
+            if excel:
+                df_excel = pd.read_excel(excel)
+                df = pd.concat([df, df_excel], ignore_index=True)
+            elif promo and hotels:
+                rows = []
+                for h in hotels:
+                    rows.append({
+                        "Hotel": h,
+                        "Promo": promo,
+                        "Market": market,
+                        "Rate_Plan": rate,
+                        "Descuento": discount,
+                        "BW_Inicio": bw_i,
+                        "BW_Fin": bw_f,
+                        "TW_Inicio": tw_i,
+                        "TW_Fin": tw_f,
+                        "Notas": notas
+                    })
+                df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+            else:
+                st.error("Completa la información.")
+                st.stop()
 
-            df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
             guardar_promos(df)
             st.success("✅ Promoción guardada")
             st.rerun()
 
 # =====================================================
-# UPSELL (TOTALMENTE AISLADO – READ ONLY)
+# UPSELL (TOTALMENTE AISLADO)
 # =====================================================
 elif menu == "📈 Upsell":
     st.subheader("📈 Upsell")
-
-    HABITACIONES = ["JS Garden View", "JS Pool View", "JS Ocean View", "JS Swim Out"]
-    col1, col2 = st.columns(2)
-
-    with col1:
-        colA, colB = st.columns(2)
-        hotel = colA.selectbox("Hotel", ["DREPM", "SECPM"])
-        fecha = colB.date_input("Fecha", value=date(2026, 4, 1))
-
-        f, a, t = st.columns([4, 1, 4])
-        habitacion_actual = f.selectbox("De", HABITACIONES)
-        a.markdown("<br>➡️", unsafe_allow_html=True)
-
-        idx = HABITACIONES.index(habitacion_actual)
-        opciones = HABITACIONES[idx + 1:]
-        habitacion_destino = t.selectbox("A", opciones if opciones else ["N/A"])
-
-        o1, o2 = st.columns(2)
-        adultos = o1.number_input("Adultos", 1, 4, 2)
-        ninos = o2.number_input("Niños", 0, 4, 0) if hotel == "DREPM" else 0
-
-        tc, nc = st.columns(2)
-        tarifa = tc.number_input("Tarifa USD", 500)
-        noches = nc.number_input("Noches", 1)
-        calcular = st.button("Calcular Upsell", use_container_width=True)
-
-    with col2:
-        if calcular:
-            temporada, precios = detectar_ok_rm(fecha)
-            if precios:
-                st.success(f"Temporada: {temporada}")
-                st.write(f"Upsell **{habitacion_actual} → {habitacion_destino}**")
-                st.write(f"Incremento estimado: **${75 * noches} USD**")
-            else:
-                st.warning("Sin reglas para esta fecha.")
+    st.info("Este módulo es informativo y NO modifica promociones ni precios.")

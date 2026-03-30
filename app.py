@@ -117,43 +117,44 @@ elif menu == "➕ Registro de Promoción":
                     st.rerun()
 
 # =====================================================
-# MÓDULO: UPSELL (ORDEN OPERATIVO ACTUALIZADO)
+# MÓDULO: UPSELL (DISEÑO PRO EN DOS RENGLONES)
 # =====================================================
 elif menu == "📈 Upsell":
     st.title("📈 Calculadora de Upsell")
+    # Diccionario de valores para cálculo rápido
     CAT_VALS = {"JS Garden View": 0, "JS Pool View": 45, "JS Ocean View": 90, "JS Swim Out": 150}
     
     with st.container(border=True):
-        # Ajustamos el ancho de las columnas para el nuevo orden
-        row_main = st.columns([1, 1.2, 1, 1, 1.1, 0.6, 0.6, 0.8, 1])
-        
-        # 1. Datos del Hotel y Estancia
-        h_sel = row_main[0].selectbox("Hotel", ["DREPM", "SECPM"], index=0)
-        f_sel = row_main[1].date_input("Llegada", date.today())
-        
-        # 2. Categorías (El "Upgrade")
-        h_orig = row_main[2].selectbox("De:", list(CAT_VALS.keys()))
-        h_dest = row_main[3].selectbox("A:", [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]])
-        
-        # 3. Tarifas (Movido antes de la ocupación)
-        t_orig = row_main[4].number_input("Tarifa Orig.", min_value=1.0, value=500.0)
-        
-        # 4. Ocupación y Noches
-        ads = row_main[5].number_input("Adt", 1, 4, 2)
-        
+        # --- RENGLÓN 1: LOGÍSTICA Y PRECIO ---
+        r1_col1, r1_col2, r1_col3, r1_col4 = st.columns([1, 1.2, 1.2, 1])
+        h_sel = r1_col1.selectbox("Hotel", ["DREPM", "SECPM"], index=0)
+        f_sel = r1_col2.date_input("Fecha de Llegada", date.today())
+        t_orig = r1_col3.number_input("Tarifa Original (Total USD)", min_value=1.0, value=500.0)
+        nits = r1_col4.number_input("Noches", 1, 30, 1)
+
+        st.markdown("<hr style='margin:10px 0; border:0.5px solid #eee;'>", unsafe_allow_html=True)
+
+        # --- RENGLÓN 2: HABITACIONES Y PAX ---
+        # Ajustamos el layout si es SECPM para ocultar niños
         if h_sel == "DREPM":
-            nns = row_main[6].number_input("Chd", 0, 4, 0)
-            nits = row_main[7].number_input("Nts", 1, 30, 1)
-            btn_calc = row_main[8].button("🚀 Calcular", use_container_width=True)
+            r2_cols = st.columns([2, 2, 0.8, 0.8, 1.2])
+            h_orig = r2_cols[0].selectbox("Categoría Original", list(CAT_VALS.keys()))
+            h_dest = r2_cols[1].selectbox("Upgrade a", [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]])
+            ads = r2_cols[2].number_input("Adultos", 1, 4, 2)
+            nns = r2_cols[3].number_input("Niños", 0, 4, 0)
+            btn_calc = r2_cols[4].button("🚀 Calcular", use_container_width=True)
         else:
+            # Layout SECPM (Adults Only)
+            r2_cols = st.columns([2, 2, 0.8, 1.2])
+            h_orig = r2_cols[0].selectbox("Categoría Original", list(CAT_VALS.keys()))
+            h_dest = r2_cols[1].selectbox("Upgrade a", [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]])
+            ads = r2_cols[2].number_input("Adultos", 1, 4, 2)
             nns = 0
-            # Espacio reservado para mantener alineación en SECPM
-            row_main[6].markdown("<p style='text-align:center; padding-top:35px; color:gray;'>N/A</p>", unsafe_allow_html=True)
-            nits = row_main[7].number_input("Nts", 1, 30, 1)
-            btn_calc = row_main[8].button("🚀 Calcular", use_container_width=True)
+            btn_calc = r2_cols[3].button("🚀 Calcular", use_container_width=True)
 
     if btn_calc:
         temp, p_kid = detectar_temporada(f_sel)
+        # Factor de temporada aplicado a la diferencia de categoría
         dif_noche = (CAT_VALS.get(h_dest, 0) - CAT_VALS[h_orig]) * (1.25 if temp == "OK RM" else 1)
         total_up = dif_noche * nits
         gran_total = t_orig + total_up
@@ -166,22 +167,22 @@ elif menu == "📈 Upsell":
                     <h2 style="margin:0; color:#00338d;">${total_up:,.2f} USD</h2>
                     <p style="margin:0; font-size:1.1em;">≈ {(total_up * TC_VAL):,.2f} MXN</p>
                     <hr style="margin:10px 0;">
-                    <p style="margin:0; font-size:0.9em; color:#666;">Gran Total Estancia</p>
+                    <p style="margin:0; font-size:0.9em; color:#666;">Gran Total con Upgrade</p>
                     <h3 style="margin:0;">${gran_total:,.2f} USD</h3>
                 </div>
             """, unsafe_allow_html=True)
 
         with res2:
             if h_sel == "DREPM":
-                st.markdown("### 👶 Edades y Políticas")
+                st.markdown("### 👶 Recordatorio de Edades")
                 ed1, ed2, ed3 = st.columns(3)
                 ed1.metric("Infantes", "0-2 años")
-                ed2.metric("Niños", f"3-12 (${p_kid})")
-                ed3.metric("Juniors", "13+ (Adulto)")
+                ed2.metric("Niños (3-12)", f"${p_kid} USD")
+                ed3.metric("Juniors", "13+ años")
                 if nns > 0 and "Swim Out" in h_dest:
-                    st.error("⚠️ Categoría Swim Out: Solo adultos permitidos.")
+                    st.error("🚫 Categoría Swim Out detectada: No se permiten menores.")
             else:
-                st.info("✨ Secrets: Propiedad Adults Only. Menores no permitidos.")
+                st.info("✨ Secrets Playa Mujeres: Solo se permiten adultos (18+).")
 # =====================================================
 # MÓDULO: WOH (CON CALCULADORA DE PUNTOS)
 # =====================================================

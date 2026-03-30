@@ -371,8 +371,17 @@ elif menu == "📈 Upsell":
                 st.markdown("---")
                 
                 # --- LÓGICA DE MOSTRAR MENORES SOLO SI APLICA ---
+                # --- INTERFAZ DE RESULTADOS ---
+                st.success(f"**Temporada:** {temporada}")
+                
+                m1, m2 = st.columns(2)
+                m1.metric("Costo Upgrade", f"${total_upsell:,.2f} USD")
+                m2.metric("Total Final", f"${total_final:,.2f} USD")
+
+                # Solo mostramos información de menores si es Dreams (DREPM)
                 if hotel_sel == "DREPM":
-                    st.markdown("#### 👶 Tarifas de Menores (DREPM)")
+                    st.markdown("---")
+                    st.markdown("#### 👶 Tarifas de Menores")
                     pub_val = precios_temp['pub']
                     net_val = precios_temp['net']
 
@@ -382,17 +391,15 @@ elif menu == "📈 Upsell":
                     with cPub:
                         st.markdown(f"**TARIFA PÚBLICA**\n- **USD:** ${pub_val}\n- **MXN:** ${round(pub_val * TC_MXN):,}")
                     st.info("Regla: 0-2 años Gratis | 3-12 con cargo | 13+ Adulto")
-                else:
-                    st.warning("🛡️ **Secrets Playa Mujeres:** Resort Solo Adultos. No se permiten menores.")
-
+                
+                # Para SECPM ya no mostramos nada, saltamos directo al resumen
+                st.markdown("---")
                 st.caption(f"Tipo de Cambio: **{TC_MXN}**")
 
-                # --- RESUMEN DE COPIADO INTELIGENTE ---
+                # --- RESUMEN DE COPIADO ---
                 st.markdown("#### 📝 Resumen")
                 resumen = f"Upgrade a {hab_destino}\nTotal Upgrade: ${total_upsell:,.2f} USD"
                 if hotel_sel == "DREPM":
                     resumen += f"\nExtra Child (3-12): ${pub_val} USD por noche."
                 
                 st.code(resumen, language="text")
-        else:
-            st.info("Ingresa los datos para generar la cotización.")

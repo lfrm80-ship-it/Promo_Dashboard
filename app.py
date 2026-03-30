@@ -337,7 +337,7 @@ elif menu == "📈 Upsell":
 
         calcular = st.button("Calcular Upsell", use_container_width=True)
 
-  # -----------------------------
+# -----------------------------
 # RESULTADOS
 # -----------------------------
 with col2:
@@ -356,13 +356,21 @@ with col2:
             if hotel == "DREPM" and ninos > 0:
                 net, pub = precios["net"], precios["pub"]
                 st.markdown(
-                    f"👶 **Niños:** NET {net} USD / {round(net * TC_MXN):,} MXN · "
-                    f"PUBLIC {pub} USD / {round(pub * TC_MXN):,} MXN\n\n"
-                    "Edades: 0–2 gratis · 3–12 con cargo · 13+ adulto\n\n"
-                    "🏊 Swim Out NO acepta niños"
+                    f"""
+👶 **Niños**
+- NET: {net} USD / {round(net * TC_MXN):,} MXN  
+- PUBLIC: {pub} USD / {round(pub * TC_MXN):,} MXN  
+
+Edades:
+- 0–2 años: Gratis  
+- 3–12 años: Con cargo  
+- 13+ años: Adulto  
+
+🏊 Swim Out **NO acepta niños**
+"""
                 )
 
-            # ✅ UPSWELL + TARIFA TOTAL (MEJORA)
+            # ✅ UPSWELL + TARIFA TOTAL (MEJORA FINAL)
             incremento = 75 * noches
             tarifa_total = tarifa + incremento
 
@@ -374,4 +382,5 @@ with col2:
 - ✅ **Nueva tarifa total:** **${tarifa_total} USD**
 """
             )
-  
+    else:
+        st.info("⬅️ Ingresa los datos y presiona **Calcular Upsell**")

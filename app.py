@@ -310,7 +310,7 @@ elif menu == "➕ Nueva promoción":
             st.rerun()
 
 # =====================================================
-# UPSELL (CON DOBLE MONEDA USD/MXN)
+# MÓDULO: UPSELL
 # =====================================================
 elif menu == "📈 Upsell":
     st.subheader("📈 Calculadora de Upsell Profesional")
@@ -323,7 +323,7 @@ elif menu == "📈 Upsell":
     }
     
     HABITACIONES = list(UPSELL_VALUES.keys())
-    TC_VAL = 18.5  # Tipo de Cambio solicitado
+    TC_VAL = 18.5 
 
     col1, col2 = st.columns(2)
 
@@ -358,107 +358,71 @@ elif menu == "📈 Upsell":
 
     with col2:
         if btn_calcular:
-            # 1. INICIALIZACIÓN DE VARIABLES
             pub_val = 0
-            net_val = 0
-            
             if ninos > 0 and "Swim Out" in hab_destino:
                 st.error("❌ **RESTRICCIÓN:** No se permiten menores en categorías **Swim Out**.")
             elif hab_destino == "Máxima categoría":
                 st.warning("La reserva ya está en la categoría más alta.")
             else:
-                # 2. LÓGICA DE CÁLCULO
                 temporada, precios_temp = detectar_ok_rm(fecha_sel)
-                
                 dif_noche = (UPSELL_VALUES[hab_destino] - UPSELL_VALUES[hab_actual])
                 if temporada == "OK RM":
                     dif_noche *= 1.25 
                 
                 total_upsell_usd = dif_noche * noches_sel
                 total_final_usd = tarifa_orig + total_upsell_usd
-                
-                # Conversiones MXN
                 total_upsell_mxn = total_upsell_usd * TC_VAL
                 total_final_mxn = total_final_usd * TC_VAL
 
-                # --- DISEÑO PROFESIONAL ---
                 color_bg = "#d4edda" if temporada == "REGULAR" else "#fff3cd"
-                st.markdown(f"""
-                    <div style="background-color:{color_bg}; padding:10px; border-radius:10px; text-align:center; border: 1px solid #ddd;">
-                        <h4 style="margin:0; color:#333;">📅 Temporada: {temporada} (TC: {TC_VAL})</h4>
-                    </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f"<div style='background-color:{color_bg}; padding:10px; border-radius:10px; text-align:center; border: 1px solid #ddd;'><h4 style='margin:0; color:#333;'>📅 Temporada: {temporada} (TC: {TC_VAL})</h4></div>", unsafe_allow_html=True)
                 
                 st.write("") 
-
-                # 3. MÉTRICAS PRINCIPALES (Doble Moneda)
                 m1, m2 = st.columns(2)
-                m1.metric("Incremento Upsell", f"${total_upsell_usd:,.2f} USD")
+                m1.metric("Costo Upgrade", f"${total_upsell_usd:,.2f} USD")
                 m1.write(f"**≈ {total_upsell_mxn:,.2f} MXN**")
-                
-                m2.metric("Nueva Tarifa Total", f"${total_final_usd:,.2f} USD")
+                m2.metric("Total Estancia", f"${total_final_usd:,.2f} USD")
                 m2.write(f"**≈ {total_final_mxn:,.2f} MXN**")
 
                 st.divider()
 
-                # 4. INFO DE MENORES (CRÍTICO PARA FRONT DESK)
                 if hotel_sel == "DREPM":
                     pub_val = precios_temp['pub']
-                    net_val = precios_temp['net']
-                    
                     st.markdown("#### 👶 Política y Costos de Menores")
-                    
-                    # Usamos 3 columnas para el desglose de edades
                     e1, e2, e3 = st.columns(3)
-                    with e1:
-                        st.info("**0 - 2 años**\n\nInfante: **Gratis**")
-                    with e2:
-                        st.success(f"**3 - 12 años**\n\nMenor: **${pub_val} USD**\n({round(pub_val * TC_VAL):,} MXN)")
-                    with e3:
-                        st.warning("**13+ años**\n\nAdulto: **Tarifa Full**")
-                    
-                    st.caption(f"Costo NETO para el hotel: ${net_val} USD")
-                    st.write("")
+                    with e1: st.info("**0-2 años**\n\nGratis")
+                    with e2: st.success(f"**3-12 años**\n\n${pub_val} USD\n({round(pub_val*TC_VAL):,} MXN)")
+                    with e3: st.warning("**13+ años**\n\nAdulto")
+                
+                with st.expander("📋 Resumen para el Cliente", expanded=True):
+                    txt = f"Upgrade: {hab_actual} ➡️ {hab_destino}\nCosto: ${total_upsell_usd:,.2f} USD (${total_upsell_mxn:,.2f} MXN)\nTotal: ${total_final_usd:,.2f} USD (${total_final_mxn:,.2f} MXN)"
+                    st.code(txt, language="text")
+        else:
+            st.info("Configura los datos y presiona 'Calcular'.")
 
-                # 5. RESUMEN PARA COPIAR
-                with st.expander("📋 Resumen para el Cliente / Voucher", expanded=True):
-                    txt_resumen = (
-                        f"Upgrade: {hab_actual} ➡️ {hab_destino}\n"
-                        f"-----------------------------------\n"
-                        f"Costo Adicional: ${total_upsell_usd:,.2f} USD (${total_upsell_mxn:,.2f} MXN)\n"
-                        f"Total a pagar: ${total_final_usd:,.2f} USD (${total_final_mxn:,.2f} MXN)\n"
-                    )
-                    if hotel_sel == "DREPM":
-                        txt_resumen += f"Nota Menores: 0-2 gratis, 3-12 ${pub_val} USD (${round(pub_val * TC_VAL):,} MXN) p/noche."
-                    
-                    st.code(txt_resumen, language="text")
-
-        # === AQUÍ ES DONDE INSERTAS EL NUEVO BLOQUE ===
+# =====================================================
+# MÓDULO: WOH (ESTA ES LA PARTE NUEVA)
+# =====================================================
 elif menu == "🏨 WOH":
     st.subheader("🏨 World of Hyatt - Programa de Lealtad")
 
-    # Tabs para organizar la info
-    tab_niveles, tab_milestones, tab_beneficios = st.tabs([
-        "🏅 Niveles y Status", 
-        "🎁 Milestone Rewards", 
-        "✨ Beneficios Clave"
-    ])
+    tab_niveles, tab_milestones, tab_beneficios = st.tabs(["🏅 Status", "🎁 Milestones", "✨ Beneficios"])
 
     with tab_niveles:
         st.markdown("### Requisitos para Status")
         niveles_data = {
             "Nivel": ["Member", "Discoverist", "Explorist", "Globalist"],
-            "Noches Req.": ["0", "10", "30", "60"],
-            "Bono Puntos": ["-", "10%", "20%", "30%"]
+            "Noches": ["0", "10", "30", "60"],
+            "Bono Pts": ["-", "10%", "20%", "30%"]
         }
         st.table(niveles_data)
 
     with tab_milestones:
-        st.markdown("### 🎯 Premios por Hitos (Milestones)")
+        st.markdown("### 🎯 Premios por Hitos")
         milestones = {
-            "20 Noches": "2 Club Access Awards O 2,000 Bonus Points",
-            "30 Noches": "1 Free Night (Cat 1-4) + Opción de puntos/créditos",
-            "40 Noches": "1 Guest of Honor Award + Suite Upgrade O 5,000 pts",
+            "20 Noches": "2 Club Access Awards O 2,000 Puntos",
+            "30 Noches": "1 Free Night (Cat 1-4) + 2 Club Access",
+            "40 Noches": "1 Guest of Honor + Suite Upgrade O 5,000 pts",
             "60 Noches": "2 Guest of Honor + 2 Suite Upgrades + Cat 1-7 Free Night"
         }
         for noches, premio in milestones.items():
@@ -468,21 +432,15 @@ elif menu == "🏨 WOH":
     with tab_beneficios:
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown("#### 🕒 Check-out Extendido")
-            st.write("* **Discoverist/Explorist:** 2 PM\n* **Globalist:** 4 PM")
+            st.markdown("#### 🕒 Check-out\n* **Disc/Expl:** 2 PM\n* **Globalist:** 4 PM")
         with c2:
-            st.markdown("#### 💎 Guest of Honor")
-            st.write("El Globalist puede otorgar sus beneficios a un tercero usando este premio.")
+            st.markdown("#### 💎 Guest of Honor\nBeneficios Globalist para amigos/familia.")
 
-    # Calculadora de puntos
     st.divider()
-    st.markdown("### 🧮 Calculadora Rápida de Puntos")
+    st.markdown("### 🧮 Calculadora de Puntos")
     col_u, col_s, col_r = st.columns([2, 2, 2])
     monto = col_u.number_input("Gasto Elegible ($USD)", min_value=0, value=100)
     status = col_s.selectbox("Status del Huésped", ["Member", "Discoverist", "Explorist", "Globalist"])
-    
     bonos = {"Member": 1.0, "Discoverist": 1.1, "Explorist": 1.2, "Globalist": 1.3}
     total_pts = (monto * 5) * bonos[status]
     col_r.metric("Puntos Totales", f"{int(total_pts)} pts")
-        else:
-            st.info("Esperando datos para calcular...")

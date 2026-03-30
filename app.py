@@ -201,15 +201,29 @@ elif menu == "➕ Nueva promoción":
         tw_f = c4.date_input("TW Fin")
 
         # =============================
-        # ADJUNTOS (EVIDENCIA)
+        # ADJUNTOS (EVIDENCIA) ✅ MEJORADO
         # =============================
         st.subheader("📎 Adjuntos")
-        imagen = st.file_uploader("Imagen promocional", ["png", "jpg", "jpeg"])
-        pdf = st.file_uploader("PDF promocional", ["pdf"])
-        excel_referencia = st.file_uploader(
-            "Excel de referencia (opcional)",
-            ["xlsx"]
-        )
+
+        col_img, col_pdf, col_xls = st.columns(3)
+
+        with col_img:
+            imagen = st.file_uploader(
+                "Imagen",
+                ["png", "jpg", "jpeg"]
+            )
+
+        with col_pdf:
+            pdf = st.file_uploader(
+                "PDF",
+                ["pdf"]
+            )
+
+        with col_xls:
+            excel_referencia = st.file_uploader(
+                "Excel ref. (opcional)",
+                ["xlsx"]
+            )
 
         notas = st.text_area("Notas")
 

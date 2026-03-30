@@ -117,35 +117,42 @@ elif menu == "➕ Registro de Promoción":
                     st.rerun()
 
 # =====================================================
-# MÓDULO: UPSELL (LAYOUT EN UNA SOLA LÍNEA)
+# MÓDULO: UPSELL (LAYOUT COMPACTO + LÓGICA ADULTS ONLY)
 # =====================================================
 elif menu == "📈 Upsell":
     st.title("📈 Calculadora de Upsell")
     CAT_VALS = {"JS Garden View": 0, "JS Pool View": 45, "JS Ocean View": 90, "JS Swim Out": 150}
     
-    # Una sola línea de inputs para máxima eficiencia
     with st.container(border=True):
-        row1 = st.columns([1.5, 1.5, 1.2, 1.2, 0.8, 0.8, 1, 1.2])
+        # Ajuste dinámico de columnas según el hotel
+        h_sel = st.selectbox("Hotel", ["DREPM", "SECPM"], index=0)
         
-        h_sel = row1[0].selectbox("Hotel", ["DREPM", "SECPM"])
-        f_sel = row1[1].date_input("Llegada", date.today())
-        h_orig = row1[2].selectbox("De:", list(CAT_VALS.keys()))
+        # Si es SECPM, eliminamos la columna de niños del layout
+        cols = st.columns([1.5, 1.2, 1.2, 0.8, 0.8, 1, 1.2]) if h_sel == "DREPM" else st.columns([1.5, 1.2, 1.2, 0.8, 1, 1.2])
+        
+        f_sel = cols[0].date_input("Llegada", date.today())
+        h_orig = cols[1].selectbox("De:", list(CAT_VALS.keys()))
         posibles = [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[h_orig]]
-        h_dest = row1[3].selectbox("A:", posibles if posibles else ["Máxima"])
+        h_dest = cols[2].selectbox("A:", posibles if posibles else ["Máxima"])
         
-        ads = row1[4].number_input("Adt", 1, 4, 2)
-        nns = row1[5].number_input("Chd", 0, 4, 0) if h_sel == "DREPM" else 0
-        nits = row1[6].number_input("Noches", 1, 30, 1)
-        btn_calc = row1[7].button("🚀 Calcular", use_container_width=True)
+        ads = cols[3].number_input("Adt", 1, 4, 2)
+        
+        # Lógica Condicional: Solo muestra Niños si NO es SECPM
+        if h_sel == "DREPM":
+            nns = cols[4].number_input("Chd", 0, 4, 0)
+            nits = cols[5].number_input("Noches", 1, 30, 1)
+            btn_calc = cols[6].button("🚀 Calcular", use_container_width=True)
+        else:
+            nns = 0 # Forzado a 0 para SECPM
+            nits = cols[4].number_input("Noches", 1, 30, 1)
+            btn_calc = cols[5].button("🚀 Calcular", use_container_width=True)
 
     if btn_calc:
         temp, p_kid = detectar_temporada(f_sel)
         dif_noche = (CAT_VALS.get(h_dest, 0) - CAT_VALS[h_orig]) * (1.25 if temp == "OK RM" else 1)
         total_up = dif_noche * nits
         
-        # Resultados y Edades en columnas paralelas
         res1, res2 = st.columns([1, 1.5])
-        
         with res1:
             st.markdown(f"""
                 <div style="background-color:#f8f9fa; padding:15px; border-radius:10px; border-left: 5px solid #00338d; border: 1px solid #ddd;">
@@ -156,14 +163,16 @@ elif menu == "📈 Upsell":
             """, unsafe_allow_html=True)
 
         with res2:
-            st.markdown("### 👶 Política de Menores")
-            ed1, ed2, ed3 = st.columns(3)
-            ed1.metric("Infantes (0-2)", "$0 USD")
-            ed2.metric("Menores (3-12)", f"${p_kid} USD")
-            ed3.metric("Juniors (13+)", "Adulto")
-        
-        if nns > 0 and "Swim Out" in h_dest:
-            st.error("🚫 No se permiten menores en categorías Swim Out.")
+            if h_sel == "DREPM":
+                st.markdown("### 👶 Política de Menores")
+                ed1, ed2, ed3 = st.columns(3)
+                ed1.metric("Infantes (0-2)", "$0 USD")
+                ed2.metric("Menores (3-12)", f"${p_kid} USD")
+                ed3.metric("Juniors (13+)", "Adulto")
+                if nns > 0 and "Swim Out" in h_dest:
+                    st.error("🚫 No se permiten menores en categorías Swim Out.")
+            else:
+                st.info("✨ Propiedad Adults Only: Cálculo basado únicamente en adultos y categoría.")
 # =====================================================
 # MÓDULO: WOH (CON CALCULADORA DE PUNTOS)
 # =====================================================

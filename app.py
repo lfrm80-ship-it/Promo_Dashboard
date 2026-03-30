@@ -132,19 +132,52 @@ if menu == "🔍 Vista rápida y Filtros":
     if df.empty:
         st.info("No hay datos en el Master Record.")
     else:
-        f1, f2, f3 = st.columns([1, 1, 2])
+        # -------------------------------------------------
+        # Cálculo de Estatus por Fecha
+        # -------------------------------------------------
+        today = date.today()
+
+        def estatus_promo(row):
+            if pd.isna(row["BW_Inicio"]) or pd.isna(row["TW_Fin"]):
+                return "Sin Fecha"
+            if row["BW_Inicio"] <= today <= row["TW_Fin"]:
+                return "Vigente"
+            elif today < row["BW_Inicio"]:
+                return "Iniciada"
+            else:
+                return "Expirada"
+
+        df_view = df.copy()
+        df_view["Estatus"] = df_view.apply(estatus_promo, axis=1)
+
+        # -------------------------------------------------
+        # Filtros
+        # -------------------------------------------------
+        f1, f2, f3, f4 = st.columns([1, 1, 1, 2])
+
         h_sel = f1.multiselect("Hoteles", ["DREPM", "SECPM"])
         m_sel = f2.multiselect(
             "Mercados",
-            df["Market"].unique() if "Market" in df.columns else []
+            df_view["Market"].unique() if "Market" in df_view.columns else []
         )
-        t_busq = f3.text_input("Buscador Global (Promo/Code)").strip()
+        e_sel = f3.multiselect(
+            "Estatus",
+            ["Vigente", "Iniciada", "Expirada"],
+            default=["Vigente"]
+        )
+        t_busq = f4.text_input("Buscador Global (Promo / Rate Plan)").strip()
 
-        df_f = df.copy()
+        # -------------------------------------------------
+        # Aplicación de filtros
+        # -------------------------------------------------
+        df_f = df_view.copy()
+
         if h_sel:
             df_f = df_f[df_f["Hotel"].isin(h_sel)]
         if m_sel:
             df_f = df_f[df_f["Market"].isin(m_sel)]
+        if e_sel:
+            df_f = df_f[df_f["Estatus"].isin(e_sel)]
 
         if t_busq:
             mask = df_f.astype(str).apply(
@@ -153,8 +186,14 @@ if menu == "🔍 Vista rápida y Filtros":
             )
             df_f = df_f[mask]
 
+        # -------------------------------------------------
+        # Tabla principal
+        # -------------------------------------------------
         st.dataframe(df_f, use_container_width=True, hide_index=True)
 
+        # -------------------------------------------------
+        # Exportar Excel
+        # -------------------------------------------------
         if st.session_state.is_admin and not df_f.empty:
             st.download_button(
                 label="📥 Exportar Selección a Excel",
@@ -162,6 +201,39 @@ if menu == "🔍 Vista rápida y Filtros":
                 file_name=f"HIC_Master_{date.today()}.xlsx",
                 mime="application/vnd.ms-excel"
             )
+
+        # -------------------------------------------------
+        # Adjuntos / Soportes
+        # -------------------------------------------------
+        st.divider()
+        st.subheader("📎 Soportes de Promoción")
+
+        soporte_dir = os.path.join(BASE_DIR, "soportes_promos")
+
+        if os.path.exists(soporte_dir):
+            soportes = {}
+
+            for archivo in os.listdir(soporte_dir):
+                promo_name = archivo.split("_")[0].replace("_", " ")
+                soportes.setdefault(promo_name, []).append(archivo)
+
+            if not soportes:
+                st.info("No hay archivos de soporte cargados.")
+            else:
+                for promo, files in soportes.items():
+                    st.markdown(f"**{promo}**")
+                    for f in files:
+                        ruta = os.path.join(soporte_dir, f)
+                        with open(ruta, "rb") as file:
+                            st.download_button(
+                                label=f"⬇️ Descargar {f}",
+                                data=file,
+                                file_name=f,
+                                mime="application/octet-stream"
+                            )
+        else:
+            st.info("No existe carpeta de soportes.")
+
 
 # =====================================================
 # MÓDULO 2: REGISTRO Y MODIFICACIÓN (CORREGIDO)

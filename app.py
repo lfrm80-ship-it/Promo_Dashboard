@@ -228,8 +228,11 @@ if menu == "🔍 Vista rápida y Filtros":
                             # Preview de imágenes
                             if ext in ["png", "jpg", "jpeg"]:
                                 st.image(
-                                    ruta,
-                                    caption=f,
+    ruta,
+    caption=f,
+    use_container_width=True
+)
+
 
 
 # =====================================================

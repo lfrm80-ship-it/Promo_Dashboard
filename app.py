@@ -178,7 +178,6 @@ if menu == "🔍 Vista rápida y Filtros":
             df_f = df_f[df_f["Market"].isin(m_sel)]
         if e_sel:
             df_f = df_f[df_f["Estatus"].isin(e_sel)]
-
         if t_busq:
             mask = df_f.astype(str).apply(
                 lambda row: row.str.contains(t_busq, case=False, na=False).any(),
@@ -192,7 +191,7 @@ if menu == "🔍 Vista rápida y Filtros":
         st.dataframe(df_f, use_container_width=True, hide_index=True)
 
         # -------------------------------------------------
-        # Exportar Excel
+        # Exportar a Excel
         # -------------------------------------------------
         if st.session_state.is_admin and not df_f.empty:
             st.download_button(
@@ -203,7 +202,7 @@ if menu == "🔍 Vista rápida y Filtros":
             )
 
         # -------------------------------------------------
-        # Adjuntos / Soportes
+        # Adjuntos / Soportes (VISUALIZACIÓN)
         # -------------------------------------------------
         st.divider()
         st.subheader("📎 Soportes de Promoción")
@@ -221,18 +220,16 @@ if menu == "🔍 Vista rápida y Filtros":
                 st.info("No hay archivos de soporte cargados.")
             else:
                 for promo, files in soportes.items():
-                    st.markdown(f"**{promo}**")
-                    for f in files:
-                        ruta = os.path.join(soporte_dir, f)
-                        with open(ruta, "rb") as file:
-                            st.download_button(
-                                label=f"⬇️ Descargar {f}",
-                                data=file,
-                                file_name=f,
-                                mime="application/octet-stream"
-                            )
-        else:
-            st.info("No existe carpeta de soportes.")
+                    with st.expander(f"📌 {promo}", expanded=False):
+                        for f in files:
+                            ruta = os.path.join(soporte_dir, f)
+                            ext = f.lower().split(".")[-1]
+
+                            # Preview de imágenes
+                            if ext in ["png", "jpg", "jpeg"]:
+                                st.image(
+                                    ruta,
+                                    caption=f,
 
 
 # =====================================================

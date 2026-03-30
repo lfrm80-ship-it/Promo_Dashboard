@@ -360,6 +360,14 @@ elif menu == "📈 Upsell":
                     )
 
                 incremento = 75 * noches
-                st.markdown(f"💰 **Upsell estimado:** {incremento} USD")
+tarifa_total = tarifa + incremento
+
+st.markdown(f"""
+### 💰 Resumen económico
+
+- **Tarifa actual:** ${tarifa} USD  
+- **Upsell estimado:** ${incremento} USD  
+- ✅ **Nueva tarifa total:** **${tarifa_total} USD**
+""")
         else:
             st.info("⬅️ Ingresa datos y presiona **Calcular Upsell**")

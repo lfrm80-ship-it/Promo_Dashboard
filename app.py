@@ -201,7 +201,7 @@ elif menu == "➕ Nueva promoción":
         tw_f = c4.date_input("TW Fin")
 
         # =============================
-        # ADJUNTOS (UNA SOLA OPCIÓN)
+        # ADJUNTOS (UNA SOLA OPCIÓN ✅)
         # =============================
         st.subheader("📎 Adjuntos")
         adjuntos = st.file_uploader(
@@ -224,11 +224,14 @@ elif menu == "➕ Nueva promoción":
         submit = st.form_submit_button("Guardar")
 
         # =============================
-        # GUARDADO SEGURO
+        # GUARDADO SEGURO (FIX DEFINITIVO)
         # =============================
         if submit:
 
-            # ---- Caso Excel Master ----
+            # 🔒 SIEMPRE leer el CSV real en disco
+            df_actual = cargar_promos()
+
+            # ---- Caso 1: Excel Master ----
             if excel is not None:
                 df_excel = pd.read_excel(excel)
 
@@ -236,9 +239,9 @@ elif menu == "➕ Nueva promoción":
                     st.error("⛔ El Excel está vacío. No se guardó nada.")
                     st.stop()
 
-                df = pd.concat([df, df_excel], ignore_index=True)
+                df_actual = pd.concat([df_actual, df_excel], ignore_index=True)
 
-            # ---- Caso Manual ----
+            # ---- Caso 2: Carga Manual ----
             elif promo and hotels:
                 os.makedirs("media", exist_ok=True)
 
@@ -278,13 +281,18 @@ elif menu == "➕ Nueva promoción":
                         "Notas": notas
                     })
 
-                df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+                df_actual = pd.concat(
+                    [df_actual, pd.DataFrame(rows)],
+                    ignore_index=True
+                )
 
             else:
                 st.error("⛔ Debes cargar un Excel o completar el formulario manual.")
                 st.stop()
 
-            guardar_promos(df)
+            # 🔒 Guardado protegido (nunca vacío)
+            guardar_promos(df_actual)
+
             st.success("✅ Promoción guardada correctamente")
             st.rerun()
 # =====================================================

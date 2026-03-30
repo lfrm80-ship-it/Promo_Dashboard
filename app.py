@@ -401,22 +401,87 @@ elif menu == "📈 Upsell":
             st.info("Configura los datos y presiona 'Calcular'.")
 
 # =====================================================
-# MÓDULO: WOH (CON ENLACE EXTERNO)
+# MÓDULO: WOH (RESTAURADO + ENLACE HTML)
 # =====================================================
 elif menu == "🏨 WOH":
     st.subheader("🏨 World of Hyatt - Programa de Lealtad")
     
-    # Línea HTML para el enlace externo con estilo de botón sutil
+    # Botón HTML elegante a la derecha para la página oficial
     st.markdown("""
         <div style="text-align: right; margin-top: -45px;">
             <a href="https://world.hyatt.com/content/gp/en/program-overview.html" target="_blank" 
-               style="color: #00338d; text-decoration: none; font-weight: bold; font-size: 14px; border: 1px solid #00338d; padding: 5px 10px; border-radius: 5px;">
+               style="color: #00338d; text-decoration: none; font-weight: bold; font-size: 14px; border: 1px solid #00338d; padding: 5px 15px; border-radius: 5px; background-color: #f8f9fa;">
                 🌐 Ir a Página Oficial WOH
             </a>
         </div>
         <br>
     """, unsafe_allow_html=True)
 
-    tab_niveles, tab_milestones, tab_beneficios = st.tabs(["🏅 Status", "🎁 Milestones", "✨ Beneficios"])
+    # Organización por Tabs para que se vea "Super Pro"
+    tab_niveles, tab_milestones, tab_beneficios = st.tabs([
+        "🏅 Niveles y Status", 
+        "🎁 Milestone Rewards", 
+        "✨ Beneficios Clave"
+    ])
+
+    with tab_niveles:
+        st.markdown("### Requisitos para alcanzar Status")
+        # Tabla comparativa de niveles oficial
+        niveles_data = {
+            "Nivel": ["Member", "Discoverist", "Explorist", "Globalist"],
+            "Noches Req.": ["0", "10", "30", "60"],
+            "Puntos Base": ["0", "25,000", "50,000", "100,000"],
+            "Bono Puntos": ["-", "10%", "20%", "30%"]
+        }
+        st.table(niveles_data)
+        st.info("💡 Recuerda: Se acumulan 5 puntos base por cada $1 USD en cargos elegibles.")
+
+    with tab_milestones:
+        st.markdown("### 🎯 Premios por Hitos (Milestones)")
+        st.write("Premios elegibles por el huésped al acumular noches anuales:")
+        
+        milestones = {
+            "20 Noches": "2 Club Access Awards O 2,000 Bonus Points",
+            "30 Noches": "1 Free Night (Cat 1-4) + 2 Club Access Awards",
+            "40 Noches": "1 Guest of Honor Award + Suite Upgrade O 5,000 pts",
+            "60 Noches": "2 Guest of Honor + 2 Suite Upgrades + Cat 1-7 Free Night",
+            "100 Noches": "1 Free Night (Cat 1-7) + Opción de Suite Upgrade o Puntos"
+        }
+        
+        for noches, premio in milestones.items():
+            with st.expander(f"🚩 Al llegar a {noches} noches"):
+                st.write(f"**Beneficio:** {premio}")
+
+    with tab_beneficios:
+        col_a, col_b = st.columns(2)
+        
+        with col_a:
+            st.markdown("""
+            #### 🕒 Check-out Extendido
+            * **Discoverist:** 2:00 PM (Sujeto a disp.)
+            * **Explorist:** 2:00 PM (Sujeto a disp.)
+            * **Globalist:** 4:00 PM (Garantizado en resorts)
+            """)
+            
+        with col_b:
+            st.markdown("""
+            #### 💎 Guest of Honor (Preciado)
+            * El Globalist puede otorgar sus beneficios a amigos o familiares.
+            * Incluye: Desayuno, Upgrades y Late Check-out para el beneficiario.
+            """)
+
+    # --- CALCULADORA DE PUNTOS (EL TOQUE FINAL) ---
+    st.divider()
+    st.markdown("### 🧮 Calculadora Rápida de Puntos")
+    c1, c2, c3 = st.columns([2, 2, 2])
     
-    # ... (El resto del código de los tabs y la calculadora se queda igual)
+    monto_usd = c1.number_input("Gasto en Habitación/Consumos ($USD)", min_value=0, value=100, key="woh_usd")
+    status_calculo = c2.selectbox("Status del Huésped", ["Member", "Discoverist", "Explorist", "Globalist"], key="woh_status")
+    
+    # Lógica de bonos
+    bonos = {"Member": 1.0, "Discoverist": 1.1, "Explorist": 1.2, "Globalist": 1.3}
+    pts_base = monto_usd * 5
+    pts_totales = pts_base * bonos[status_calculo]
+    
+    c3.metric("Puntos Estimados", f"{int(pts_totales)} pts")
+    st.caption(f"Desglose: {pts_base} base + {int(pts_totales - pts_base)} bono de status.")

@@ -47,8 +47,9 @@ def cargar_promos():
 
 
 def guardar_promos(df):
+    # 🔒 PROTECCIÓN CRÍTICA — nunca guardar vacío
     if df is None or len(df) == 0:
-        st.error("⛔ Seguridad activada: intento de guardar CSV vacío BLOQUEADO.")
+        st.error("⛔ Seguridad: intento de guardar CSV vacío BLOQUEADO")
         st.stop()
     df.to_csv(PROMOS_FILE, index=False)
 
@@ -71,19 +72,25 @@ def calcular_estado(row):
     return "Expirada"
 
 # =====================================================
-# VARIABLES DE UPSWLL (AISLADAS – READ ONLY)
+# REGLAS OK RM (SOLO UPSELL – READ ONLY)
 # =====================================================
 OK_RM_RULES = {
     2026: {
-        "ok_rm": [("2026-03-26", "2026-04-13"), ("2026-12-21", "2026-12-31")],
+        "ok_rm": [
+            ("2026-03-26", "2026-04-13"),
+            ("2026-12-21", "2026-12-31")
+        ],
         "regular": {"net": 67, "pub": 89},
-        "ok": {"net": 111, "pub": 148},
+        "ok": {"net": 111, "pub": 148}
     },
     2027: {
-        "ok_rm": [("2027-03-20", "2027-04-11"), ("2027-12-21", "2028-01-04")],
+        "ok_rm": [
+            ("2027-03-20", "2027-04-11"),
+            ("2027-12-21", "2028-01-04")
+        ],
         "regular": {"net": 71, "pub": 95},
-        "ok": {"net": 118, "pub": 157},
-    },
+        "ok": {"net": 118, "pub": 157}
+    }
 }
 
 TC_MXN = 18.50
@@ -106,11 +113,11 @@ with st.sidebar:
     menu = st.radio(
         "Navegación",
         ["🔍 Vista rápida", "➕ Nueva promoción", "📈 Upsell"]
-        if st.session_state.is_admin
-        else ["🔍 Vista rápida", "📈 Upsell"]
+        if st.session_state.is_admin else
+        ["🔍 Vista rápida", "📈 Upsell"]
     )
-    st.divider()
 
+    st.divider()
     if st.session_state.is_admin:
         st.success("🟢 Modo ADMIN activo")
         if st.button("Salir de Admin"):
@@ -124,7 +131,7 @@ with st.sidebar:
                 st.rerun()
 
 # =====================================================
-# DATA CARGADA UNA SOLA VEZ
+# DATA (CARGA ÚNICA)
 # =====================================================
 df = cargar_promos()
 
@@ -141,33 +148,43 @@ if menu == "🔍 Vista rápida":
         st.subheader("🔎 Filtros")
 
         c1, c2, c3, c4 = st.columns(4)
-
         with c1:
-            h = st.multiselect("Hotel", df_view["Hotel"].unique())
+            f_hotel = st.multiselect("Hotel", df_view["Hotel"].dropna().unique())
         with c2:
-            e = st.multiselect("Estado", ["Activa", "Futura", "Expirada"])
+            f_estado = st.multiselect("Estado", ["Activa", "Futura", "Expirada"])
         with c3:
-            m = st.multiselect("Market", df_view["Market"].unique())
+            f_market = st.multiselect("Market", df_view["Market"].dropna().unique())
         with c4:
-            t = st.text_input("Buscar")
+            f_texto = st.text_input("Buscar texto")
 
-        if h:
-            df_view = df_view[df_view["Hotel"].isin(h)]
-        if e:
-            df_view = df_view[df_view["Estado"].isin(e)]
-        if m:
-            df_view = df_view[df_view["Market"].isin(m)]
-        if t:
-            df_view = df_view[df_view.apply(lambda r: t.lower() in " ".join(r.astype(str)).lower(), axis=1)]
+        if f_hotel:
+            df_view = df_view[df_view["Hotel"].isin(f_hotel)]
+        if f_estado:
+            df_view = df_view[df_view["Estado"].isin(f_estado)]
+        if f_market:
+            df_view = df_view[df_view["Market"].isin(f_market)]
+        if f_texto:
+            txt = f_texto.lower()
+            df_view = df_view[
+                df_view.apply(
+                    lambda r: txt in " ".join(r.astype(str)).lower(), axis=1
+                )
+            ]
 
         st.dataframe(df_view, use_container_width=True, hide_index=True)
-        st.download_button("📥 Descargar Excel", generar_excel(df_view), "promos.xlsx")
+        st.download_button(
+            "📥 Descargar Excel filtrado",
+            generar_excel(df_view),
+            f"MasterRecord_{date.today()}.xlsx"
+        )
 
 # =====================================================
-# NUEVA PROMOCIÓN (ÚNICO GUARDADO)
+# NUEVA PROMOCIÓN (ÚNICA SECCIÓN QUE ESCRIBE CSV)
 # =====================================================
 elif menu == "➕ Nueva promoción":
     with st.form("new_promo"):
+        st.subheader("➕ Nueva promoción")
+
         promo = st.text_input("Promoción")
         hotels = st.multiselect("Hotel", PROPERTIES)
         market = st.selectbox("Market", MARKETS)
@@ -210,12 +227,73 @@ elif menu == "➕ Nueva promoción":
                 st.stop()
 
             guardar_promos(df)
-            st.success("✅ Promoción guardada")
+            st.success("✅ Promoción guardada correctamente")
             st.rerun()
 
 # =====================================================
-# UPSELL (TOTALMENTE AISLADO)
+# UPSELL (COMPLETO – 100% AISLADO)
 # =====================================================
 elif menu == "📈 Upsell":
     st.subheader("📈 Upsell")
-    st.info("Este módulo es informativo y NO modifica promociones ni precios.")
+
+    HABITACIONES = ["JS Garden View", "JS Pool View", "JS Ocean View", "JS Swim Out"]
+
+    col1, col2 = st.columns(2)
+
+    # -----------------------------
+    # INPUTS
+    # -----------------------------
+    with col1:
+        cA, cB = st.columns(2)
+        hotel = cA.selectbox("Hotel", ["DREPM", "SECPM"])
+        fecha = cB.date_input("Fecha", value=date(2026, 4, 1))
+
+        f, a, t = st.columns([4, 1, 4])
+        habitacion_actual = f.selectbox("De", HABITACIONES)
+        a.markdown("<br>➡️", unsafe_allow_html=True)
+
+        idx = HABITACIONES.index(habitacion_actual)
+        opciones = HABITACIONES[idx + 1:]
+        habitacion_destino = t.selectbox("A", opciones if opciones else ["N/A"])
+
+        cO1, cO2 = st.columns(2)
+        if hotel == "DREPM":
+            adultos = cO1.number_input("Adultos", 1, 4, 2)
+            ninos = cO2.number_input("Niños", 0, 4, 0)
+        else:
+            adultos = cO1.number_input("Adultos", 1, 3, 2)
+            ninos = 0
+            st.caption("ℹ️ Resort solo adultos (18+)")
+
+        cT, cN = st.columns(2)
+        tarifa = cT.number_input("Tarifa USD", 500)
+        noches = cN.number_input("Noches", 1)
+
+        calcular = st.button("Calcular Upsell", use_container_width=True)
+
+    # -----------------------------
+    # RESULTADOS
+    # -----------------------------
+    with col2:
+        if calcular:
+            temporada, precios = detectar_ok_rm(fecha)
+
+            if not precios:
+                st.warning("No hay reglas de temporada configuradas.")
+            else:
+                st.success(f"Temporada: {temporada}")
+                st.markdown(f"🏨 **Upsell:** {habitacion_actual} → {habitacion_destino}")
+
+                if hotel == "DREPM" and ninos > 0:
+                    net, pub = precios["net"], precios["pub"]
+                    st.markdown(
+                        f"👶 **Niños:** NET {net} USD / {round(net * TC_MXN):,} MXN · "
+                        f"PUBLIC {pub} USD / {round(pub * TC_MXN):,} MXN\n\n"
+                        "Edades: 0–2 gratis · 3–12 con cargo · 13+ adulto\n\n"
+                        "🏊 Swim Out NO acepta niños"
+                    )
+
+                incremento = 75 * noches
+                st.markdown(f"💰 **Upsell estimado:** {incremento} USD")
+        else:
+            st.info("⬅️ Ingresa datos y presiona **Calcular Upsell**")

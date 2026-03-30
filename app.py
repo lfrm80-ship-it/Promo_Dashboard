@@ -200,16 +200,17 @@ elif menu == "➕ Nueva promoción":
         tw_i = c3.date_input("TW Inicio")
         tw_f = c4.date_input("TW Fin")
 
-       
-# =============================
-# ADJUNTOS (UNA SOLA OPCIÓN)
-# =============================
-st.subheader("📎 Adjuntos")
-adjuntos = st.file_uploader(
-    "Subir archivos (Imagen / PDF / Excel)",
-    type=["png", "jpg", "jpeg", "pdf", "xlsx"],
-    accept_multiple_files=True
-)
+        # =============================
+        # ADJUNTOS (UNA SOLA OPCIÓN)
+        # =============================
+        st.subheader("📎 Adjuntos")
+        adjuntos = st.file_uploader(
+            "Subir archivos (Imagen / PDF / Excel)",
+            type=["png", "jpg", "jpeg", "pdf", "xlsx"],
+            accept_multiple_files=True
+        )
+
+        notas = st.text_area("Notas")
 
         # =============================
         # CARGA MASIVA (MASTER)
@@ -227,7 +228,7 @@ adjuntos = st.file_uploader(
         # =============================
         if submit:
 
-            # ---- CASO 1: EXCEL MASTER ----
+            # ---- Caso Excel Master ----
             if excel is not None:
                 df_excel = pd.read_excel(excel)
 
@@ -237,7 +238,7 @@ adjuntos = st.file_uploader(
 
                 df = pd.concat([df, df_excel], ignore_index=True)
 
-            # ---- CASO 2: CARGA MANUAL ----
+            # ---- Caso Manual ----
             elif promo and hotels:
                 os.makedirs("media", exist_ok=True)
 
@@ -245,20 +246,19 @@ adjuntos = st.file_uploader(
                 pdf_path = ""
                 excel_ref_path = ""
 
-                if imagen:
-                    image_path = os.path.join("media", imagen.name)
-                    with open(image_path, "wb") as f:
-                        f.write(imagen.getbuffer())
+                if adjuntos:
+                    for archivo in adjuntos:
+                        file_path = os.path.join("media", archivo.name)
+                        with open(file_path, "wb") as f:
+                            f.write(archivo.getbuffer())
 
-                if pdf:
-                    pdf_path = os.path.join("media", pdf.name)
-                    with open(pdf_path, "wb") as f:
-                        f.write(pdf.getbuffer())
-
-                if excel_referencia:
-                    excel_ref_path = os.path.join("media", excel_referencia.name)
-                    with open(excel_ref_path, "wb") as f:
-                        f.write(excel_referencia.getbuffer())
+                        nombre = archivo.name.lower()
+                        if nombre.endswith((".png", ".jpg", ".jpeg")):
+                            image_path = file_path
+                        elif nombre.endswith(".pdf"):
+                            pdf_path = file_path
+                        elif nombre.endswith(".xlsx"):
+                            excel_ref_path = file_path
 
                 rows = []
                 for h in hotels:

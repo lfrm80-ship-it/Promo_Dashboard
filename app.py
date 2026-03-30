@@ -175,59 +175,88 @@ elif menu == "➕ Registro y Modificación":
         t1, t2 = st.tabs(["🚀 Nueva Campaña", "📝 Extender/Modificar Fechas"])
 
         with t1:
-            with st.form("new_promo", clear_on_submit=True):
-                st.subheader("Datos de la Promoción")
-                c1, c2 = st.columns(2)
-                p_nom = c1.text_input("Nombre de la Promo")
-                p_htl = c2.multiselect("Hoteles", ["DREPM", "SECPM"])
+    with st.form("new_promo", clear_on_submit=True):
+        st.subheader("Datos de la Promoción")
 
-                c3, c4, c5 = st.columns(3)
-                p_mkt = c3.selectbox("Mercado", ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"])
-                p_cod = c4.text_input("Rate Plan Code")
-                p_des = c5.number_input("Descuento %", 0, 100, 0)
+        # -------------------------
+        # Datos generales
+        # -------------------------
+        c1, c2 = st.columns(2)
+        p_nom = c1.text_input("Nombre de la Promo (ej: Kids Stay Free)")
+        p_htl = c2.multiselect("Hoteles", ["DREPM", "SECPM"])
 
-                bw_i, bw_f = st.date_input("BW Inicio"), st.date_input("BW Fin")
-                tw_i, tw_f = st.date_input("TW Inicio"), st.date_input("TW Fin")
-                notas = st.text_area("Notas")
+        c3, c4, c5 = st.columns(3)
+        p_mkt = c3.selectbox(
+            "Mercado",
+            ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
+        )
+        p_cod = c4.text_input("Rate Plan Code")
+        p_des = c5.number_input("Descuento %", 0, 100, 0)
 
-                if st.form_submit_button("✅ Registrar"):
-                    nuevos = pd.DataFrame([{
-                        "Hotel": h,
-                        "Promo": p_nom,
-                        "Market": p_mkt,
-                        "Rate_Plan": p_cod,
-                        "Descuento": p_des,
-                        "BW_Inicio": bw_i,
-                        "BW_Fin": bw_f,
-                        "TW_Inicio": tw_i,
-                        "TW_Fin": tw_f,
-                        "Notas": notas
-                    } for h in p_htl])
+        st.divider()
 
-                    df = pd.concat([df, nuevos], ignore_index=True)
-                    guardar_datos_y_respaldar(df, f"Alta: {p_nom}")
-                    st.success("Registro completado.")
-                    st.rerun()
+        # -------------------------
+        # BW y TW en una sola línea
+        # -------------------------
+        st.markdown("**Vigencias de Booking (BW)**")
+        bw1, bw2 = st.columns(2)
+        bw_i = bw1.date_input("BW Inicio")
+        bw_f = bw2.date_input("BW Fin")
 
-        with t2:
-            st.subheader("Modificación de Vigencias")
-            if not df.empty:
-                promo_mod = st.selectbox("Promo a modificar", df["Promo"].unique())
-                idx = df[df["Promo"] == promo_mod].index[0]
+        st.markdown("**Vigencias de Viaje (TW)**")
+        tw1, tw2 = st.columns(2)
+        tw_i = tw1.date_input("TW Inicio")
+        tw_f = tw2.date_input("TW Fin")
 
-                with st.form("mod_form"):
-                    new_bw_f = st.date_input("Nueva fecha BW Fin", df.at[idx, 'BW_Fin'])
-                    new_tw_f = st.date_input("Nueva fecha TW Fin", df.at[idx, 'TW_Fin'])
-                    new_notes = st.text_area("Actualizar Notas", df.at[idx, 'Notas'])
+        st.divider()
 
-                    if st.form_submit_button("💾 Guardar Cambios"):
-                        df.loc[df["Promo"] == promo_mod, "BW_Fin"] = new_bw_f
-                        df.loc[df["Promo"] == promo_mod, "TW_Fin"] = new_tw_f
-                        df.loc[df["Promo"] == promo_mod, "Notas"] = new_notes
-                        guardar_datos_y_respaldar(df, f"Mod: {promo_mod}")
-                        st.success("Cambios aplicados.")
-                        st.rerun()
+        # -------------------------
+        # Carga de archivo (Imagen / PDF / Excel)
+        # -------------------------
+        st.markdown("**Soporte / Material de la Promoción (opcional)**")
+        archivo = st.file_uploader(
+            "Subir Imagen, PDF o Excel",
+            type=["png", "jpg", "jpeg", "pdf", "xlsx"]
+        )
 
+        p_not = st.text_area("Notas de Combinabilidad / Restricciones")
+
+        # -------------------------
+        # Submit
+        # -------------------------
+        if st.form_submit_button("✅ Registrar en Base de Datos"):
+            if p_nom and p_htl:
+                nuevos = pd.DataFrame([{
+                    "Hotel": h,
+                    "Promo": p_nom,
+                    "Market": p_mkt,
+                    "Rate_Plan": p_cod,
+                    "Descuento": p_des,
+                    "BW_Inicio": bw_i,
+                    "BW_Fin": bw_f,
+                    "TW_Inicio": tw_i,
+                    "TW_Fin": tw_f,
+                    "Notas": p_not
+                } for h in p_htl])
+
+                df = pd.concat([df, nuevos], ignore_index=True)
+
+                guardar_datos_y_respaldar(df, f"Alta: {p_nom}")
+
+                # ✅ Guardado opcional del archivo (si existe)
+                if archivo is not None:
+                    soporte_dir = os.path.join(BASE_DIR, "soportes_promos")
+                    os.makedirs(soporte_dir, exist_ok=True)
+
+                    ruta_archivo = os.path.join(
+                        soporte_dir,
+                        f"{p_nom.replace(' ', '_')}_{archivo.name}"
+                    )
+                    with open(ruta_archivo, "wb") as f:
+                        f.write(archivo.getbuffer())
+
+                st.success("Registro completado y respaldo generado.")
+                st.rerun()
 # =====================================================
 # MÓDULO 3: UPSELL FD
 # =====================================================

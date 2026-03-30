@@ -1,196 +1,273 @@
 import streamlit as st
 import pandas as pd
 import os
+import shutil
 from datetime import datetime, date
 from io import BytesIO
 
 # =====================================================
-# 1. CONFIGURACIÓN Y ESTILOS PRO
+# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS HIC
 # =====================================================
 st.set_page_config(page_title="HIC Master Record", layout="wide", page_icon="🏨")
 
-# Parámetros Operativos Cancún 2026
+# Inyección de CSS para el Logo y Estética (Imagen 6)
+st.markdown("""
+    <style>
+    .main { background-color: #f5f7f9; }
+    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #00338d; color: white; }
+    [data-testid="stSidebar"] { background-color: #ffffff; border-right: 1px solid #e0e0e0; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Parámetros del Entorno
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROMOS_FILE = os.path.join(BASE_DIR, "promociones_produccion.csv")
 BACKUP_DIR = os.path.join(BASE_DIR, "backups")
-TC_VAL = 18.50 
+TC_VAL = 18.50  # Tipo de Cambio 2026
 
-for d in [BACKUP_DIR]:
-    if not os.path.exists(d): os.makedirs(d)
+if not os.path.exists(BACKUP_DIR): os.makedirs(BACKUP_DIR)
 
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
 # =====================================================
-# 2. FUNCIONES DE DATOS Y REVENUE
+# 2. MOTOR DE DATOS Y RESPALDOS (REVENUE OPS)
 # =====================================================
-def guardar_y_respaldar(df, nota="Actualización"):
+def guardar_datos_y_respaldar(df, comentario="Actualización"):
+    """Guarda el CSV principal y genera un backup con timestamp"""
     df.to_csv(PROMOS_FILE, index=False)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     df.to_csv(os.path.join(BACKUP_DIR, f"backup_{ts}.csv"), index=False)
+    # Log de cambios para auditoría
+    with open(os.path.join(BACKUP_DIR, "audit_log.txt"), "a") as f:
+        f.write(f"{datetime.now()}: {comentario} - Filas: {len(df)}\n")
 
 def cargar_datos():
+    """Carga datos y asegura formato de fecha para evitar SyntaxErrors"""
     if not os.path.exists(PROMOS_FILE):
-        return pd.DataFrame(columns=["Hotel", "Promo", "Market", "Rate_Plan", "Descuento", "BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin", "Notas"])
+        return pd.DataFrame(columns=[
+            "Hotel", "Promo", "Market", "Rate_Plan", "Descuento", 
+            "BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin", "Notas"
+        ])
     df = pd.read_csv(PROMOS_FILE)
     for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
-        if col in df.columns: df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
+        if col in df.columns: 
+            df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
     return df
 
-def get_season_rate(fecha):
-    # Temporadas Críticas 2026 (Semana Santa y Navidad)
-    peaks = [(date(2026, 3, 26), date(2026, 4, 13)), (date(2026, 12, 20), date(2026, 12, 31))]
-    for start, end in peaks:
-        if start <= fecha <= end: return "PREMIUM", 148
+def detectar_temporada_rm(fecha):
+    """Lógica de Revenue para temporadas pico 2026"""
+    semanas_pico = [
+        (date(2026, 3, 26), date(2026, 4, 13)), # Semana Santa
+        (date(2026, 12, 20), date(2026, 12, 31)) # Navidad
+    ]
+    for inicio, fin in semanas_pico:
+        if inicio <= fecha <= fin: return "PREMIUM", 148
     return "REGULAR", 89
 
+def generar_excel(df):
+    """Crea el binario de Excel para descarga (Imagen 5)"""
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Master HIC')
+    return output.getvalue()
+
 # =====================================================
-# 3. SIDEBAR (LOGO Y NAVEGACIÓN)
+# 3. SIDEBAR Y LOGO (ELIMINADO ZVRIM)
 # =====================================================
 with st.sidebar:
-    # URL del logo de Hyatt World (Verificado)
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Hyatt_logo.svg/2560px-Hyatt_logo.svg.png", use_container_width=True)
-    st.markdown("<h3 style='text-align: center;'>Master Record HIC</h3>", unsafe_allow_html=True)
+    # Logo oficial centrado
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Hyatt_logo.svg/512px-Hyatt_logo.svg.png", width=180)
+    st.markdown("<h2 style='text-align: center; color: #00338d;'>Master Record</h2>", unsafe_allow_html=True)
     st.divider()
     
-    menu = st.radio("Módulos de Gestión", 
+    menu = st.radio("Navegación", 
                     ["🔍 Vista rápida y Filtros", "➕ Registro y Modificación", "📈 Upsell FD", "🏨 World of Hyatt"])
     st.divider()
     
     if st.session_state.is_admin:
-        st.success("🔓 MODO ADMINISTRADOR ACTIVO")
-        if st.button("Cerrar Sesión", use_container_width=True):
+        st.success("🔓 MODO ADMINISTRADOR")
+        if st.button("Cerrar Sesión"):
             st.session_state.is_admin = False
             st.rerun()
     else:
-        with st.expander("🔐 Staff Admin"):
-            pwd = st.text_input("Pass", type="password")
-            if st.button("Desbloquear") and pwd == ADMIN_PASSWORD:
+        with st.expander("🔐 Acceso Distribución"):
+            pwd = st.text_input("Password", type="password")
+            if st.button("Login") and pwd == ADMIN_PASSWORD:
                 st.session_state.is_admin = True
                 st.rerun()
 
 df = cargar_datos()
 
 # =====================================================
-# MÓDULO: VISTA RÁPIDA (FIX TYPEERROR IMAGEN 5)
+# MÓDULO 1: VISTA RÁPIDA (FILTROS Y FIX TYPEERROR)
 # =====================================================
 if menu == "🔍 Vista rápida y Filtros":
-    st.title("🔎 Consulta de Promociones")
+    st.title("🔎 Consulta Integral de Promociones")
     if df.empty:
-        st.info("Base de datos vacía.")
+        st.info("No hay datos en el Master Record.")
     else:
-        c1, c2, c3 = st.columns([1, 1, 2])
-        h_f = c1.multiselect("Hotel", ["DREPM", "SECPM", "ZOE VR"])
-        m_f = c2.multiselect("Mercado", df["Market"].unique() if "Market" in df.columns else [])
-        t_f = c3.text_input("Buscador Global (Código o Nombre)").strip()
+        # Layout de Filtros (Imagen 5)
+        f1, f2, f3 = st.columns([1, 1, 2])
+        h_sel = f1.multiselect("Hoteles", ["DREPM", "SECPM"])
+        m_sel = f2.multiselect("Mercados", df["Market"].unique() if "Market" in df.columns else [])
+        t_busq = f3.text_input("Buscador Global (Promo/Code)").strip()
 
         df_f = df.copy()
-        if h_f: df_f = df_f[df_f["Hotel"].isin(h_f)]
-        if m_f: df_f = df_f[df_f["Market"].isin(m_f)]
+        if h_sel: df_f = df_f[df_f["Hotel"].isin(h_sel)]
+        if m_sel: df_f = df_f[df_f["Market"].isin(m_sel)]
         
-        # FIX BUSCADOR (Imagen 5)
-        if t_f:
-            mask = df_f.astype(str).apply(lambda x: x.str.contains(t_f, case=False, na=False).any(), axis=1)
+        # --- FIX ROBUSTO AL TYPEERROR DE LA IMAGEN 5 ---
+        if t_busq:
+            mask = df_f.astype(str).apply(lambda row: row.str.contains(t_busq, case=False, na=False).any(), axis=1)
             df_f = df_f[mask]
 
         st.dataframe(df_f, use_container_width=True, hide_index=True)
-        
-        if st.session_state.is_admin:
-            # Botón Excel
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                df_f.to_excel(writer, index=False)
-            st.download_button("📥 Descargar Excel", data=output.getvalue(), file_name="HIC_Report.xlsx")
+
+        # Botón de Descarga Excel (Imagen 5)
+        if st.session_state.is_admin and not df_f.empty:
+            st.download_button(
+                label="📥 Exportar Selección a Excel",
+                data=generar_excel(df_f),
+                file_name=f"HIC_Master_{date.today()}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
 
 # =====================================================
-# MÓDULO: REGISTRO Y MODIFICACIÓN (IMAGEN 4)
+# MÓDULO 2: REGISTRO Y MODIFICACIÓN (IMAGEN 4 & 7)
 # =====================================================
 elif menu == "➕ Registro y Modificación":
-    st.title("🛠️ Gestión de Inventario de Promos")
+    st.title("🛠️ Centro de Control de Inventario")
     if not st.session_state.is_admin:
-        st.warning("Inicia sesión como Admin.")
+        st.error("Requiere privilegios de Administrador.")
     else:
-        t_n, t_m = st.tabs(["🚀 Nueva Promo", "📝 Modificar/Extender"])
+        t1, t2 = st.tabs(["🚀 Nueva Campaña", "📝 Extender/Modificar Fechas"])
         
-        with t_n:
-            with st.form("new_f"):
-                # ... Formulario de registro similar al anterior ...
-                st.write("Complete los datos de la nueva campaña")
-                n = st.text_input("Nombre Promo")
-                htls = st.multiselect("Hoteles", ["DREPM", "SECPM", "ZOE VR"])
-                if st.form_submit_button("Guardar"):
-                    st.success("Registrado.")
-        
-        with t_m:
+        with t1:
+            with st.form("new_promo", clear_on_submit=True):
+                st.subheader("Datos de la Promoción")
+                c1, c2 = st.columns(2)
+                p_nom = c1.text_input("Nombre de la Promo (ej: Kids Stay Free)")
+                p_htl = c2.multiselect("Hoteles", ["DREPM", "SECPM"])
+                
+                c3, c4, c5 = st.columns(3)
+                p_mkt = c3.selectbox("Mercado", ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"])
+                p_cod = c4.text_input("Rate Plan Code")
+                p_des = c5.number_input("Descuento %", 0, 100, 0)
+                
+                st.divider()
+                st.write("Vigencias (BW) y Viaje (TW)")
+                d1, d2, d3, d4 = st.columns(4)
+                bw_i, bw_f = d1.date_input("BW Ini"), d2.date_input("BW Fin")
+                tw_i, tw_f = d3.date_input("TW Ini"), d4.date_input("TW Fin")
+                
+                p_not = st.text_area("Notas de Combinabilidad / Restricciones")
+                
+                if st.form_submit_button("✅ Registrar en Base de Datos"):
+                    if p_nom and p_htl:
+                        nuevos = pd.DataFrame([{
+                            "Hotel": h, "Promo": p_nom, "Market": p_mkt, "Rate_Plan": p_cod,
+                            "Descuento": p_des, "BW_Inicio": bw_i, "BW_Fin": bw_f,
+                            "TW_Inicio": tw_i, "TW_Fin": tw_f, "Notas": p_not
+                        } for h in p_htl])
+                        df = pd.concat([df, nuevos], ignore_index=True)
+                        guardar_datos_y_respaldar(df, f"Alta: {p_nom}")
+                        st.success("Registro completado y backup generado.")
+                        st.rerun()
+
+        with t2:
+            st.subheader("Modificación de Vigencias (Imagen 4)")
             if not df.empty:
-                sel = st.selectbox("Elija Promo para Modificar", df["Promo"].unique())
-                # Lógica de extensión de fechas (Imagen 4)
-                idx = df[df["Promo"] == sel].index[0]
-                new_bw = st.date_input("Extender BW Fin", df.at[idx, 'BW_Fin'])
-                if st.button("Actualizar Fechas"):
-                    df.at[idx, 'BW_Fin'] = new_bw
-                    guardar_y_respaldar(df)
-                    st.rerun()
+                promo_mod = st.selectbox("Buscar Promo a Modificar", df["Promo"].unique())
+                idx = df[df["Promo"] == promo_mod].index[0]
+                
+                with st.form("mod_form"):
+                    st.info(f"Modificando: {df.at[idx, 'Hotel']} - {promo_mod}")
+                    m1, m2 = st.columns(2)
+                    new_bw_f = m1.date_input("Nueva fecha BW Fin", df.at[idx, 'BW_Fin'])
+                    new_tw_f = m2.date_input("Nueva fecha TW Fin", df.at[idx, 'TW_Fin'])
+                    new_notes = st.text_area("Actualizar Notas", df.at[idx, 'Notas'])
+                    
+                    if st.form_submit_button("💾 Guardar Cambios"):
+                        # Actualizar todos los registros con ese nombre de promo
+                        df.loc[df["Promo"] == promo_mod, "BW_Fin"] = new_bw_f
+                        df.loc[df["Promo"] == promo_mod, "TW_Fin"] = new_tw_f
+                        df.loc[df["Promo"] == promo_mod, "Notas"] = new_notes
+                        guardar_datos_y_respaldar(df, f"Mod: {promo_mod}")
+                        st.success("Cambios aplicados.")
+                        st.rerun()
 
 # =====================================================
-# MÓDULO: UPSELL FD (SIN PUNTOS WOH - IMAGEN 1 & 3)
+# MÓDULO 3: UPSELL FD (DISEÑO IMAGEN 3 - SIN PUNTOS)
 # =====================================================
 elif menu == "📈 Upsell FD":
-    st.title("📈 Calculadora de Upsell")
-    CAT_VALS = {"JS Garden View": 0, "JS Pool View": 45, "JS Ocean View": 90, "JS Swim Out": 150}
+    st.title("📈 Calculadora de Upsell Front Desk")
+    # Tarifas HIC
+    CATS = {"JS Garden View": 0, "JS Pool View": 45, "JS Ocean View": 90, "JS Swim Out": 150}
     
     with st.container(border=True):
-        # Layout de 2 renglones (Imagen 3)
+        # Renglón 1: Logística (Imagen 3)
         r1 = st.columns([1, 1, 1.5, 1])
         hotel = r1[0].selectbox("Hotel", ["DREPM", "SECPM"])
-        fecha = r1[1].date_input("Llegada", date.today())
-        tarifa_o = r1[2].number_input("Tarifa Original (USD)", value=500.0)
-        noches = r1[3].number_input("Noches", 1, 30, 1)
+        f_arr = r1[1].date_input("Llegada", date.today())
+        p_ori = r1[2].number_input("Tarifa Original USD (Total)", value=500.0)
+        nts = r1[3].number_input("Noches", 1, 30, 1)
         
         st.divider()
         
+        # Renglón 2: Categorías y Pax (Imagen 3)
         r2 = st.columns([2, 2, 0.8, 0.8, 1])
-        c_de = r2[0].selectbox("De:", list(CAT_VALS.keys()))
-        c_a = r2[1].selectbox("A:", [k for k in CAT_VALS.keys() if CAT_VALS[k] > CAT_VALS[c_de]])
+        c_de = r2[0].selectbox("De:", list(CATS.keys()))
+        c_a = r2[1].selectbox("A:", [k for k in CATS.keys() if CATS[k] > CATS[c_de]])
         adt = r2[2].number_input("Adt", 1, 4, 2)
         chd = r2[3].number_input("Chd", 0, 4, 0)
-        calc = r2[4].button("🚀 Calcular", use_container_width=True)
+        btn_calc = r2[4].button("🚀 Calcular")
 
-    if calc:
-        temp, p_nino = get_season_rate(fecha)
-        diff = (CAT_VALS[c_a] - CAT_VALS[c_de]) * noches
+    if btn_calc:
+        temp, p_chd = detectar_temporada_rm(f_arr)
+        # Lógica de cálculo 2026
+        diff_noche = CATS[c_a] - CATS[c_de]
+        total_u = diff_noche * nts
         
-        # Resultado Visual (Imagen 1)
+        # Resultados (Imagen 1)
         res1, res2 = st.columns([1, 1.5])
         with res1:
-            st.metric("Total Upgrade", f"${diff:,.2f} USD", f"≈ {diff*TC_VAL:,.2f} MXN")
+            st.markdown(f"""
+                <div style='background-color:#e1f5fe; padding:20px; border-radius:10px; border-left:5px solid #01579b;'>
+                    <p style='margin:0; color:#01579b;'><b>Total Upgrade</b></p>
+                    <h2 style='margin:0;'>${total_u:,.2f} USD</h2>
+                    <p style='color:gray;'>≈ {(total_u * TC_VAL):,.2f} MXN</p>
+                </div>
+            """, unsafe_allow_html=True)
+        
         with res2:
-            st.info(f"👶 Niño (3-12): ${p_nino} USD | Temporada: {temp}")
+            st.info(f"👶 Niño (3-12): ${p_chd} USD | Temporada: {temp}")
             if chd > 0 and "Swim Out" in c_a:
-                st.error("🚫 No se permiten niños en Swim Out.")
+                st.error("⚠️ POLÍTICA: No se permiten menores en Swim Out.")
 
 # =====================================================
-# MÓDULO: WORLD OF HYATT (IMAGEN 6)
+# MÓDULO 4: WORLD OF HYATT (IMAGEN 6)
 # =====================================================
 elif menu == "🏨 World of Hyatt":
-    st.title("🏨 World of Hyatt")
+    st.title("🏨 Programas de Lealtad Hyatt")
     ta, tb = st.tabs(["🏆 Estatus y Beneficios", "🔢 Simulador de Puntos"])
     
     with ta:
-        st.image("https://www.hyatt.com/content/dam/hyatt/hyattcom/en/world-of-hyatt/WOH_Logo.png", width=100)
+        st.subheader("Beneficios Operativos 2026 (Imagen 6)")
         st.table({
             "Estatus": ["Member", "Discoverist", "Explorist", "Globalist"],
             "Noches Req.": [0, 10, 30, 60],
             "Bono Puntos": ["--", "10%", "20%", "30%"],
             "Late C/O": ["Sujeto", "2:00 PM", "2:00 PM", "4:00 PM"]
         })
-        st.caption("📣 Guest of Honor: Premio Milestone a las 40 noches.")
-    
+        st.markdown("💡 *Guest of Honor:* Premio Milestone a las 40 noches.")
+        
     with tb:
-        t_eleg = st.number_input("Tarifa por noche (USD)", 0, 2000, 300)
-        n_est = st.number_input("Noches de estancia", 1, 30, 4)
-        p_base = (t_eleg * n_est) * 5
+        st.subheader("Simulador de Puntos Base")
+        t_w = st.number_input("Tarifa elegible por noche (USD)", value=300)
+        n_w = st.number_input("Total de noches", value=4)
+        p_base = (t_w * n_w) * 5
         
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Member", f"{int(p_base):,}")

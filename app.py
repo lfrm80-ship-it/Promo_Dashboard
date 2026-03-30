@@ -477,6 +477,12 @@ elif menu == "🏨 World of Hyatt":
     st.divider()
     st.markdown("### 🔢 Points Accrual Calculator")
 
+    # 👉 Texto UX‑friendly (mobile & desktop)
+    st.info(
+        "Earn 5 points for every USD 1 spent on eligible rates. "
+        "Tier bonuses apply by membership level."
+    )
+
     col1, col2 = st.columns(2)
 
     with col1:

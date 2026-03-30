@@ -388,36 +388,150 @@ elif menu == "📈 Upsell FD":
             st.success(f"Upgrade total: ${diff:,.2f} USD | Temporada {temp}")
 
 # =====================================================
-# MÓDULO 4: WORLD OF HYATT – MEJORADO
+# MÓDULO 4: WORLD OF HYATT – EJECUTIVO & OPERATIVO
 # =====================================================
 elif menu == "🏨 World of Hyatt":
-    st.title("🏨 World of Hyatt – Programa de Lealtad")
-    st.caption("Visión operativa y estratégica de estatus, beneficios y generación de puntos")
+    st.title("🏨 World of Hyatt")
+    st.caption(
+        "A global loyalty program designed to reward guests with meaningful benefits, recognition, and experiences."
+    )
 
-    ta, tb = st.tabs(["🏆 Estatus y Milestones", "🔢 Simulador de Puntos"])
+    # Selector de vista
+    vista = st.radio(
+        "Selecciona la vista",
+        ["🧭 Vista Ejecutiva", "🛎️ Vista Operativa"],
+        horizontal=True
+    )
 
-    with ta:
+    # =================================================
+    # DATA BASE WOH
+    # =================================================
+    woh = {
+        "Member": {
+            "noches": 0,
+            "bonus": 0,
+            "late": "Subject to availability",
+            "impacto": "Standard recognition",
+            "copy": "Begin earning points and enjoying member‑exclusive rates."
+        },
+        "Discoverist": {
+            "noches": 10,
+            "bonus": 10,
+            "late": "Up to 2:00 PM",
+            "impacto": "Enhanced recognition",
+            "copy": "Enjoy greater recognition and preferred experiences."
+        },
+        "Explorist": {
+            "noches": 30,
+            "bonus": 20,
+            "late": "Up to 2:00 PM",
+            "impacto": "High priority service",
+            "copy": "Elevated benefits designed for frequent travelers."
+        },
+        "Globalist": {
+            "noches": 60,
+            "bonus": 30,
+            "late": "Guaranteed 4:00 PM",
+            "impacto": "Premium priority",
+            "copy": "Our highest level of care, comfort, and recognition."
+        }
+    }
+
+    estatus_sel = st.radio(
+        "Select World of Hyatt tier",
+        list(woh.keys()),
+        horizontal=True
+    )
+
+    b = woh[estatus_sel]
+
+    # =================================================
+    # 🧭 VISTA EJECUTIVA
+    # =================================================
+    if vista == "🧭 Vista Ejecutiva":
+        st.markdown(f"### ✨ {estatus_sel}")
+        st.markdown(f"*{b['copy']}*")
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric(
+            "Points Bonus",
+            f"{b['bonus']}%",
+            help="Bonus points earned on eligible spend."
+        )
+        c2.metric(
+            "Late Check‑Out",
+            b["late"],
+            help="Extended check‑out time where applicable."
+        )
+        c3.metric(
+            "Recognition Level",
+            b["impacto"],
+            help="Level of recognition and priority during the stay."
+        )
+
+        st.divider()
+        st.markdown("### 📊 Progress Through the Program")
+
+        noches_acum = st.slider(
+            "Eligible nights in the calendar year",
+            0, 60, 20
+        )
+
+        st.progress(noches_acum / 60)
+
+        if noches_acum >= 40 and noches_acum < 60:
+            st.success("🎁 Milestone Reward Unlocked: Guest of Honor")
+        elif noches_acum >= 60:
+            st.success("🏆 Globalist Status Achieved")
+
+        st.info(
+            "Milestone Rewards are earned independently of status and recognize ongoing loyalty."
+        )
+
+    # =================================================
+    # 🛎️ VISTA OPERATIVA
+    # =================================================
+    else:
+        st.markdown("### 🛎️ Operational Application Guide")
+
         st.table({
-            "Estatus": ["Member", "Discoverist", "Explorist", "Globalist"],
-            "Noches": [0, 10, 30, 60],
-            "Bono": ["—", "10%", "20%", "30%"],
-            "Late Check-Out": [
-                "Sujeto a disponibilidad",
-                "Hasta 2:00 PM",
-                "Hasta 2:00 PM",
-                "Garantizado hasta 4:00 PM"
-            ],
+            "Operational Area": ["Check‑in Priority", "Late Check‑Out", "Points Accrual"],
+            "Guideline": [
+                b["impacto"],
+                b["late"],
+                f"Base points + {b['bonus']}% bonus"
+            ]
         })
 
-    with tb:
-        t_w = st.number_input("Tarifa por noche USD", value=300)
-        n_w = st.number_input("Noches", value=4)
-        p_base = (t_w * n_w) * 5
+        st.divider()
+        st.markdown("### 🔢 Points Accrual Simulator")
 
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Member", f"{int(p_base):,}")
-        c2.metric("Discoverist", f"{int(p_base * 1.10):,}")
-        c3.metric("Explorist", f"{int(p_base * 1.20):,}")
-        c4.metric("Globalist", f"{int(p_base * 1.30):,}")
+        t_w = st.number_input(
+            "Eligible nightly rate (USD)",
+            value=300,
+            help="Base room rate eligible for World of Hyatt points."
+        )
+        n_w = st.number_input(
+            "Number of nights",
+            value=3,
+            help="Total eligible nights for the stay."
+        )
 
-        st.caption("Los puntos se calculan a razón de 5 puntos por USD elegible.")
+        base_points = t_w * n_w * 5
+        total_points = base_points * (1 + b["bonus"] / 100)
+
+        r1, r2 = st.columns(2)
+        r1.metric(
+            "Base Points",
+            f"{int(base_points):,}",
+            help="Standard earning rate: 5 points per USD."
+        )
+        r2.metric(
+            f"Total Points as {estatus_sel}",
+            f"{int(total_points):,}",
+            help="Includes applicable tier bonus."
+        )
+
+        st.caption(
+            "Operational note: Points are awarded only on eligible spend per World of Hyatt terms."
+        )

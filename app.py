@@ -311,23 +311,142 @@ elif menu == "📈 Upsell FD":
 # =====================================================
 elif menu == "🏨 World of Hyatt":
     st.title("🏨 World of Hyatt – Operational Guide")
+    st.caption(
+        "Apply benefits accurately and calculate points based on guest tier and eligible spend."
+    )
 
+    # -------------------------------------------------
+    # Definición de estatus World of Hyatt (OPERATIVA)
+    # -------------------------------------------------
     woh = {
-        "Member": {"bonus": 0, "late": "Subject to availability"},
-        "Discoverist": {"bonus": 10, "late": "Up to 2 PM"},
-        "Explorist": {"bonus": 20, "late": "Up to 2 PM"},
-        "Globalist": {"bonus": 30, "late": "Guaranteed 4 PM"}
+        "Member": {
+            "nights": 0,
+            "bonus": 0,
+            "late": "Subject to availability",
+            "priority": "Standard recognition",
+            "tooltip": "Members earn points on eligible spend and access member‑only rates."
+        },
+        "Discoverist": {
+            "nights": 10,
+            "bonus": 10,
+            "late": "Up to 2:00 PM",
+            "priority": "Enhanced recognition",
+            "tooltip": "Discoverist members enjoy added recognition and a points bonus."
+        },
+        "Explorist": {
+            "nights": 30,
+            "bonus": 20,
+            "late": "Up to 2:00 PM",
+            "priority": "High priority service",
+            "tooltip": "Explorist members receive elevated benefits suited for frequent stays."
+        },
+        "Globalist": {
+            "nights": 60,
+            "bonus": 30,
+            "late": "Guaranteed 4:00 PM",
+            "priority": "Premium priority",
+            "tooltip": "Globalist members receive the highest level of recognition and benefits."
+        }
     }
 
-    tier = st.radio("Tier", list(woh.keys()), horizontal=True)
+    # -------------------------------------------------
+    # Selector de tier
+    # -------------------------------------------------
+    estatus = st.radio(
+        "World of Hyatt Tier",
+        list(woh.keys()),
+        horizontal=True,
+        help="Select the guest's World of Hyatt tier to apply benefits correctly."
+    )
 
-    rate = st.number_input("Eligible Rate (USD)", value=300)
-    nights = st.number_input("Nights", 1, 30, 1)
+    b = woh[estatus]
 
-    base = rate * nights * 5
-    total = base * (1 + woh[tier]["bonus"] / 100)
+    # -------------------------------------------------
+    # Beneficios operativos (FRONT DESK VIEW)
+    # -------------------------------------------------
+    st.markdown("### 🛎️ Tier Benefits")
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Base Points", int(base))
-    c2.metric("Bonus", f"+{woh[tier]['bonus']}%")
-    c3.metric("Total Points", int(total))
+    c1, c2, c3, c4 = st.columns(4)
+
+    c1.metric(
+        "Tier Qualification",
+        f"{b['nights']} nights",
+        help="Eligible nights required in a calendar year."
+    )
+
+    c2.metric(
+        "Points Bonus",
+        f"{b['bonus']}%",
+        help="Bonus applied to base points on eligible spend."
+    )
+
+    c3.metric(
+        "Late Check‑Out",
+        b["late"],
+        help="Late check‑out benefit according to tier terms."
+    )
+
+    c4.metric(
+        "Service Priority",
+        b["priority"],
+        help="Operational level of recognition for this tier."
+    )
+
+    st.info(b["tooltip"])
+
+    # -------------------------------------------------
+    # CALCULADORA DE PUNTOS (OPERATIVA)
+    # -------------------------------------------------
+    st.divider()
+    st.markdown("### 🔢 Points Accrual Calculator")
+
+    st.info(
+        "Earn 5 points for every USD 1 spent on eligible rates. "
+        "Tier bonuses apply automatically."
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        rate = st.number_input(
+            "Eligible Nightly Rate (USD)",
+            value=300,
+            help="Base room rate eligible for points earning."
+        )
+
+    with col2:
+        nights = st.number_input(
+            "Number of Nights",
+            value=3,
+            min_value=1,
+            help="Total eligible nights for the stay."
+        )
+
+    base_points = rate * nights * 5
+    total_points = base_points * (1 + b["bonus"] / 100)
+
+    r1, r2, r3 = st.columns(3)
+
+    r1.metric(
+        "Base Points",
+        f"{int(base_points):,}",
+        help="Standard earning: 5 points per USD."
+    )
+
+    r2.metric(
+        "Tier Bonus",
+        f"+{int(total_points - base_points):,}",
+        help="Additional points from tier bonus."
+    )
+
+    r3.metric(
+        f"Total Points ({estatus})",
+        f"{int(total_points):,}",
+        help="Total World of Hyatt points credited."
+    )
+
+    st.caption(
+        "Operational note: Points are credited only on eligible spend "
+        "in accordance with World of Hyatt terms and conditions."
+    )
+

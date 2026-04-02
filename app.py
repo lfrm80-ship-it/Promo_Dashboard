@@ -120,66 +120,34 @@ with st.sidebar:
             st.rerun()
 
 # =====================================================
-# 4. MÓDULO 1 – VISTA RÁPIDA (CON BOTÓN EXCEL PARA VENTAS)
-# =====================================================
-if menu == "🔍 Vista rápida y Filtros":
-    st.title("🔎 Consulta Integral de Promociones")
-
-    if df.empty:
-        st.info("No hay promociones registradas.")
-    else:
-        today = date.today()
-
-        def estatus(row):
-            if pd.isna(row["BW_Inicio"]) or pd.isna(row["TW_Fin"]): return "Sin Fecha"
-            if row["BW_Inicio"] <= today <= row["TW_Fin"]: return "Vigente"
-            elif today < row["BW_Inicio"]: return "Iniciada"
-            return "Expirada"
-
-        df_view = df.copy()
-        df_view["Estatus"] = df_view.apply(estatus, axis=1)
-
-        f1, f2, f3, f4 = st.columns([1, 1, 1, 2])
-        h_sel = f1.multiselect("Hotel", ["DREPM", "SECPM"])
-        m_sel = f2.multiselect("Mercado", sorted(df_view["Market"].dropna().unique()))
-        e_sel = f3.multiselect("Estatus", ["Vigente", "Iniciada", "Expirada"], default=["Vigente"])
-        t_busq = f4.text_input("Buscador Global")
-
-        df_f = df_view.copy()
-        if h_sel: df_f = df_f[df_f["Hotel"].isin(h_sel)]
-        if m_sel: df_f = df_f[df_f["Market"].isin(m_sel)]
-        if e_sel: df_f = df_f[df_f["Estatus"].isin(e_sel)]
-        if t_busq:
-            df_f = df_f[df_f.astype(str).apply(lambda r: r.str.contains(t_busq, case=False).any(), axis=1)]
-
-        # --- MEJORA: BOTÓN EXCEL DISPONIBLE PARA REVENUE/VENTAS ---
-        if not df_f.empty:
-            c_info, c_btn = st.columns([3, 1])
-            with c_info:
-                st.write(f"Resultados: **{len(df_f)}** promociones.")
-            with c_btn:
-                st.download_button(
-                    "🟢 Descargar Excel",
-                    generar_excel(df_f),
-                    file_name=f"HIC_Reporte_{today}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-
-        st.dataframe(df_f, use_container_width=True, hide_index=True)
-
+        # MEJORA: VISUALIZACIÓN DE TESTIGOS BAJO DEMANDA
+        # =====================================================
         st.divider()
-        st.subheader("📎 Testigos de Promociones")
-        if os.path.exists(SOPORTES_DIR):
-            archivos = os.listdir(SOPORTES_DIR)
-            if archivos:
-                for f in archivos:
-                    ruta = os.path.join(SOPORTES_DIR, f)
-                    if f.lower().split(".")[-1] in ["png", "jpg", "jpeg"]:
-                        st.image(ruta, caption=f, use_container_width=True)
-                    else:
-                        with open(ruta, "rb") as file:
-                            st.download_button(f"Descargar {f}", file, file_name=f)
-
+        with st.expander("👁️ Ver Testigos / Soportes de Promociones"):
+            if os.path.exists(SOPORTES_DIR):
+                archivos = os.listdir(SOPORTES_DIR)
+                if not archivos:
+                    st.info("No hay archivos de soporte cargados.")
+                else:
+                    # Organizamos en 3 columnas para que se vea más ordenado
+                    cols_img = st.columns(3) 
+                    for i, f in enumerate(archivos):
+                        ruta = os.path.join(SOPORTES_DIR, f)
+                        ext = f.lower().split(".")[-1]
+                        
+                        with cols_img[i % 3]: 
+                            if ext in ["png", "jpg", "jpeg"]:
+                                st.image(ruta, caption=f"Evidencia: {f}", use_container_width=True)
+                            else:
+                                with open(ruta, "rb") as file:
+                                    st.download_button(
+                                        label=f"📄 Descargar {f}", 
+                                        data=file, 
+                                        file_name=f, 
+                                        key=f"btn_dl_{i}"
+                                    )
+            else:
+                st.info("La carpeta de soportes aún no ha sido creada.")
 # =====================================================
 # 5. MÓDULO 2 – REGISTRO Y MODIFICACIÓN (ADMIN)
 # =====================================================

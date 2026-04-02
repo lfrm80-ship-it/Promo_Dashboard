@@ -235,16 +235,33 @@ elif menu == "📈 Upsell FD":
         st.success(f"Upgrade total: ${(CATS[c_a] - CATS[c_de]) * nts:,.2f} USD")
 
 # =====================================================
-# 7. MÓDULO 4 – WORLD OF HYATT
+# 7. MÓDULO 4 – WORLD OF HYATT (LÓGICA COMPLETA)
 # =====================================================
 elif menu == "🏨 World of Hyatt":
-    st.title("🏨 Operational Guide")
+    st.title("🏨 World of Hyatt – Operational Guide")
     woh = {
-        "Member": {"bonus": 0, "late": "Availability"},
-        "Discoverist": {"bonus": 10, "late": "2:00 PM"},
-        "Explorist": {"bonus": 20, "late": "2:00 PM"},
-        "Globalist": {"bonus": 30, "late": "4:00 PM"}
+        "Member": {"nights": 0, "bonus": 0, "late": "Subject to availability", "priority": "Standard"},
+        "Discoverist": {"nights": 10, "bonus": 10, "late": "2:00 PM", "priority": "Enhanced"},
+        "Explorist": {"nights": 30, "bonus": 20, "late": "2:00 PM", "priority": "High"},
+        "Globalist": {"nights": 60, "bonus": 30, "late": "4:00 PM", "priority": "Premium"}
     }
-    tier = st.radio("Tier", list(woh.keys()), horizontal=True)
-    st.metric("Puntos Bonus", f"{woh[tier]['bonus']}%")
-    st.metric("Late Check-Out", woh[tier]['late'])
+    estatus_woh = st.radio("Tier", list(woh.keys()), horizontal=True)
+    b = woh[estatus_woh]
+    
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Nights", f"{b['nights']}")
+    c2.metric("Bonus", f"{b['bonus']}%")
+    c3.metric("Late C/O", b['late'])
+    c4.metric("Priority", b['priority'])
+
+    st.divider()
+    st.markdown("### 🔢 Points Calculator")
+    rate = st.number_input("Rate (USD)", value=300)
+    nights_woh = st.number_input("Noches ", value=3)
+    base_p = rate * nights_woh * 5
+    total_p = base_p * (1 + b["bonus"] / 100)
+    
+    r1, r2, r3 = st.columns(3)
+    r1.metric("Base Points", f"{int(base_p):,}")
+    r2.metric("Bonus Points", f"+{int(total_p - base_p):,}")
+    r3.metric("Total", f"{int(total_p):,}")

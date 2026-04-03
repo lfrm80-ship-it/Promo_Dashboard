@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import io
+import json          # ✅ ESTA LÍNEA FALTABA
 import requests
 from datetime import date
 

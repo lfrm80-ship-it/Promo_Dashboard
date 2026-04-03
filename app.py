@@ -159,7 +159,7 @@ elif menu == "➕ Nueva promoción":
 
     with st.form("new_promo", clear_on_submit=True):
 
-        # ---------- PROMO / HOTEL ----------
+        # PROMO / HOTEL / RATE
         c1, c2 = st.columns(2)
 
         with c1:
@@ -172,7 +172,7 @@ elif menu == "➕ Nueva promoción":
 
         st.divider()
 
-        # ---------- OTA / MARKET + FECHAS ----------
+        # OTA / MARKET + FECHAS (ULTRA COMPACTO)
         left, right = st.columns([1, 1.6])
 
         with left:
@@ -200,16 +200,16 @@ elif menu == "➕ Nueva promoción":
 
         st.divider()
 
-        # ---------- ARCHIVO / NOTAS ----------
         archivo = st.file_uploader(
             "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
             ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
         )
         notas = st.text_area("Notas / Restricciones")
 
+        # ✅ BOTÓN DENTRO DEL FORM (CLAVE)
         submit = st.form_submit_button("✅ Registrar promoción")
 
-        # ---------- GUARDADO ----------
+        # ✅ LÓGICA DEL SUBMIT
         if submit:
 
             if not promo or not hotels or not rate:

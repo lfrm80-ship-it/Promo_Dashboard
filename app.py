@@ -7,9 +7,9 @@ import base64
 import requests
 from datetime import date
 
-# =============================
+# =========================================================
 # CONFIGURACIÓN GENERAL
-# =============================
+# =========================================================
 st.set_page_config(
     page_title="Master Record Playa Mujeres",
     layout="wide"
@@ -21,9 +21,9 @@ WEB_APP_URL = st.secrets["apps_script_url"]
 SHEET_ID = "1dvYqQFpI7VqJFuOLeyqQdb2GijFrhoFrNrpWidakAq4"
 WORKSHEET = "promociones"
 
-# =============================
+# =========================================================
 # FUNCIONES AUXILIARES
-# =============================
+# =========================================================
 def csv_url():
     return (
         f"https://docs.google.com/spreadsheets/d/"
@@ -61,16 +61,16 @@ def generar_excel(df):
     return buffer.getvalue()
 
 
-# =============================
+# =========================================================
 # SESSION STATE
-# =============================
+# =========================================================
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
 
-# =============================
+# =========================================================
 # SIDEBAR
-# =============================
+# =========================================================
 with st.sidebar:
     st.image("HIC.png", use_container_width=True)
 
@@ -86,9 +86,9 @@ with st.sidebar:
             st.rerun()
 
 
-# =============================
+# =========================================================
 # DATA
-# =============================
+# =========================================================
 df = cargar_df()
 st.markdown("## Master Record Playa Mujeres")
 
@@ -177,8 +177,6 @@ if menu == "Vista rápida":
                 file_name=f"MasterRecord_{date.today()}.xlsx"
             )
 
-            st.write("DEBUG columnas:", df_view.columns.tolist())
-st.write("DEBUG primera fila:", df_view.iloc[0].to_dict() if not df_view.empty else "No rows")
             # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
             st.divider()
             st.markdown("### Testigos / Material adjunto")
@@ -197,6 +195,7 @@ st.write("DEBUG primera fila:", df_view.iloc[0].to_dict() if not df_view.empty e
                             str(link),
                             key=f"file_{idx}"
                         )
+
 
 # =========================================================
 # NUEVA PROMOCIÓN

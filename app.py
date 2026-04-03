@@ -174,32 +174,30 @@ if menu == "Vista rápida":
             )
 
             # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
-st.divider()
-st.markdown("### Testigos / Material adjunto")
+            st.divider()
+            st.markdown("### Testigos / Material adjunto")
 
-if not df_view.empty:
-    for idx, row in df_view.iterrows():
+            for idx, row in df_view.iterrows():
 
-        link = None
+                link = None
 
-        # Detectar cualquier URL en la fila (robusto)
-        for col in df_view.columns:
-            val = row.get(col)
-            if isinstance(val, str) and val.strip().startswith("http"):
-                link = val
-                break
+                # Detectar cualquier URL en la fila (robusto)
+                for col in df_view.columns:
+                    val = row.get(col)
+                    if isinstance(val, str) and val.strip().startswith("http"):
+                        link = val
+                        break
 
-        if link:
-            st.markdown(
-                f"**{row['Promo']}**  \n"
-                f"{row['Hotel']} · {row['Market']}"
-            )
-
-            st.link_button(
-                "📎 Ver / Descargar archivo",
-                link,
-                key=f"file_{idx}"
-            )
+                if link:
+                    st.markdown(
+                        f"**{row['Promo']}**  \n"
+                        f"{row['Hotel']} · {row['Market']}"
+                    )
+                    st.link_button(
+                        "📎 Ver / Descargar archivo",
+                        link,
+                        key=f"file_{idx}"
+                    )
 # =========================================================
 # NUEVA PROMOCIÓN
 # =========================================================

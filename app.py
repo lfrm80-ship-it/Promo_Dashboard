@@ -164,28 +164,88 @@ elif menu == "➕ Nueva promoción":
             rate = st.text_input("Rate Plan *")
             discount = st.number_input("Descuento (%)", 0, 100, step=1)
 
-# =============================
-# OTA + MARKET + BW / TW
-# =============================
-left, right = st.columns([1.2, 1])
+        st.divider()
 
-# --- LADO IZQUIERDO ---
-with left:
-    ota = st.selectbox("OTA *", OTAS)
-    market = st.selectbox("Market", MARKETS)
+        # =============================
+        # OTA + MARKET (IZQUIERDA) / BW + TW (DERECHA)
+        # =============================
+        left, right = st.columns([1.2, 1])
 
-# --- LADO DERECHO ---
-with right:
-    # BW
-    bw_c1, bw_c2 = st.columns(2)
-    with bw_c1:
-        bw_i = st.date_input("BW Inicio", value=None)
-    with bw_c2:
-        bw_f = st.date_input("BW Fin", value=None)
+        # ----- LADO IZQUIERDO -----
+        with left:
+            ota = st.selectbox("OTA *", OTAS)
+            market = st.selectbox("Market", MARKETS)
 
-    # TW
-    tw_c1, tw_c2 = st.columns(2)
-    with tw_c1:
-        tw_i = st.date_input("TW Inicio", value=None)
-    with tw_c2:
-        tw_f = st.date_input("TW Fin", value=None)
+        # ----- LADO DERECHO -----
+        with right:
+            # BW
+            bw_c1, bw_c2 = st.columns(2)
+            with bw_c1:
+                bw_i = st.date_input("BW Inicio", value=None)
+            with bw_c2:
+                bw_f = st.date_input("BW Fin", value=None)
+
+            # TW (siempre visible)
+            tw_c1, tw_c2 = st.columns(2)
+            with tw_c1:
+                tw_i = st.date_input("TW Inicio", value=None)
+            with tw_c2:
+                tw_f = st.date_input("TW Fin", value=None)
+
+        st.divider()
+
+        # =============================
+        # ARCHIVO / NOTAS
+        # =============================
+        archivo = st.file_uploader(
+            "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
+            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
+        )
+
+        notas = st.text_area("Notas / Restricciones")
+
+        # ✅ ✅ ✅ ESTE BOTÓN ES OBLIGATORIO ✅ ✅ ✅
+        submit = st.form_submit_button("✅ Registrar promoción")
+
+        # =============================
+        # VALIDACIONES Y GUARDADO
+        # =============================
+        if submit:
+
+            if not promo or not hotels or not rate:
+                st.error("Completa los campos obligatorios.")
+                st.stop()
+
+            if bw_i and bw_f and bw_f < bw_i:
+                st.error("BW Fin no puede ser menor que BW Inicio.")
+                st.stop()
+
+            if tw_i and tw_f and tw_f < tw_i:
+                st.error("TW Fin no puede ser menor que TW Inicio.")
+                st.stop()
+
+            archivo_path = ""
+            if archivo:
+                archivo_path = os.path.join(MEDIA_DIR, archivo.name)
+                with open(archivo_path, "wb") as f:
+                    f.write(archivo.getbuffer())
+
+            for h in hotels:
+                payload = {
+                    "Hotel": h,
+                    "OTA": ota,
+                    "Promo": promo,
+                    "Market": market,
+                    "Rate_Plan": rate,
+                    "Descuento": discount,
+                    "BW_Inicio": bw_i,
+                    "BW_Fin": bw_f,
+                    "TW_Inicio": tw_i,
+                    "TW_Fin": tw_f,
+                    "Archivo_Path": archivo_path,
+                    "Notas": notas
+                }
+                requests.post(WEB_APP_URL, json=payload)
+
+            st.success("🎉 Promoción guardada correctamente")
+            st.rerun()

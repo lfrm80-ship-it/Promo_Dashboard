@@ -20,11 +20,7 @@ os.makedirs(MEDIA_DIR, exist_ok=True)
 # =============================
 # GOOGLE SHEETS (NATIVO)
 # =============================
-conn = st.connection(
-    "gsheets",
-    type="gsheets",
-    url=SPREADSHEET_URL
-)
+conn = st.connection("gsheets")
 
 # =============================
 # SESSION STATE

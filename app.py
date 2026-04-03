@@ -177,29 +177,32 @@ if menu == "Vista rápida":
 st.divider()
 st.markdown("### Testigos / Material adjunto")
 
-for idx, row in df_view.iterrows():
+# Protección absoluta: solo si df_view existe y no está vacío
+if "df_view" in locals() and not df_view.empty:
 
-    # Detectar columna con link de Google Drive
-    link_col = None
-    for c in df_view.columns:
-        val = row.get(c)
-        if isinstance(val, str) and "drive.google.com" in val:
-            link_col = c
-            break
+    for idx, row in df_view.iterrows():
 
-    if link_col:
-        link = row[link_col]
+        link = None
 
-        st.markdown(
-            f"**{row['Promo']}**  \n"
-            f"{row['Hotel']} · {row['Market']}"
-        )
+        # Buscar automáticamente un link de Drive en cualquier columna
+        for col in df_view.columns:
+            val = row.get(col)
+            if isinstance(val, str) and "drive.google.com" in val:
+                link = val
+                break
 
-        st.link_button(
-            "Ver / Descargar archivo",
-            link,
-            key=f"file_{idx}"
-        )
+        if link:
+            st.markdown(
+                f"**{row['Promo']}**  \n"
+                f"{row['Hotel']} · {row['Market']}"
+            )
+
+            st.link_button(
+                "👁 Ver / Descargar archivo",
+                link,
+                key=f"file_{idx}"
+            )
+
 
 # =========================================================
 # NUEVA PROMOCIÓN

@@ -177,9 +177,9 @@ st.download_button(
     file_name=f"MasterRecord_{date.today()}.xlsx"
 )
 
-# ✅ DEBUG TEMPORAL: ver columnas reales que llegan del Sheet
+# ✅ DEBUG TEMPORAL
 st.write("DEBUG columnas reales:", df_view.columns.tolist())
-``
+
 
             # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
             st.divider()

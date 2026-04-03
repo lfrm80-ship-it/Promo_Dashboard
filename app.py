@@ -87,8 +87,115 @@ st.markdown("## 📊 Master Record Playa Mujeres")
 # VISTA RÁPIDA
 # =========================================================
 if menu == "Vista rápida":
-    # (tu código de Vista Rápida completo aquí)
-    pass
+
+    if df.empty:
+        st.info("No hay promociones registradas.")
+
+    else:
+        df = df.copy()
+        df["Estado"] = df.apply(estado, axis=1)
+
+        # ---------- BUSCADOR ----------
+        search = st.text_input(
+            "🔎 Buscar (Promoción, Hotel o Market)",
+            placeholder="Ej. Summer Sale, DREPM, USA…"
+        )
+
+        # ---------- FILTROS ----------
+        f1, f2, f3 = st.columns(3)
+
+        with f1:
+            filtro_estado = st.multiselect(
+                "Estado",
+                ["Activa", "Futura", "Expirada"],
+                default=["Activa"]
+            )
+
+        with f2:
+            filtro_hotel = st.multiselect(
+                "Hotel",
+                sorted(df["Hotel"].dropna().unique())
+            )
+
+        with f3:
+            filtro_market = st.multiselect(
+                "Market",
+                sorted(df["Market"].dropna().unique())
+            )
+
+        # ---------- APLICAR FILTROS ----------
+        df_view = df.copy()
+
+        if filtro_estado:
+            df_view = df_view[df_view["Estado"].isin(filtro_estado)]
+
+        if filtro_hotel:
+            df_view = df_view[df_view["Hotel"].isin(filtro_hotel)]
+
+        if filtro_market:
+            df_view = df_view[df_view["Market"].isin(filtro_market)]
+
+        if search:
+            s = search.lower()
+            df_view = df_view[
+                df_view["Promo"].str.lower().str.contains(s, na=False)
+                | df_view["Hotel"].str.lower().str.contains(s, na=False)
+                | df_view["Market"].str.lower().str.contains(s, na=False)
+            ]
+
+        if not st.session_state.is_admin:
+            df_view = df_view[df_view["Estado"] == "Activa"]
+
+        if df_view.empty:
+            st.warning("No hay promociones con los filtros actuales.")
+
+        else:
+            # ---------- TABLA ----------
+            columnas = [
+                "Hotel", "Promo", "Market", "Rate_Plan", "Descuento",
+                "BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin", "Estado"
+            ]
+            columnas = [c for c in columnas if c in df_view.columns]
+
+            st.dataframe(
+                df_view[columnas],
+                use_container_width=True,
+                hide_index=True
+            )
+
+            # ---------- EXCEL ----------
+            st.download_button(
+                "📥 Descargar Excel",
+                data=generar_excel(df_view[columnas]),
+                file_name=f"MasterRecord_{date.today()}.xlsx"
+            )
+
+            # ---------- TESTIGOS ----------
+            st.divider()
+            st.markdown("### 📎 Testigos / Material adjunto")
+
+            for idx, row in df_view.iterrows():
+
+                archivo_columns = [
+                    c for c in df_view.columns
+                    if "archivo" in c.lower() or "file" in c.lower()
+                ]
+
+                link = None
+                if archivo_columns:
+                    link = row[archivo_columns[0]]
+
+                if isinstance(link, str) and link.strip() != "":
+                    st.markdown(
+                        f"**{row['Promo']}**  \n"
+                        f"{row['Hotel']} · {row['Market']}"
+                    )
+
+                    st.link_button(
+                        "👁 Ver / Descargar archivo",
+                        link,
+                        key=f"file_{idx}"
+                    )
 
 # =========================================================
 # NUEVA PROMOCIÓN

@@ -159,32 +159,56 @@ elif menu == "➕ Nueva promoción":
 
     with st.form("new_promo", clear_on_submit=True):
 
-        col1, col2 = st.columns(2)
+        # =============================
+        # PROMO / HOTEL / RATE
+        # =============================
+        c1, c2 = st.columns(2)
 
-        with col1:
+        with c1:
             promo = st.text_input("Promoción *")
             hotels = st.multiselect("Hotel *", PROPERTIES)
 
-        with col2:
+        with c2:
             rate = st.text_input("Rate Plan *")
             discount = st.number_input("Descuento (%)", 0, 100, step=1)
 
         st.divider()
 
-        left, right = st.columns([1.2, 1])
+        # =============================
+        # OTA + MARKET | BW + TW (ULTRA COMPACTO)
+        # =============================
+        left, right = st.columns([1, 1.6])
 
+        # IZQUIERDA
         with left:
             ota = st.selectbox("OTA *", OTAS)
             market = st.selectbox("Market", MARKETS)
 
+        # DERECHA
         with right:
-            bw_i = st.date_input("BW Inicio", value=None)
-            bw_f = st.date_input("BW Fin", value=None)
-            tw_i = st.date_input("TW Inicio", value=None)
-            tw_f = st.date_input("TW Fin", value=None)
+            bw1, bw2, tw1, tw2 = st.columns(4)
+
+            with bw1:
+                st.caption("BW Init")
+                bw_i = st.date_input("", value=None, label_visibility="collapsed")
+
+            with bw2:
+                st.caption("BW End")
+                bw_f = st.date_input("", value=None, label_visibility="collapsed")
+
+            with tw1:
+                st.caption("TW Init")
+                tw_i = st.date_input("", value=None, label_visibility="collapsed")
+
+            with tw2:
+                st.caption("TW End")
+                tw_f = st.date_input("", value=None, label_visibility="collapsed")
 
         st.divider()
 
+        # =============================
+        # ARCHIVO / NOTAS
+        # =============================
         archivo = st.file_uploader(
             "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
             ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
@@ -193,6 +217,9 @@ elif menu == "➕ Nueva promoción":
 
         submit = st.form_submit_button("✅ Registrar promoción")
 
+        # =============================
+        # VALIDACIONES Y GUARDADO
+        # =============================
         if submit:
 
             if not promo or not hotels or not rate:
@@ -220,31 +247,98 @@ elif menu == "➕ Nueva promoción":
             headers = {"Content-Type": "application/json"}
 
             for h in hotels:
-                payload = {
-                    "Hotel": h,
-                    "OTA": ota,
-                    "Promo": promo,
-                    "Market": market,
-                    "Rate_Plan": rate,
-                    "Descuento": discount,
-                    "BW_Inicio": date_to_str(bw_i),
-                    "BW_Fin": date_to_str(bw_f),
-                    "TW_Inicio": date_to_str(tw_i),
-                    "TW_Fin": date_to_str(tw_f),
-                    "Archivo_Path": archivo_path,
-                    "Notas": notas
-                }
+# =============================
+# NUEVA PROMOCIÓN
+# =============================
+elif menu == "➕ Nueva promoción":
 
-                r = requests.post(
-                    WEB_APP_URL,
-                    data=json.dumps(payload),
-                    headers=headers,
-                    timeout=10
-                )
+    with st.form("new_promo", clear_on_submit=True):
 
-                if r.status_code != 200:
-                    st.error("Error escribiendo en Google Sheets.")
-                    st.stop()
+        # =============================
+        # PROMO / HOTEL / RATE
+        # =============================
+        c1, c2 = st.columns(2)
 
-            st.success("🎉 Promoción guardada correctamente")
-            st.rerun()
+        with c1:
+            promo = st.text_input("Promoción *")
+            hotels = st.multiselect("Hotel *", PROPERTIES)
+
+        with c2:
+            rate = st.text_input("Rate Plan *")
+            discount = st.number_input("Descuento (%)", 0, 100, step=1)
+
+        st.divider()
+
+        # =============================
+        # OTA + MARKET | BW + TW (ULTRA COMPACTO)
+        # =============================
+        left, right = st.columns([1, 1.6])
+
+        # IZQUIERDA
+        with left:
+            ota = st.selectbox("OTA *", OTAS)
+            market = st.selectbox("Market", MARKETS)
+
+        # DERECHA
+        with right:
+            bw1, bw2, tw1, tw2 = st.columns(4)
+
+            with bw1:
+                st.caption("BW Init")
+                bw_i = st.date_input("", value=None, label_visibility="collapsed")
+
+            with bw2:
+                st.caption("BW End")
+                bw_f = st.date_input("", value=None, label_visibility="collapsed")
+
+            with tw1:
+                st.caption("TW Init")
+                tw_i = st.date_input("", value=None, label_visibility="collapsed")
+
+            with tw2:
+                st.caption("TW End")
+                tw_f = st.date_input("", value=None, label_visibility="collapsed")
+
+        st.divider()
+
+        # =============================
+        # ARCHIVO / NOTAS
+        # =============================
+        archivo = st.file_uploader(
+            "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
+            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
+        )
+        notas = st.text_area("Notas / Restricciones")
+
+        submit = st.form_submit_button("✅ Registrar promoción")
+
+        # =============================
+        # VALIDACIONES Y GUARDADO
+        # =============================
+        if submit:
+
+            if not promo or not hotels or not rate:
+                st.error("Completa los campos obligatorios.")
+                st.stop()
+
+            if bw_i and bw_f and bw_f < bw_i:
+                st.error("BW Fin no puede ser menor que BW Inicio.")
+                st.stop()
+
+            if tw_i and tw_f and tw_f < tw_i:
+                st.error("TW Fin no puede ser menor que TW Inicio.")
+                st.stop()
+
+            if not WEB_APP_URL.startswith("https://"):
+                st.error("La URL de Apps Script no está configurada correctamente.")
+                st.stop()
+
+            archivo_path = ""
+            if archivo:
+                archivo_path = os.path.join(MEDIA_DIR, archivo.name)
+                with open(archivo_path, "wb") as f:
+                    f.write(archivo.getbuffer())
+
+            headers = {"Content-Type": "application/json"}
+
+            for h in hotels:

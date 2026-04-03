@@ -196,66 +196,49 @@ if menu == "Nueva promoción":
 
         st.divider()
 
-        # -------- MARKET + FECHAS (LAYOUT PRO) --------
-        left, right = st.columns([1.1, 2.6])
+       # -------- MARKET --------
+market = st.selectbox(
+    "Market *",
+    ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
+)
 
-        with left:
-            market = st.selectbox(
-                "Market *",
-                ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
-            )
+st.divider()
 
-        with right:
-            h1, h2, h3, h4 = st.columns(4)
-            with h1: st.caption("BW IN")
-            with h2: st.caption("BW FIN")
-            with h3: st.caption("TW IN")
-            with h4: st.caption("TW FIN")
+# -------- BOOKING & TRAVEL WINDOW --------
+st.markdown("**Booking & Travel Window**")
 
-            i1, i2, i3, i4 = st.columns(4)
-            with i1: bw_i = st.date_input("", value=None, label_visibility="collapsed", key="bw_i")
-            with i2: bw_f = st.date_input("", value=None, label_visibility="collapsed", key="bw_f")
-            with i3: tw_i = st.date_input("", value=None, label_visibility="collapsed", key="tw_i")
-            with i4: tw_f = st.date_input("", value=None, label_visibility="collapsed", key="tw_f")
+labels = st.columns(4)
+with labels[0]: st.caption("BW IN")
+with labels[1]: st.caption("BW FIN")
+with labels[2]: st.caption("TW IN")
+with labels[3]: st.caption("TW FIN")
 
-        st.divider()
-
-        archivo = st.file_uploader(
-            "Archivo (PNG, JPG, PDF, XLS, XLSX)",
-            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
-        )
-
-        notas = st.text_area("Notas / Restricciones")
-
-        # ✅ SUBMIT SIEMPRE AL FINAL
-        submit = st.form_submit_button("✅ Registrar promoción")
-
-        if submit:
-            for h in hotels:
-                payload = {
-                    "Hotel": h,
-                    "Promo": promo,
-                    "Market": market,          # ✅ único eje comercial
-                    "Rate_Plan": rate,
-                    "Descuento": discount,
-                    "BW_Inicio": str(bw_i or ""),
-                    "BW_Fin": str(bw_f or ""),
-                    "TW_Inicio": str(tw_i or ""),
-                    "TW_Fin": str(tw_f or ""),
-                    "Notas": notas
-                }
-
-                if archivo:
-                    payload["FileName"] = archivo.name
-                    payload["FileType"] = archivo.type
-                    payload["FileContent"] = base64.b64encode(
-                        archivo.getvalue()
-                    ).decode()
-
-                r = requests.post(WEB_APP_URL, data=json.dumps(payload))
-                if r.status_code != 200:
-                    st.error("Error al guardar promoción")
-                    st.stop()
-
-            st.success("✅ Promoción guardada correctamente")
-            st.rerun()
+inputs = st.columns(4)
+with inputs[0]:
+    bw_i = st.date_input(
+        "",
+        value=None,
+        label_visibility="collapsed",
+        key="bw_i"
+    )
+with inputs[1]:
+    bw_f = st.date_input(
+        "",
+        value=None,
+        label_visibility="collapsed",
+        key="bw_f"
+    )
+with inputs[2]:
+    tw_i = st.date_input(
+        "",
+        value=None,
+        label_visibility="collapsed",
+        key="tw_i"
+    )
+with inputs[3]:
+    tw_f = st.date_input(
+        "",
+        value=None,
+        label_visibility="collapsed",
+        key="tw_f"
+    )

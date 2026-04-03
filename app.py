@@ -81,16 +81,24 @@ def guardar_promo(rows):
     sheet = get_gsheet()
     for r in rows:
         sheet.append_row([
-            r["Hotel"], r["OTA"], r["Promo"], r["Market"],
-            r["Rate_Plan"], r["Descuento"],
-            r["BW_Inicio"], r["BW_Fin"],
-            r["TW_Inicio"], r["TW_Fin"],
-            r["Archivo_Path"], r["Notas"]
+            r["Hotel"],
+            r["OTA"],
+            r["WOH"],
+            r["Promo"],
+            r["Market"],
+            r["Rate_Plan"],
+            r["Descuento"],
+            r["BW_Inicio"],
+            r["BW_Fin"],
+            r["TW_Inicio"],
+            r["TW_Fin"],
+            r["Archivo_Path"],
+            r["Notas"]
         ])
 
 def eliminar_promo(idx):
     sheet = get_gsheet()
-    sheet.delete_rows(idx + 2)
+    sheet.delete_rows(idx + 2)  # header + 1
 
 def generar_excel(df):
     buffer = io.BytesIO()
@@ -124,7 +132,7 @@ with st.sidebar:
     st.caption("Acceso administrativo")
 
     if st.session_state.is_admin:
-        st.success("🟢 Modo ADMIN")
+        st.success("🟢 Modo ADMIN activo")
         if st.button("Salir de Admin"):
             st.session_state.is_admin = False
             st.session_state.selected_idx = None
@@ -166,7 +174,11 @@ if menu == "🔍 Vista rápida":
         }
 
         default_ui = ["🟢 Activa"] if not st.session_state.is_admin else list(estados_ui)
-        filtro_estado_ui = st.multiselect("Estado", list(estados_ui), default=default_ui)
+        filtro_estado_ui = st.multiselect(
+            "Estado",
+            list(estados_ui),
+            default=default_ui
+        )
         filtro_estado = [estados_ui[e] for e in filtro_estado_ui]
 
         df_view = df[df["Estado"].isin(filtro_estado)]
@@ -191,10 +203,11 @@ if menu == "🔍 Vista rápida":
 
         st.dataframe(df_view, use_container_width=True, hide_index=True)
 
+        # ===== PREVIEW =====
         if not df_view.empty:
             st.divider()
             idx = st.selectbox(
-                "Selecciona promoción",
+                "Selecciona una promoción",
                 df_view.index,
                 format_func=lambda i: df_view.loc[i, "Promo"]
             )
@@ -213,13 +226,17 @@ if menu == "🔍 Vista rápida":
                                 f,
                                 file_name=os.path.basename(archivo)
                             )
+            else:
+                st.info("Esta promoción no tiene archivo adjunto.")
 
+        # ===== ELIMINAR (ADMIN) =====
         if st.session_state.is_admin and st.session_state.selected_idx is not None:
             st.divider()
+            st.warning("⚠️ Esta acción no se puede deshacer")
             if st.checkbox("Confirmar eliminación"):
                 if st.button("🗑 Eliminar promoción", type="primary"):
                     eliminar_promo(st.session_state.selected_idx)
-                    st.success("Promoción eliminada")
+                    st.success("Promoción eliminada correctamente ✅")
                     st.rerun()
 
 # =============================
@@ -234,11 +251,12 @@ elif menu == "➕ Nueva promoción":
             promo = st.text_input("Promoción *")
             hotels = st.multiselect("Hotel *", PROPERTIES)
             ota = st.selectbox("OTA *", OTAS)
+            woh = st.selectbox("World of Hyatt (WOH)", ["Yes", "No"])
             market = st.selectbox("Market", MARKETS)
 
         with col2:
             rate = st.text_input("Rate Plan *")
-            discount = st.number_input("Descuento (%)", 0, 100)
+            discount = st.number_input("Descuento (%)", 0, 100, step=1)
 
         st.divider()
         c3, c4, c5, c6 = st.columns(4)
@@ -261,10 +279,11 @@ elif menu == "➕ Nueva promoción":
 
         if submit:
             if not promo or not hotels or not rate:
-                st.error("Completa los campos obligatorios")
+                st.error("Completa los campos obligatorios.")
                 st.stop()
+
             if bw_f < bw_i or tw_f < tw_i:
-                st.error("Fechas inválidas")
+                st.error("Fechas inválidas.")
                 st.stop()
 
             archivo_path = ""
@@ -278,6 +297,7 @@ elif menu == "➕ Nueva promoción":
                 rows.append({
                     "Hotel": h,
                     "OTA": ota,
+                    "WOH": woh,
                     "Promo": promo,
                     "Market": market,
                     "Rate_Plan": rate,
@@ -291,5 +311,5 @@ elif menu == "➕ Nueva promoción":
                 })
 
             guardar_promo(rows)
-            st.success("🎉 Promoción registrada")
+            st.success("🎉 Promoción registrada correctamente")
             st.rerun()

@@ -182,53 +182,53 @@ if menu == "Vista rápida":
                         key=f"file_{idx}"
                     )
 
-# =========================================================
-# NUEVA PROMOCIÓN (SUPER PRO, ESTABLE)
-# =========================================================
+# =============================
+# NUEVA PROMOCIÓN
+# =============================
 elif menu == "Nueva promoción":
 
     with st.form("new_promo", clear_on_submit=True):
 
+        # -------- PROMOCIÓN / HOTEL / RATE --------
         col1, col2 = st.columns(2)
+
         with col1:
             promo = st.text_input("Promoción *")
             hotels = st.multiselect("Hotel *", ["DREPM", "SECPM"])
+
         with col2:
             rate = st.text_input("Rate Plan *")
             discount = st.number_input("Descuento (%)", 0, 100, step=1)
 
-        st.divider()
-
+        # -------- MARKET --------
         market = st.selectbox(
             "Market *",
             ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
         )
 
-        st.divider()
-
+        # -------- BOOKING & TRAVEL WINDOW --------
         st.markdown("**Booking & Travel Window**")
-        label_cols = st.columns(4)
-        label_cols[0].caption("BW IN")
-        label_cols[1].caption("BW FIN")
-        label_cols[2].caption("TW IN")
-        label_cols[3].caption("TW FIN")
 
-        input_cols = st.columns(4)
-        bw_i = input_cols[0].date_input("", value=None, label_visibility="collapsed")
-        bw_f = input_cols[1].date_input("", value=None, label_visibility="collapsed")
-        tw_i = input_cols[2].date_input("", value=None, label_visibility="collapsed")
-        tw_f = input_cols[3].date_input("", value=None, label_visibility="collapsed")
+        bw_cols = st.columns(4)
+        bw_cols[0].caption("BW IN")
+        bw_cols[1].caption("BW FIN")
+        bw_cols[2].caption("TW IN")
+        bw_cols[3].caption("TW FIN")
 
-        st.divider()
+        in_cols = st.columns(4)
+        bw_i = in_cols[0].date_input("", value=None, label_visibility="collapsed")
+        bw_f = in_cols[1].date_input("", value=None, label_visibility="collapsed")
+        tw_i = in_cols[2].date_input("", value=None, label_visibility="collapsed")
+        tw_f = in_cols[3].date_input("", value=None, label_visibility="collapsed")
 
+        # -------- ARCHIVO / NOTAS --------
         archivo = st.file_uploader(
             "Archivo (PNG, JPG, PDF, XLS, XLSX)",
             ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
         )
-
         notas = st.text_area("Notas / Restricciones")
 
-        # ✅ SUBMIT SIEMPRE AL FINAL
+        # ✅ ✅ ✅ SUBMIT: ÚLTIMA LÍNEA DEL FORM ✅ ✅ ✅
         submit = st.form_submit_button("✅ Registrar promoción")
 
         if submit:

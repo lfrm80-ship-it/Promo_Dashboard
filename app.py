@@ -159,71 +159,49 @@ elif menu == "➕ Nueva promoción":
 
     with st.form("new_promo", clear_on_submit=True):
 
-        # ---------- PROMO / HOTEL ----------
+        # PROMO / HOTEL
         c1, c2 = st.columns(2)
-
         with c1:
             promo = st.text_input("Promoción *", key="promo_name")
             hotels = st.multiselect("Hotel *", PROPERTIES, key="hotels_sel")
-
         with c2:
             rate = st.text_input("Rate Plan *", key="rate_plan")
             discount = st.number_input("Descuento (%)", 0, 100, step=1, key="discount")
 
         st.divider()
 
-        # ---------- OTA / MARKET + FECHAS (HEADER ALIGN PRO) ----------
-left, right = st.columns([1.1, 2.6])
+        # OTA / MARKET + FECHAS (HEADER PRO)
+        left, right = st.columns([1.1, 2.6])
 
-# ===== LADO IZQUIERDO: CONTEXTO =====
-with left:
-    ota = st.selectbox("OTA *", OTAS, key="ota_sel")
-    market = st.selectbox("Market", MARKETS, key="market_sel")
+        with left:
+            ota = st.selectbox("OTA *", OTAS, key="ota_sel")
+            market = st.selectbox("Market", MARKETS, key="market_sel")
 
-# ===== LADO DERECHO: FECHAS =====
-with right:
-    # Header superior (labels)
-    h1, h2, h3, h4 = st.columns(4)
-    with h1:
-        st.caption("BW IN")
-    with h2:
-        st.caption("BW FIN")
-    with h3:
-        st.caption("TW IN")
-    with h4:
-        st.caption("TW FIN")
+        with right:
+            h1, h2, h3, h4 = st.columns(4)
+            with h1: st.caption("BW IN")
+            with h2: st.caption("BW FIN")
+            with h3: st.caption("TW IN")
+            with h4: st.caption("TW FIN")
 
-    # Inputs alineados
-    i1, i2, i3, i4 = st.columns(4)
+            i1, i2, i3, i4 = st.columns(4)
+            with i1: bw_i = st.date_input("", value=None, label_visibility="collapsed", key="bw_start")
+            with i2: bw_f = st.date_input("", value=None, label_visibility="collapsed", key="bw_end")
+            with i3: tw_i = st.date_input("", value=None, label_visibility="collapsed", key="tw_start")
+            with i4: tw_f = st.date_input("", value=None, label_visibility="collapsed", key="tw_end")
 
-    with i1:
-        bw_i = st.date_input(
-            "",
-            value=None,
-            label_visibility="collapsed",
-            key="bw_start"
+        st.divider()
+
+        archivo = st.file_uploader(
+            "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
+            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"],
+            key="file_upload"
         )
+        notas = st.text_area("Notas / Restricciones", key="notes")
 
-    with i2:
-        bw_f = st.date_input(
-            "",
-            value=None,
-            label_visibility="collapsed",
-            key="bw_end"
-        )
+        # ✅ SUBMIT SIEMPRE AL FINAL
+        submit = st.form_submit_button("✅ Registrar promoción")
 
-    with i3:
-        tw_i = st.date_input(
-            "",
-            value=None,
-            label_visibility="collapsed",
-            key="tw_start"
-        )
-
-    with i4:
-        tw_f = st.date_input(
-            "",
-            value=None,
-            label_visibility="collapsed",
-            key="tw_end"
-        )
+        if submit:
+            # validaciones y guardado
+            ...

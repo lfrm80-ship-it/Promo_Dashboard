@@ -84,15 +84,19 @@ df = cargar_df()
 st.markdown("## 📊 Master Record Playa Mujeres")
 
 # =========================================================
-# VISTA RÁPIDA (PRO)
+# VISTA RÁPIDA
 # =========================================================
 if menu == "Vista rápida":
 
-    if df.empty:
-        st.info("No hay promociones registradas.")
-    else:
-        df = df.copy()
-        df["Estado"] = df.apply(estado, axis=1)
+    # ---- TODO tu código de Vista Rápida aquí ----
+    # (tabla, filtros, testigos, etc.)
+
+# =========================================================
+# NUEVA PROMOCIÓN
+# =========================================================
+elif menu == "Nueva promoción":
+
+    # ---- TODO tu código de Nueva Promoción aquí ----
 
         # ---------- BUSCADOR ----------
         search = st.text_input(

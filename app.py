@@ -32,7 +32,7 @@ CSV_URL = (
 # =============================
 # GOOGLE SHEETS (ESCRITURA)
 # =============================
-WEB_APP_URL = st.secrets["apps_script_url"]  # URL del Apps Script
+WEB_APP_URL = st.secrets.get("apps_script_url", "").strip()
 
 # =============================
 # SESSION STATE

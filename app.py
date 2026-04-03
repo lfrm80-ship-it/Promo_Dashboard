@@ -150,13 +150,30 @@ if menu == "🔍 Vista rápida":
         if df_view.empty:
             st.info("No hay promociones con los filtros actuales.")
         else:
-            st.dataframe(df_view, use_container_width=True, hide_index=True)
+           st.dataframe(df_view, use_container_width=True, hide_index=True)
 
-            st.download_button(
-                "📥 Descargar Excel",
-                data=generar_excel(df_view),
-                file_name=f"MasterRecord_{date.today()}.xlsx"
-            )
+st.divider()
+st.markdown("### 📎 Archivos adjuntos")
+
+for idx, row in df_view.iterrows():
+    if row.get("Archivo_Path"):
+        st.markdown(
+            f"**{row['Promo']} – {row['Hotel']}**"
+        )
+
+        col_v1, col_v2 = st.columns([1, 6])
+
+        with col_v1:
+            try:
+                with open(row["Archivo_Path"], "rb") as f:
+                    st.download_button(
+                        label="⬇️ Descargar",
+                        data=f,
+                        file_name=os.path.basename(row["Archivo_Path"]),
+                        key=f"dl_{idx}"
+                    )
+            except Exception:
+                st.warning("Archivo no disponible")
 
 # =============================
 # NUEVA PROMOCIÓN

@@ -196,49 +196,54 @@ if menu == "Nueva promoción":
 
         st.divider()
 
-       # -------- MARKET --------
-market = st.selectbox(
-    "Market *",
-    ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
-)
+        # -------- MARKET --------
+        market = st.selectbox(
+            "Market *",
+            ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
+        )
 
-st.divider()
+        st.divider()
 
-# -------- BOOKING & TRAVEL WINDOW --------
-st.markdown("**Booking & Travel Window**")
+        # -------- BOOKING & TRAVEL WINDOW --------
+        st.markdown("**Booking & Travel Window**")
 
-labels = st.columns(4)
-with labels[0]: st.caption("BW IN")
-with labels[1]: st.caption("BW FIN")
-with labels[2]: st.caption("TW IN")
-with labels[3]: st.caption("TW FIN")
+        labels = st.columns(4)
+        with labels[0]: st.caption("BW IN")
+        with labels[1]: st.caption("BW FIN")
+        with labels[2]: st.caption("TW IN")
+        with labels[3]: st.caption("TW FIN")
 
-inputs = st.columns(4)
-with inputs[0]:
-    bw_i = st.date_input(
-        "",
-        value=None,
-        label_visibility="collapsed",
-        key="bw_i"
-    )
-with inputs[1]:
-    bw_f = st.date_input(
-        "",
-        value=None,
-        label_visibility="collapsed",
-        key="bw_f"
-    )
-with inputs[2]:
-    tw_i = st.date_input(
-        "",
-        value=None,
-        label_visibility="collapsed",
-        key="tw_i"
-    )
-with inputs[3]:
-    tw_f = st.date_input(
-        "",
-        value=None,
-        label_visibility="collapsed",
-        key="tw_f"
-    )
+        inputs = st.columns(4)
+        with inputs[0]:
+            bw_i = st.date_input("", value=None, label_visibility="collapsed", key="bw_i")
+        with inputs[1]:
+            bw_f = st.date_input("", value=None, label_visibility="collapsed", key="bw_f")
+        with inputs[2]:
+            tw_i = st.date_input("", value=None, label_visibility="collapsed", key="tw_i")
+        with inputs[3]:
+            tw_f = st.date_input("", value=None, label_visibility="collapsed", key="tw_f")
+
+        st.divider()
+
+        archivo = st.file_uploader(
+            "Archivo (PNG, JPG, PDF, XLS, XLSX)",
+            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
+        )
+
+        notas = st.text_area("Notas / Restricciones")
+
+        # ✅ SUBMIT **ABSOLUTAMENTE LO ÚLTIMO**
+        submit = st.form_submit_button("✅ Registrar promoción")
+
+        if submit:
+            for h in hotels:
+                payload = {
+                    "Hotel": h,
+                    "Promo": promo,
+                    "Market": market,
+                    "Rate_Plan": rate,
+                    "Descuento": discount,
+                    "BW_Inicio": str(bw_i or ""),
+                    "BW_Fin": str(bw_f or ""),
+                    "TW_Inicio": str(tw_i or ""),
+                    "TW_Fin": str(tw_f or ""),

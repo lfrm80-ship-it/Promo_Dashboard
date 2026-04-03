@@ -83,7 +83,7 @@ df = cargar_df()
 st.markdown("## 📊 Master Record Playa Mujeres")
 
 # =============================
-# VISTA RÁPIDA (PRO)
+# VISTA RÁPIDA
 # =============================
 if menu == "Vista rápida":
 
@@ -93,8 +93,14 @@ if menu == "Vista rápida":
         df = df.copy()
         df["Estado"] = df.apply(estado, axis=1)
 
-        # -------- FILTROS --------
-        f1, f2, f3, f4 = st.columns(4)
+        # ---------- BUSCADOR ----------
+        search = st.text_input(
+            "🔎 Buscar (Promoción, Hotel o Market)",
+            placeholder="Ej. Summer Sale, DREPM, USA…"
+        )
+
+        # ---------- FILTROS ----------
+        f1, f2, f3 = st.columns(3)
 
         with f1:
             filtro_estado = st.multiselect(
@@ -102,42 +108,59 @@ if menu == "Vista rápida":
                 ["Activa", "Futura", "Expirada"],
                 default=["Activa"]
             )
+
         with f2:
             filtro_hotel = st.multiselect(
                 "Hotel",
                 sorted(df["Hotel"].dropna().unique())
             )
+
         with f3:
-            filtro_ota = st.multiselect(
-                "OTA",
-                sorted(df["OTA"].dropna().unique())
-            )
-        with f4:
             filtro_market = st.multiselect(
                 "Market",
                 sorted(df["Market"].dropna().unique())
             )
 
+        # ---------- APLICAR FILTROS ----------
         df_view = df.copy()
+
         if filtro_estado:
             df_view = df_view[df_view["Estado"].isin(filtro_estado)]
+
         if filtro_hotel:
             df_view = df_view[df_view["Hotel"].isin(filtro_hotel)]
-        if filtro_ota:
-            df_view = df_view[df_view["OTA"].isin(filtro_ota)]
+
         if filtro_market:
             df_view = df_view[df_view["Market"].isin(filtro_market)]
 
+        # ---------- BUSQUEDA TEXTO ----------
+        if search:
+            search_l = search.lower()
+            df_view = df_view[
+                df_view["Promo"].str.lower().str.contains(search_l, na=False)
+                | df_view["Hotel"].str.lower().str.contains(search_l, na=False)
+                | df_view["Market"].str.lower().str.contains(search_l, na=False)
+            ]
+
+        # ---------- USUARIO NO ADMIN ----------
         if not st.session_state.is_admin:
             df_view = df_view[df_view["Estado"] == "Activa"]
 
         if df_view.empty:
-            st.warning("No hay promociones con los filtros seleccionados.")
+            st.warning("No hay promociones con los filtros actuales.")
         else:
-            # -------- ORDEN DE COLUMNAS --------
+            # ---------- TABLA ----------
             columnas = [
-                "Hotel","OTA","Promo","Market","Rate_Plan","Descuento",
-                "BW_Inicio","BW_Fin","TW_Inicio","TW_Fin","Estado"
+                "Hotel",
+                "Promo",
+                "Market",
+                "Rate_Plan",
+                "Descuento",
+                "BW_Inicio",
+                "BW_Fin",
+                "TW_Inicio",
+                "TW_Fin",
+                "Estado",
             ]
             columnas = [c for c in columnas if c in df_view.columns]
 
@@ -147,31 +170,36 @@ if menu == "Vista rápida":
                 hide_index=True
             )
 
+            # ---------- DESCARGA EXCEL ----------
             st.download_button(
                 "📥 Descargar Excel",
                 data=generar_excel(df_view[columnas]),
                 file_name=f"MasterRecord_{date.today()}.xlsx"
             )
 
-            # -------- TESTIGOS / PREVIEW --------
+            # ---------- TESTIGOS / ADJUNTOS ----------
             st.divider()
             st.markdown("### 📎 Testigos / Material adjunto")
 
             for idx, row in df_view.iterrows():
                 link = row.get("Archivo_Path")
-                if isinstance(link, str) and link:
+
+                if isinstance(link, str) and link.strip() != "":
                     st.markdown(
-                        f"**{row['Promo']}** · {row['Hotel']} · {row['OTA']}"
+                        f"**{row['Promo']}**  \n"
+                        f"{row['Hotel']} · {row['Market']}"
                     )
 
+                    # Preview imagen
                     if any(ext in link.lower() for ext in [".png", ".jpg", ".jpeg"]):
                         st.image(link, width=300)
 
+                    # PDF: link clicable (Drive maneja visor)
                     elif ".pdf" in link.lower():
                         st.markdown(f"[📄 Ver PDF]({link})")
 
                     st.link_button(
-                        "⬇️ Descargar archivo",
+                        "⬇️ Ver / Descargar archivo",
                         link,
                         key=f"file_{idx}"
                     )

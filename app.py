@@ -219,7 +219,7 @@ elif menu == "➕ Nueva promoción":
         # =============================
         # VALIDACIONES Y GUARDADO
         # =============================
-        if submit:
+      if submit:
 
     if not promo or not hotels or not rate:
         st.error("Completa los campos obligatorios.")
@@ -233,12 +233,10 @@ elif menu == "➕ Nueva promoción":
         st.error("TW Fin no puede ser menor que TW Inicio.")
         st.stop()
 
-    # Validar Apps Script URL
     if not WEB_APP_URL.startswith("https://"):
         st.error("La URL de Apps Script no está configurada correctamente.")
         st.stop()
 
-    # Guardar archivo (si existe)
     archivo_path = ""
     if archivo:
         archivo_path = os.path.join(MEDIA_DIR, archivo.name)

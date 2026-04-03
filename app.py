@@ -181,7 +181,6 @@ if menu == "Vista rápida":
                         link,
                         key=f"file_{idx}"
                     )
-
 # =============================
 # NUEVA PROMOCIÓN
 # =============================
@@ -193,42 +192,75 @@ elif menu == "Nueva promoción":
         col1, col2 = st.columns(2)
 
         with col1:
-            promo = st.text_input("Promoción *")
-            hotels = st.multiselect("Hotel *", ["DREPM", "SECPM"])
+            promo = st.text_input("Promoción *", key="promo")
+            hotels = st.multiselect(
+                "Hotel *",
+                ["DREPM", "SECPM"],
+                key="hotels"
+            )
 
         with col2:
-            rate = st.text_input("Rate Plan *")
-            discount = st.number_input("Descuento (%)", 0, 100, step=1)
+            rate = st.text_input("Rate Plan *", key="rate")
+            discount = st.number_input(
+                "Descuento (%)",
+                0, 100, step=1,
+                key="discount"
+            )
 
         # -------- MARKET --------
         market = st.selectbox(
             "Market *",
-            ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
+            ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"],
+            key="market"
         )
 
         # -------- BOOKING & TRAVEL WINDOW --------
         st.markdown("**Booking & Travel Window**")
 
-        bw_cols = st.columns(4)
-        bw_cols[0].caption("BW IN")
-        bw_cols[1].caption("BW FIN")
-        bw_cols[2].caption("TW IN")
-        bw_cols[3].caption("TW FIN")
+        labels = st.columns(4)
+        labels[0].caption("BW IN")
+        labels[1].caption("BW FIN")
+        labels[2].caption("TW IN")
+        labels[3].caption("TW FIN")
 
-        in_cols = st.columns(4)
-        bw_i = in_cols[0].date_input("", value=None, label_visibility="collapsed")
-        bw_f = in_cols[1].date_input("", value=None, label_visibility="collapsed")
-        tw_i = in_cols[2].date_input("", value=None, label_visibility="collapsed")
-        tw_f = in_cols[3].date_input("", value=None, label_visibility="collapsed")
+        inputs = st.columns(4)
+        bw_i = inputs[0].date_input(
+            "",
+            value=None,
+            label_visibility="collapsed",
+            key="bw_i"
+        )
+        bw_f = inputs[1].date_input(
+            "",
+            value=None,
+            label_visibility="collapsed",
+            key="bw_f"
+        )
+        tw_i = inputs[2].date_input(
+            "",
+            value=None,
+            label_visibility="collapsed",
+            key="tw_i"
+        )
+        tw_f = inputs[3].date_input(
+            "",
+            value=None,
+            label_visibility="collapsed",
+            key="tw_f"
+        )
 
         # -------- ARCHIVO / NOTAS --------
         archivo = st.file_uploader(
             "Archivo (PNG, JPG, PDF, XLS, XLSX)",
-            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
+            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"],
+            key="archivo"
         )
-        notas = st.text_area("Notas / Restricciones")
+        notas = st.text_area(
+            "Notas / Restricciones",
+            key="notas"
+        )
 
-        # ✅ ✅ ✅ SUBMIT: ÚLTIMA LÍNEA DEL FORM ✅ ✅ ✅
+        # ✅ ✅ ✅ SUBMIT: DEBE SER EL ÚLTIMO ✅ ✅ ✅
         submit = st.form_submit_button("✅ Registrar promoción")
 
         if submit:
@@ -253,12 +285,12 @@ elif menu == "Nueva promoción":
                         archivo.getvalue()
                     ).decode()
 
-                response = requests.post(
+                r = requests.post(
                     WEB_APP_URL,
                     data=json.dumps(payload)
                 )
 
-                if response.status_code != 200:
+                if r.status_code != 200:
                     st.error("Error al guardar promoción")
                     st.stop()
 

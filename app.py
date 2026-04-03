@@ -179,7 +179,7 @@ elif menu == "➕ Nueva promoción":
     with st.form("new_promo", clear_on_submit=True):
 
         # =============================
-        # DATOS GENERALES (PROMO)
+        # PROMO / HOTEL / RATE
         # =============================
         col1, col2 = st.columns(2)
 
@@ -191,10 +191,8 @@ elif menu == "➕ Nueva promoción":
             rate = st.text_input("Rate Plan *")
             discount = st.number_input("Descuento (%)", 0, 100, step=1)
 
-        st.divider()
-
         # =============================
-        # OTA + BW (MISMA FILA)
+        # OTA + BW
         # =============================
         c1, c2 = st.columns([1.2, 1])
 
@@ -209,19 +207,33 @@ elif menu == "➕ Nueva promoción":
                 bw_f = st.date_input("BW Fin", value=None)
 
         # =============================
-        # WOH + TW (MISMA FILA)
+        # WOH + TW (CONDICIONAL)
         # =============================
         c3, c4 = st.columns([1.2, 1])
 
         with c3:
-            woh = st.selectbox("World of Hyatt (WOH)", ["Yes", "No"])
+            woh = st.selectbox(
+                "World of Hyatt (WOH)",
+                ["No", "Yes"],   # No primero, más lógico
+                index=0
+            )
 
         with c4:
-            tw_c1, tw_c2 = st.columns(2)
-            with tw_c1:
-                tw_i = st.date_input("TW Inicio", value=None)
-            with tw_c2:
-                tw_f = st.date_input("TW Fin", value=None)
+            if woh == "Yes":
+                tw_c1, tw_c2 = st.columns(2)
+                with tw_c1:
+                    tw_i = st.date_input("TW Inicio", value=None)
+                with tw_c2:
+                    tw_f = st.date_input("TW Fin", value=None)
+            else:
+                tw_i = None
+                tw_f = None
+                st.markdown(
+                    "<span style='color:gray;font-size:0.85em;'>"
+                    "TW no aplica para esta promoción"
+                    "</span>",
+                    unsafe_allow_html=True
+                )
 
         # =============================
         # MARKET
@@ -231,7 +243,7 @@ elif menu == "➕ Nueva promoción":
         st.divider()
 
         # =============================
-        # ARCHIVO Y NOTAS
+        # ARCHIVO / NOTAS
         # =============================
         archivo = st.file_uploader(
             "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
@@ -242,3 +254,49 @@ elif menu == "➕ Nueva promoción":
 
         submit = st.form_submit_button("✅ Registrar promoción")
 
+        # =============================
+        # VALIDACIONES Y GUARDADO
+        # =============================
+        if submit:
+
+            if not promo or not hotels or not rate:
+                st.error("Completa los campos obligatorios.")
+                st.stop()
+
+            if bw_i and bw_f and bw_f < bw_i:
+                st.error("BW Fin no puede ser menor que BW Inicio.")
+                st.stop()
+
+            if woh == "Yes" and tw_i and tw_f and tw_f < tw_i:
+                st.error("TW Fin no puede ser menor que TW Inicio.")
+                st.stop()
+
+            archivo_path = ""
+            if archivo:
+                archivo_path = os.path.join(MEDIA_DIR, archivo.name)
+                with open(archivo_path, "wb") as f:
+                    f.write(archivo.getbuffer())
+
+            filas = []
+            for h in hotels:
+                filas.append({
+                    "Hotel": h,
+                    "OTA": ota,
+                    "WOH": woh,
+                    "Promo": promo,
+                    "Market": market,
+                    "Rate_Plan": rate,
+                    "Descuento": discount,
+                    "BW_Inicio": bw_i,
+                    "BW_Fin": bw_f,
+                    "TW_Inicio": tw_i,
+                    "TW_Fin": tw_f,
+                    "Archivo_Path": archivo_path,
+                    "Notas": notas
+                })
+
+            df = pd.concat([df, pd.DataFrame(filas)], ignore_index=True)
+            df.to_csv("backup_promos.csv", index=False)
+
+            st.success("🎉 Promoción registrada correctamente")
+            st.rerun()

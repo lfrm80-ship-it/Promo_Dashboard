@@ -159,57 +159,79 @@ elif menu == "➕ Nueva promoción":
 
     with st.form("new_promo", clear_on_submit=True):
 
-        # PROMO / HOTEL / RATE
+        # ---------- PROMO / HOTEL ----------
         c1, c2 = st.columns(2)
 
         with c1:
-            promo = st.text_input("Promoción *")
-            hotels = st.multiselect("Hotel *", PROPERTIES)
+            promo = st.text_input("Promoción *", key="promo_name")
+            hotels = st.multiselect("Hotel *", PROPERTIES, key="hotels_sel")
 
         with c2:
-            rate = st.text_input("Rate Plan *")
-            discount = st.number_input("Descuento (%)", 0, 100, step=1)
+            rate = st.text_input("Rate Plan *", key="rate_plan")
+            discount = st.number_input("Descuento (%)", 0, 100, step=1, key="discount")
 
         st.divider()
 
-        # OTA / MARKET + FECHAS (ULTRA COMPACTO)
+        # ---------- OTA / MARKET + FECHAS ----------
         left, right = st.columns([1, 1.6])
 
         with left:
-            ota = st.selectbox("OTA *", OTAS)
-            market = st.selectbox("Market", MARKETS)
+            ota = st.selectbox("OTA *", OTAS, key="ota_sel")
+            market = st.selectbox("Market", MARKETS, key="market_sel")
 
         with right:
             bw1, bw2, tw1, tw2 = st.columns(4)
 
             with bw1:
                 st.caption("BW Init")
-                bw_i = st.date_input("", value=None, label_visibility="collapsed")
+                bw_i = st.date_input(
+                    "BW Init",
+                    value=None,
+                    label_visibility="collapsed",
+                    key="bw_start"
+                )
 
             with bw2:
                 st.caption("BW End")
-                bw_f = st.date_input("", value=None, label_visibility="collapsed")
+                bw_f = st.date_input(
+                    "BW End",
+                    value=None,
+                    label_visibility="collapsed",
+                    key="bw_end"
+                )
 
             with tw1:
                 st.caption("TW Init")
-                tw_i = st.date_input("", value=None, label_visibility="collapsed")
+                tw_i = st.date_input(
+                    "TW Init",
+                    value=None,
+                    label_visibility="collapsed",
+                    key="tw_start"
+                )
 
             with tw2:
                 st.caption("TW End")
-                tw_f = st.date_input("", value=None, label_visibility="collapsed")
+                tw_f = st.date_input(
+                    "TW End",
+                    value=None,
+                    label_visibility="collapsed",
+                    key="tw_end"
+                )
 
         st.divider()
 
         archivo = st.file_uploader(
             "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
-            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
+            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"],
+            key="file_upload"
         )
-        notas = st.text_area("Notas / Restricciones")
 
-        # ✅ BOTÓN DENTRO DEL FORM (CLAVE)
+        notas = st.text_area("Notas / Restricciones", key="notes")
+
+        # ✅ SUBMIT BUTTON (ahora sí reconocido)
         submit = st.form_submit_button("✅ Registrar promoción")
 
-        # ✅ LÓGICA DEL SUBMIT
+        # ---------- GUARDADO ----------
         if submit:
 
             if not promo or not hotels or not rate:

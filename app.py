@@ -100,22 +100,25 @@ if menu == "Vista rápida":
 
     if df.empty:
         st.info("No hay promociones registradas.")
+
     else:
         df = df.copy()
         df["Estado"] = df.apply(estado, axis=1)
 
+        # ---------- BUSCADOR ----------
         search = st.text_input(
             "Buscar (Promoción, Hotel o Market)",
             placeholder="Ej. Summer Sale, DREPM, USA"
         )
 
+        # ---------- FILTROS ----------
         c1, c2, c3 = st.columns(3)
 
         with c1:
             filtro_estado = st.multiselect(
                 "Estado",
                 ["Activa", "Futura", "Expirada"],
-               default=["Activa", "Futura", "Expirada"]
+                default=["Activa", "Futura", "Expirada"]
             )
 
         with c2:
@@ -130,6 +133,7 @@ if menu == "Vista rápida":
                 sorted(df["Market"].dropna().unique())
             )
 
+        # ---------- APLICAR FILTROS ----------
         df_view = df.copy()
 
         if filtro_estado:
@@ -149,12 +153,11 @@ if menu == "Vista rápida":
                 | df_view["Market"].str.lower().str.contains(s, na=False)
             ]
 
-        #if not st.session_state.is_admin:
-        #    df_view = df_view[df_view["Estado"] == "Activa"]
-
         if df_view.empty:
             st.warning("No hay promociones con los filtros actuales.")
+
         else:
+            # ---------- TABLA ----------
             columnas = [
                 "Hotel", "Promo", "Market", "Rate_Plan", "Descuento",
                 "BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin", "Estado"
@@ -167,33 +170,31 @@ if menu == "Vista rápida":
                 hide_index=True
             )
 
+            # ---------- EXCEL ----------
             st.download_button(
                 "Descargar Excel",
                 data=generar_excel(df_view[columnas]),
                 file_name=f"MasterRecord_{date.today()}.xlsx"
             )
 
-          # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
-st.divider()
-st.markdown("### Testigos / Material adjunto")
+            # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
+            st.divider()
+            st.markdown("### Testigos / Material adjunto")
 
-if "Archivo_Path" in df_view.columns:
+            if "Archivo_Path" in df_view.columns:
+                for idx, row in df_view.iterrows():
+                    link = row["Archivo_Path"]
 
-    for idx, row in df_view.iterrows():
-
-        link = row["Archivo_Path"]
-
-        if pd.notna(link) and str(link).strip() != "":
-            st.markdown(
-                f"**{row['Promo']}**  \n"
-                f"{row['Hotel']} · {row['Market']}"
-            )
-
-            st.link_button(
-                "📎 Ver / Descargar archivo",
-                str(link),
-                key=f"file_{idx}"
-            )
+                    if pd.notna(link) and str(link).strip() != "":
+                        st.markdown(
+                            f"**{row['Promo']}**  \n"
+                            f"{row['Hotel']} · {row['Market']}"
+                        )
+                        st.link_button(
+                            "📎 Ver / Descargar archivo",
+                            str(link),
+                            key=f"file_{idx}"
+                        )
 
 # =========================================================
 # NUEVA PROMOCIÓN

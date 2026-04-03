@@ -210,69 +210,69 @@ elif menu == "➕ Nueva promoción":
             "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
             ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
         )
-
         notas = st.text_area("Notas / Restricciones")
 
-        # ✅ ✅ ✅ ESTE BOTÓN ES OBLIGATORIO ✅ ✅ ✅
+        # ✅ BOTÓN SUBMIT
         submit = st.form_submit_button("✅ Registrar promoción")
 
         # =============================
         # VALIDACIONES Y GUARDADO
         # =============================
-      if submit:
+        if submit:
 
-    if not promo or not hotels or not rate:
-        st.error("Completa los campos obligatorios.")
-        st.stop()
+            if not promo or not hotels or not rate:
+                st.error("Completa los campos obligatorios.")
+                st.stop()
 
-    if bw_i and bw_f and bw_f < bw_i:
-        st.error("BW Fin no puede ser menor que BW Inicio.")
-        st.stop()
+            if bw_i and bw_f and bw_f < bw_i:
+                st.error("BW Fin no puede ser menor que BW Inicio.")
+                st.stop()
 
-    if tw_i and tw_f and tw_f < tw_i:
-        st.error("TW Fin no puede ser menor que TW Inicio.")
-        st.stop()
+            if tw_i and tw_f and tw_f < tw_i:
+                st.error("TW Fin no puede ser menor que TW Inicio.")
+                st.stop()
 
-    if not WEB_APP_URL.startswith("https://"):
-        st.error("La URL de Apps Script no está configurada correctamente.")
-        st.stop()
+            if not WEB_APP_URL.startswith("https://"):
+                st.error("La URL de Apps Script no está configurada correctamente.")
+                st.stop()
 
-    archivo_path = ""
-    if archivo:
-        archivo_path = os.path.join(MEDIA_DIR, archivo.name)
-        with open(archivo_path, "wb") as f:
-            f.write(archivo.getbuffer())
+            # Guardar archivo
+            archivo_path = ""
+            if archivo:
+                archivo_path = os.path.join(MEDIA_DIR, archivo.name)
+                with open(archivo_path, "wb") as f:
+                    f.write(archivo.getbuffer())
 
-    headers = {
-        "Content-Type": "application/json"
-    }
+            headers = {
+                "Content-Type": "application/json"
+            }
 
-    for h in hotels:
-        payload = {
-            "Hotel": h,
-            "OTA": ota,
-            "Promo": promo,
-            "Market": market,
-            "Rate_Plan": rate,
-            "Descuento": discount,
-            "BW_Inicio": date_to_str(bw_i),
-            "BW_Fin": date_to_str(bw_f),
-            "TW_Inicio": date_to_str(tw_i),
-            "TW_Fin": date_to_str(tw_f),
-            "Archivo_Path": archivo_path,
-            "Notas": notas
-        }
+            for h in hotels:
+                payload = {
+                    "Hotel": h,
+                    "OTA": ota,
+                    "Promo": promo,
+                    "Market": market,
+                    "Rate_Plan": rate,
+                    "Descuento": discount,
+                    "BW_Inicio": date_to_str(bw_i),
+                    "BW_Fin": date_to_str(bw_f),
+                    "TW_Inicio": date_to_str(tw_i),
+                    "TW_Fin": date_to_str(tw_f),
+                    "Archivo_Path": archivo_path,
+                    "Notas": notas
+                }
 
-        response = requests.post(
-            WEB_APP_URL,
-            data=json.dumps(payload),
-            headers=headers,
-            timeout=10
-        )
+                response = requests.post(
+                    WEB_APP_URL,
+                    data=json.dumps(payload),
+                    headers=headers,
+                    timeout=10
+                )
 
-        if response.status_code != 200:
-            st.error("Error escribiendo en Google Sheets.")
-            st.stop()
+                if response.status_code != 200:
+                    st.error("Error escribiendo en Google Sheets.")
+                    st.stop()
 
-    st.success("🎉 Promoción guardada correctamente")
-    st.rerun()
+            st.success("🎉 Promoción guardada correctamente")
+            st.rerun()

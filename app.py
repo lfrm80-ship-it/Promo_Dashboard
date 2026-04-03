@@ -13,11 +13,12 @@ st.set_page_config(
 )
 
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
+
 MEDIA_DIR = "media"
 os.makedirs(MEDIA_DIR, exist_ok=True)
 
 # =============================
-# GOOGLE SHEETS vía CSV (ESTABLE)
+# GOOGLE SHEETS (CSV PÚBLICO)
 # =============================
 SHEET_ID = "1dvYqQFpI7VqJFuOLeyqQdb2GijFrhoFrNrpWidakAq4"
 WORKSHEET = "promociones"
@@ -32,6 +33,8 @@ CSV_URL = (
 # =============================
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
+if "selected_idx" not in st.session_state:
+    st.session_state.selected_idx = None
 
 # =============================
 # CONSTANTES
@@ -59,16 +62,20 @@ OTAS = [
 # FUNCIONES
 # =============================
 def cargar_promos():
-    df = pd.read_csv(CSV_URL)
+    try:
+        df = pd.read_csv(CSV_URL)
+    except Exception:
+        df = pd.DataFrame(columns=[
+            "Hotel", "OTA", "WOH", "Promo", "Market", "Rate_Plan",
+            "Descuento", "BW_Inicio", "BW_Fin",
+            "TW_Inicio", "TW_Fin", "Archivo_Path", "Notas"
+        ])
+
     for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
-    return df
 
-def guardar_promo(rows):
-    df = cargar_promos()
-    df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
-    conn.update(worksheet="promociones", data=df)
+    return df
 
 def generar_excel(df):
     buffer = io.BytesIO()
@@ -84,7 +91,8 @@ def calcular_estado(row):
         return "Activa"
     elif hoy < row["TW_Inicio"]:
         return "Futura"
-    return "Expirada"
+    else:
+        return "Expirada"
 
 # =============================
 # SIDEBAR
@@ -99,22 +107,30 @@ with st.sidebar:
     )
 
     st.divider()
+    st.caption("Acceso administrativo")
+
     if st.session_state.is_admin:
-        st.success("🟢 Modo ADMIN")
+        st.success("🟢 Modo ADMIN activo")
         if st.button("Salir de Admin"):
             st.session_state.is_admin = False
+            st.session_state.selected_idx = None
             st.rerun()
     else:
         with st.expander("🔒 Entrar como Admin"):
             pwd = st.text_input("Contraseña", type="password")
-            if st.button("Entrar") and pwd == ADMIN_PASSWORD:
-                st.session_state.is_admin = True
-                st.rerun()
+            if st.button("Entrar"):
+                if pwd == ADMIN_PASSWORD:
+                    st.session_state.is_admin = True
+                    st.rerun()
+                else:
+                    st.error("Contraseña incorrecta")
 
 # =============================
 # HEADER
 # =============================
 st.markdown("## 📊 Master Record Playa Mujeres")
+if not st.session_state.is_admin:
+    st.caption("Modo lectura")
 
 df = cargar_promos()
 
@@ -126,9 +142,9 @@ if menu == "🔍 Vista rápida":
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
+        df = df.copy()
         df["Estado"] = df.apply(calcular_estado, axis=1)
 
-        # 🔹 FILTROS
         col_f1, col_f2 = st.columns(2)
         with col_f1:
             filtro_woh = st.selectbox("WOH", ["All", "Yes", "No"])
@@ -143,7 +159,7 @@ if menu == "🔍 Vista rápida":
         if filtro_woh != "All":
             df_view = df_view[df_view["WOH"] == filtro_woh]
 
-        search = st.text_input("Buscar promoción")
+        search = st.text_input("Buscar promoción…")
         if search:
             df_view = df_view[
                 df_view.astype(str)
@@ -166,37 +182,55 @@ elif menu == "➕ Nueva promoción":
 
     with st.form("new_promo", clear_on_submit=True):
 
-        promo = st.text_input("Promoción *")
-        hotels = st.multiselect("Hotel *", PROPERTIES)
-        ota = st.selectbox("OTA *", OTAS)
-        woh = st.selectbox("World of Hyatt (WOH)", ["Yes", "No"])
-        market = st.selectbox("Market", MARKETS)
-        rate = st.text_input("Rate Plan *")
-        discount = st.number_input("Descuento (%)", 0, 100)
+        col1, col2 = st.columns(2)
+        with col1:
+            promo = st.text_input("Promoción *")
+            hotels = st.multiselect("Hotel *", PROPERTIES)
+            ota = st.selectbox("OTA *", OTAS)
+            woh = st.selectbox("World of Hyatt (WOH)", ["Yes", "No"])
+            market = st.selectbox("Market", MARKETS)
 
-        bw_i = st.date_input("BW Inicio")
-        bw_f = st.date_input("BW Fin")
-        tw_i = st.date_input("TW Inicio")
-        tw_f = st.date_input("TW Fin")
+        with col2:
+            rate = st.text_input("Rate Plan *")
+            discount = st.number_input("Descuento (%)", 0, 100, step=1)
+
+        st.divider()
+        c3, c4, c5, c6 = st.columns(4)
+        with c3:
+            bw_i = st.date_input("BW Inicio")
+        with c4:
+            bw_f = st.date_input("BW Fin")
+        with c5:
+            tw_i = st.date_input("TW Inicio")
+        with c6:
+            tw_f = st.date_input("TW Fin")
 
         archivo = st.file_uploader(
             "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
             ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
         )
 
-        notas = st.text_area("Notas")
-        submit = st.form_submit_button("Registrar promoción")
+        notas = st.text_area("Notas / Restricciones")
+        submit = st.form_submit_button("✅ Registrar promoción")
 
         if submit:
+            if not promo or not hotels or not rate:
+                st.error("Completa los campos obligatorios.")
+                st.stop()
+
+            if bw_f < bw_i or tw_f < tw_i:
+                st.error("Fechas inválidas.")
+                st.stop()
+
             archivo_path = ""
             if archivo:
                 archivo_path = os.path.join(MEDIA_DIR, archivo.name)
                 with open(archivo_path, "wb") as f:
                     f.write(archivo.getbuffer())
 
-            rows = []
+            filas = []
             for h in hotels:
-                rows.append({
+                filas.append({
                     "Hotel": h,
                     "OTA": ota,
                     "WOH": woh,
@@ -212,6 +246,8 @@ elif menu == "➕ Nueva promoción":
                     "Notas": notas
                 })
 
-            guardar_promo(rows)
-            st.success("✅ Promoción registrada correctamente")
+            df = pd.concat([df, pd.DataFrame(filas)], ignore_index=True)
+            df.to_csv("backup_promos.csv", index=False)
+
+            st.success("🎉 Promoción registrada correctamente")
             st.rerun()

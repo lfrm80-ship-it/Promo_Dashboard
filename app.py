@@ -177,32 +177,27 @@ if menu == "Vista rápida":
                 file_name=f"MasterRecord_{date.today()}.xlsx"
             )
 
-            # ---------- TESTIGOS / ADJUNTOS ----------
-            st.divider()
-            st.markdown("### 📎 Testigos / Material adjunto")
+           # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
+st.divider()
+st.markdown("### 📎 Testigos / Material adjunto")
 
-            for idx, row in df_view.iterrows():
-                link = row.get("Archivo_Path")
+for idx, row in df_view.iterrows():
 
-                if isinstance(link, str) and link.strip() != "":
-                    st.markdown(
-                        f"**{row['Promo']}**  \n"
-                        f"{row['Hotel']} · {row['Market']}"
-                    )
+    link = row.get("Archivo_Path")
 
-                    # Preview imagen
-                    if any(ext in link.lower() for ext in [".png", ".jpg", ".jpeg"]):
-                        st.image(link, width=300)
+    if isinstance(link, str) and link.strip() != "":
 
-                    # PDF: link clicable (Drive maneja visor)
-                    elif ".pdf" in link.lower():
-                        st.markdown(f"[📄 Ver PDF]({link})")
+        st.markdown(
+            f"**{row['Promo']}**  \n"
+            f"{row['Hotel']} · {row['Market']}"
+        )
 
-                    st.link_button(
-                        "⬇️ Ver / Descargar archivo",
-                        link,
-                        key=f"file_{idx}"
-                    )
+        # Google Drive maneja el preview automáticamente
+        st.link_button(
+            "👁 Ver / Descargar archivo",
+            link,
+            key=f"file_{idx}"
+        )
 
 # =============================
 # NUEVA PROMOCIÓN

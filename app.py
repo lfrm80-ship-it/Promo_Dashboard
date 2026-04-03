@@ -13,7 +13,6 @@ st.set_page_config(
 )
 
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
-SPREADSHEET_URL = st.secrets["gsheets_url"]
 MEDIA_DIR = "media"
 os.makedirs(MEDIA_DIR, exist_ok=True)
 

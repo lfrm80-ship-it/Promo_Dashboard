@@ -184,13 +184,13 @@ if menu == "Nueva promoción":
     with st.form("new_promo", clear_on_submit=True):
 
         # -------- PROMOCIÓN / HOTEL / RATE --------
-        c1, c2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
-        with c1:
+        with col1:
             promo = st.text_input("Promoción *")
             hotels = st.multiselect("Hotel *", ["DREPM", "SECPM"])
 
-        with c2:
+        with col2:
             rate = st.text_input("Rate Plan *")
             discount = st.number_input("Descuento (%)", 0, 100, step=1)
 
@@ -207,21 +207,17 @@ if menu == "Nueva promoción":
         # -------- BOOKING & TRAVEL WINDOW --------
         st.markdown("**Booking & Travel Window**")
 
-        labels = st.columns(4)
-        with labels[0]: st.caption("BW IN")
-        with labels[1]: st.caption("BW FIN")
-        with labels[2]: st.caption("TW IN")
-        with labels[3]: st.caption("TW FIN")
+        label_cols = st.columns(4)
+        label_cols[0].caption("BW IN")
+        label_cols[1].caption("BW FIN")
+        label_cols[2].caption("TW IN")
+        label_cols[3].caption("TW FIN")
 
-        inputs = st.columns(4)
-        with inputs[0]:
-            bw_i = st.date_input("", value=None, label_visibility="collapsed", key="bw_i")
-        with inputs[1]:
-            bw_f = st.date_input("", value=None, label_visibility="collapsed", key="bw_f")
-        with inputs[2]:
-            tw_i = st.date_input("", value=None, label_visibility="collapsed", key="tw_i")
-        with inputs[3]:
-            tw_f = st.date_input("", value=None, label_visibility="collapsed", key="tw_f")
+        input_cols = st.columns(4)
+        bw_i = input_cols[0].date_input("", value=None, label_visibility="collapsed", key="bw_i")
+        bw_f = input_cols[1].date_input("", value=None, label_visibility="collapsed", key="bw_f")
+        tw_i = input_cols[2].date_input("", value=None, label_visibility="collapsed", key="tw_i")
+        tw_f = input_cols[3].date_input("", value=None, label_visibility="collapsed", key="tw_f")
 
         st.divider()
 
@@ -232,7 +228,7 @@ if menu == "Nueva promoción":
 
         notas = st.text_area("Notas / Restricciones")
 
-        # ✅ SUBMIT **ABSOLUTAMENTE LO ÚLTIMO**
+        # ✅ SUBMIT (DEBE SER LO ÚLTIMO)
         submit = st.form_submit_button("✅ Registrar promoción")
 
         if submit:
@@ -247,3 +243,24 @@ if menu == "Nueva promoción":
                     "BW_Fin": str(bw_f or ""),
                     "TW_Inicio": str(tw_i or ""),
                     "TW_Fin": str(tw_f or ""),
+                    "Notas": notas
+                }
+
+                if archivo:
+                    payload["FileName"] = archivo.name
+                    payload["FileType"] = archivo.type
+                    payload["FileContent"] = base64.b64encode(
+                        archivo.getvalue()
+                    ).decode()
+
+                response = requests.post(
+                    WEB_APP_URL,
+                    data=json.dumps(payload)
+                )
+
+                if response.status_code != 200:
+                    st.error("Error al guardar promoción")
+                    st.stop()
+
+            st.success("✅ Promoción guardada correctamente")
+            st.rerun()

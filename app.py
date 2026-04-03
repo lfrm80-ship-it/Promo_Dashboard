@@ -17,9 +17,15 @@ MEDIA_DIR = "media"
 os.makedirs(MEDIA_DIR, exist_ok=True)
 
 # =============================
-# GOOGLE SHEETS (NATIVO)
+# GOOGLE SHEETS vía CSV (ESTABLE)
 # =============================
-conn = st.connection("gsheets")
+SHEET_ID = "1dvYqQFpI7VqJFuOLeyqQdb2GijFrhoFrNrpWidakAq4"
+WORKSHEET = "promociones"
+
+CSV_URL = (
+    f"https://docs.google.com/spreadsheets/d/"
+    f"{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={WORKSHEET}"
+)
 
 # =============================
 # SESSION STATE

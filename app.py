@@ -149,8 +149,8 @@ if menu == "Vista rápida":
                 | df_view["Market"].str.lower().str.contains(s, na=False)
             ]
 
-        if not st.session_state.is_admin:
-            df_view = df_view[df_view["Estado"] == "Activa"]
+        #if not st.session_state.is_admin:
+        #    df_view = df_view[df_view["Estado"] == "Activa"]
 
         if df_view.empty:
             st.warning("No hay promociones con los filtros actuales.")

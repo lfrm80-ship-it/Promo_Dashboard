@@ -59,7 +59,7 @@ OTAS = [
 # FUNCIONES
 # =============================
 def cargar_promos():
-    df = conn.read(worksheet="promociones", ttl=0)
+    df = pd.read_csv(CSV_URL)
     for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce").dt.date

@@ -166,21 +166,33 @@ if menu == "Vista rápida":
                 file_name=f"MasterRecord_{date.today()}.xlsx"
             )
 
-            # ---------- TESTIGOS ----------
-            st.divider()
-            st.markdown("### 📎 Testigos / Material adjunto")
+           # ---------- TESTIGOS ----------
+st.divider()
+st.markdown("### 📎 Testigos / Material adjunto")
 
-            for idx, row in df_view.iterrows():
-                link = row.get("Archivo_Path")
-                if isinstance(link, str) and link.strip() != "":
-                    st.markdown(
-                        f"**{row['Promo']}**  \n{row['Hotel']} · {row['Market']}"
-                    )
-                    st.link_button(
-                        "👁 Ver / Descargar archivo",
-                        link,
-                        key=f"file_{idx}"
-                    )
+for idx, row in df_view.iterrows():
+
+    # Detectar automáticamente columna de adjuntos
+    archivo_columns = [
+        c for c in df_view.columns
+        if "archivo" in c.lower() or "file" in c.lower()
+    ]
+
+    link = None
+    if archivo_columns:
+        link = row[archivo_columns[0]]
+
+    if isinstance(link, str) and link.strip() != "":
+        st.markdown(
+            f"**{row['Promo']}**  \n"
+            f"{row['Hotel']} · {row['Market']}"
+        )
+
+        st.link_button(
+            "👁 Ver / Descargar archivo",
+            link,
+            key=f"file_{idx}"
+        )
 # =============================
 # NUEVA PROMOCIÓN
 # =============================

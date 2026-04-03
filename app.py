@@ -144,15 +144,28 @@ if menu == "🔍 Vista rápida":
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
+        df = df.copy()
         df["Estado"] = df.apply(calcular_estado, axis=1)
 
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        if st.session_state.is_admin:
+            df_view = df
+        else:
+            df_view = df[df["Estado"] == "Activa"]
 
-        st.download_button(
-            "📥 Descargar Excel",
-            data=generar_excel(df),
-            file_name=f"MasterRecord_{date.today()}.xlsx"
-        )
+        if df_view.empty:
+            st.info("No hay promociones con los filtros actuales.")
+        else:
+            st.dataframe(
+                df_view,
+                use_container_width=True,
+                hide_index=True
+            )
+
+            st.download_button(
+                "📥 Descargar Excel",
+                data=generar_excel(df_view),
+                file_name=f"MasterRecord_{date.today()}.xlsx"
+            )
 
 # =============================
 # NUEVA PROMOCIÓN

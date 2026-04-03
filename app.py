@@ -87,14 +87,15 @@ st.markdown("## 📊 Master Record Playa Mujeres")
 # VISTA RÁPIDA
 # =========================================================
 if menu == "Vista rápida":
-
-    # ---- TODO tu código de Vista Rápida aquí ----
-    # (tabla, filtros, testigos, etc.)
+    # (tu código de Vista Rápida completo aquí)
+    pass
 
 # =========================================================
 # NUEVA PROMOCIÓN
 # =========================================================
-elif menu == "Nueva promoción":
+if menu == "Nueva promoción":
+    # (tu código de Nueva Promoción completo aquí)
+    pass
 
     # ---- TODO tu código de Nueva Promoción aquí ----
 

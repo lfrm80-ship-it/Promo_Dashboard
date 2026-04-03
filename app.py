@@ -51,10 +51,6 @@ OTAS = [
     "Booking.com",
     "Expedia",
     "Hotelbeds",
-    "Jet2Holidays",
-    "Apple Vacations",
-    "Funjet",
-    "Classic Vacations",
     "Other"
 ]
 
@@ -182,7 +178,11 @@ elif menu == "➕ Nueva promoción":
 
     with st.form("new_promo", clear_on_submit=True):
 
+        # =============================
+        # DATOS GENERALES
+        # =============================
         col1, col2 = st.columns(2)
+
         with col1:
             promo = st.text_input("Promoción *")
             hotels = st.multiselect("Hotel *", PROPERTIES)
@@ -195,39 +195,60 @@ elif menu == "➕ Nueva promoción":
             discount = st.number_input("Descuento (%)", 0, 100, step=1)
 
         st.divider()
-        c3, c4, c5, c6 = st.columns(4)
-        with c3:
-            bw_i = st.date_input("BW Inicio")
-        with c4:
-            bw_f = st.date_input("BW Fin")
-        with c5:
-            tw_i = st.date_input("TW Inicio")
-        with c6:
-            tw_f = st.date_input("TW Fin")
 
+        # =============================
+        # FECHAS (OPCIONALES)
+        # =============================
+        c3, c4, c5, c6 = st.columns(4)
+
+        with c3:
+            bw_i = st.date_input("BW Inicio", value=None)
+        with c4:
+            bw_f = st.date_input("BW Fin", value=None)
+        with c5:
+            tw_i = st.date_input("TW Inicio", value=None)
+        with c6:
+            tw_f = st.date_input("TW Fin", value=None)
+
+        # =============================
+        # ARCHIVO / NOTAS
+        # =============================
         archivo = st.file_uploader(
             "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
             ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
         )
 
         notas = st.text_area("Notas / Restricciones")
+
         submit = st.form_submit_button("✅ Registrar promoción")
 
+        # =============================
+        # VALIDACIONES Y GUARDADO
+        # =============================
         if submit:
+
+            # Campos obligatorios
             if not promo or not hotels or not rate:
                 st.error("Completa los campos obligatorios.")
                 st.stop()
 
-            if bw_f < bw_i or tw_f < tw_i:
-                st.error("Fechas inválidas.")
+            # Validaciones de fechas SOLO si existen
+            if bw_i and bw_f and bw_f < bw_i:
+                st.error("BW Fin no puede ser menor que BW Inicio.")
                 st.stop()
 
+            if tw_i and tw_f and tw_f < tw_i:
+                st.error("TW Fin no puede ser menor que TW Inicio.")
+                st.stop()
+
+            # Guardar archivo (si existe)
             archivo_path = ""
             if archivo:
                 archivo_path = os.path.join(MEDIA_DIR, archivo.name)
                 with open(archivo_path, "wb") as f:
                     f.write(archivo.getbuffer())
 
+            # Construir filas (una por hotel)
             filas = []
             for h in hotels:
                 filas.append({
@@ -246,6 +267,7 @@ elif menu == "➕ Nueva promoción":
                     "Notas": notas
                 })
 
+            # Guardado local (backup)
             df = pd.concat([df, pd.DataFrame(filas)], ignore_index=True)
             df.to_csv("backup_promos.csv", index=False)
 

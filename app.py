@@ -173,27 +173,33 @@ if menu == "Vista rápida":
                 file_name=f"MasterRecord_{date.today()}.xlsx"
             )
 
-            st.divider()
-            st.markdown("### Testigos / Material adjunto")
+            # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
+st.divider()
+st.markdown("### Testigos / Material adjunto")
 
-            for idx, row in df_view.iterrows():
-                archivo_cols = [
-                    c for c in df_view.columns
-                    if "archivo" in c.lower() or "file" in c.lower()
-                ]
+for idx, row in df_view.iterrows():
 
-                link = row[archivo_cols[0]] if archivo_cols else None
+    # Detectar columna con link de Google Drive
+    link_col = None
+    for c in df_view.columns:
+        val = row.get(c)
+        if isinstance(val, str) and "drive.google.com" in val:
+            link_col = c
+            break
 
-                if isinstance(link, str) and link.strip():
-                    st.markdown(
-                        f"**{row['Promo']}**  \n{row['Hotel']} · {row['Market']}"
-                    )
-                    st.link_button(
-                        "Ver / Descargar archivo",
-                        link,
-                        key=f"file_{idx}"
-                    )
+    if link_col:
+        link = row[link_col]
 
+        st.markdown(
+            f"**{row['Promo']}**  \n"
+            f"{row['Hotel']} · {row['Market']}"
+        )
+
+        st.link_button(
+            "Ver / Descargar archivo",
+            link,
+            key=f"file_{idx}"
+        )
 
 # =========================================================
 # NUEVA PROMOCIÓN

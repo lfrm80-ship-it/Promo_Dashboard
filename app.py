@@ -173,31 +173,28 @@ if menu == "Vista rápida":
                 file_name=f"MasterRecord_{date.today()}.xlsx"
             )
 
-            # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
-            st.divider()
-            st.markdown("### Testigos / Material adjunto")
+          # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
+st.divider()
+st.markdown("### Testigos / Material adjunto")
 
-            for idx, row in df_view.iterrows():
+if "Archivo_Path" in df_view.columns:
 
-                link = None
+    for idx, row in df_view.iterrows():
 
-                # Detectar cualquier URL en la fila (robusto)
-                for col in df_view.columns:
-                    val = row.get(col)
-                    if isinstance(val, str) and val.strip().startswith("http"):
-                        link = val
-                        break
+        link = row["Archivo_Path"]
 
-                if link:
-                    st.markdown(
-                        f"**{row['Promo']}**  \n"
-                        f"{row['Hotel']} · {row['Market']}"
-                    )
-                    st.link_button(
-                        "📎 Ver / Descargar archivo",
-                        link,
-                        key=f"file_{idx}"
-                    )
+        if pd.notna(link) and str(link).strip() != "":
+            st.markdown(
+                f"**{row['Promo']}**  \n"
+                f"{row['Hotel']} · {row['Market']}"
+            )
+
+            st.link_button(
+                "📎 Ver / Descargar archivo",
+                str(link),
+                key=f"file_{idx}"
+            )
+
 # =========================================================
 # NUEVA PROMOCIÓN
 # =========================================================

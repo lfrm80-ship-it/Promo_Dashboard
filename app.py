@@ -89,17 +89,44 @@ if menu == "Vista rápida":
 # =============================
 if menu == "Nueva promoción":
 
-    with st.form("new_promo"):
+    with st.form("new_promo", clear_on_submit=True):
 
-        promo = st.text_input("Promoción *")
-        hotels = st.multiselect("Hotel *", ["DREPM", "SECPM"])
-        ota = st.selectbox("OTA", ["Direct","Booking","Expedia"])
-        market = st.selectbox("Market", ["USA","CAN","MEX"])
+        # ----- PROMO / HOTEL / RATE -----
+        c1, c2 = st.columns(2)
 
-        bw_i = st.date_input("BW Inicio", value=None)
-        bw_f = st.date_input("BW Fin", value=None)
-        tw_i = st.date_input("TW Inicio", value=None)
-        tw_f = st.date_input("TW Fin", value=None)
+        with c1:
+            promo = st.text_input("Promoción *")
+            hotels = st.multiselect("Hotel *", ["DREPM", "SECPM"])
+
+        with c2:
+            rate = st.text_input("Rate Plan *")
+            discount = st.number_input("Descuento (%)", 0, 100, step=1)
+
+        st.divider()
+
+        # ----- OTA / MARKET + FECHAS (LAYOUT PRO) -----
+        left, right = st.columns([1.1, 2.6])
+
+        with left:
+            ota = st.selectbox("OTA *", ["Direct","Booking","Expedia"])
+            market = st.selectbox("Market", ["USA","CAN","MEX","LATAM","EUR","Worldwide"])
+
+        with right:
+            # Headers
+            h1, h2, h3, h4 = st.columns(4)
+            with h1: st.caption("BW IN")
+            with h2: st.caption("BW FIN")
+            with h3: st.caption("TW IN")
+            with h4: st.caption("TW FIN")
+
+            # Inputs alineados
+            i1, i2, i3, i4 = st.columns(4)
+            with i1: bw_i = st.date_input("", value=None, label_visibility="collapsed", key="bw_i")
+            with i2: bw_f = st.date_input("", value=None, label_visibility="collapsed", key="bw_f")
+            with i3: tw_i = st.date_input("", value=None, label_visibility="collapsed", key="tw_i")
+            with i4: tw_f = st.date_input("", value=None, label_visibility="collapsed", key="tw_f")
+
+        st.divider()
 
         archivo = st.file_uploader(
             "Archivo (PNG, JPG, PDF, XLS, XLSX)",
@@ -117,8 +144,8 @@ if menu == "Nueva promoción":
                     "OTA": ota,
                     "Promo": promo,
                     "Market": market,
-                    "Rate_Plan": "",
-                    "Descuento": 0,
+                    "Rate_Plan": rate,
+                    "Descuento": discount,
                     "BW_Inicio": str(bw_i or ""),
                     "BW_Fin": str(bw_f or ""),
                     "TW_Inicio": str(tw_i or ""),

@@ -177,17 +177,15 @@ if menu == "Vista rápida":
 st.divider()
 st.markdown("### Testigos / Material adjunto")
 
-# Protección absoluta: solo si df_view existe y no está vacío
-if "df_view" in locals() and not df_view.empty:
-
+if not df_view.empty:
     for idx, row in df_view.iterrows():
 
         link = None
 
-        # Buscar automáticamente un link de Drive en cualquier columna
+        # Detectar cualquier URL en la fila (robusto)
         for col in df_view.columns:
             val = row.get(col)
-            if isinstance(val, str) and "drive.google.com" in val:
+            if isinstance(val, str) and val.strip().startswith("http"):
                 link = val
                 break
 
@@ -198,12 +196,10 @@ if "df_view" in locals() and not df_view.empty:
             )
 
             st.link_button(
-                "👁 Ver / Descargar archivo",
+                "📎 Ver / Descargar archivo",
                 link,
                 key=f"file_{idx}"
             )
-
-
 # =========================================================
 # NUEVA PROMOCIÓN
 # =========================================================

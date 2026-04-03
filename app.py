@@ -179,16 +179,13 @@ elif menu == "➕ Nueva promoción":
     with st.form("new_promo", clear_on_submit=True):
 
         # =============================
-        # DATOS GENERALES
+        # DATOS GENERALES (PROMO)
         # =============================
         col1, col2 = st.columns(2)
 
         with col1:
             promo = st.text_input("Promoción *")
             hotels = st.multiselect("Hotel *", PROPERTIES)
-            ota = st.selectbox("OTA *", OTAS)
-            woh = st.selectbox("World of Hyatt (WOH)", ["Yes", "No"])
-            market = st.selectbox("Market", MARKETS)
 
         with col2:
             rate = st.text_input("Rate Plan *")
@@ -197,21 +194,44 @@ elif menu == "➕ Nueva promoción":
         st.divider()
 
         # =============================
-        # FECHAS (OPCIONALES)
+        # OTA + BW (MISMA FILA)
         # =============================
-        c3, c4, c5, c6 = st.columns(4)
+        c1, c2 = st.columns([1.2, 1])
+
+        with c1:
+            ota = st.selectbox("OTA *", OTAS)
+
+        with c2:
+            bw_c1, bw_c2 = st.columns(2)
+            with bw_c1:
+                bw_i = st.date_input("BW Inicio", value=None)
+            with bw_c2:
+                bw_f = st.date_input("BW Fin", value=None)
+
+        # =============================
+        # WOH + TW (MISMA FILA)
+        # =============================
+        c3, c4 = st.columns([1.2, 1])
 
         with c3:
-            bw_i = st.date_input("BW Inicio", value=None)
+            woh = st.selectbox("World of Hyatt (WOH)", ["Yes", "No"])
+
         with c4:
-            bw_f = st.date_input("BW Fin", value=None)
-        with c5:
-            tw_i = st.date_input("TW Inicio", value=None)
-        with c6:
-            tw_f = st.date_input("TW Fin", value=None)
+            tw_c1, tw_c2 = st.columns(2)
+            with tw_c1:
+                tw_i = st.date_input("TW Inicio", value=None)
+            with tw_c2:
+                tw_f = st.date_input("TW Fin", value=None)
 
         # =============================
-        # ARCHIVO / NOTAS
+        # MARKET
+        # =============================
+        market = st.selectbox("Market", MARKETS)
+
+        st.divider()
+
+        # =============================
+        # ARCHIVO Y NOTAS
         # =============================
         archivo = st.file_uploader(
             "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
@@ -222,54 +242,3 @@ elif menu == "➕ Nueva promoción":
 
         submit = st.form_submit_button("✅ Registrar promoción")
 
-        # =============================
-        # VALIDACIONES Y GUARDADO
-        # =============================
-        if submit:
-
-            # Campos obligatorios
-            if not promo or not hotels or not rate:
-                st.error("Completa los campos obligatorios.")
-                st.stop()
-
-            # Validaciones de fechas SOLO si existen
-            if bw_i and bw_f and bw_f < bw_i:
-                st.error("BW Fin no puede ser menor que BW Inicio.")
-                st.stop()
-
-            if tw_i and tw_f and tw_f < tw_i:
-                st.error("TW Fin no puede ser menor que TW Inicio.")
-                st.stop()
-
-            # Guardar archivo (si existe)
-            archivo_path = ""
-            if archivo:
-                archivo_path = os.path.join(MEDIA_DIR, archivo.name)
-                with open(archivo_path, "wb") as f:
-                    f.write(archivo.getbuffer())
-
-            # Construir filas (una por hotel)
-            filas = []
-            for h in hotels:
-                filas.append({
-                    "Hotel": h,
-                    "OTA": ota,
-                    "WOH": woh,
-                    "Promo": promo,
-                    "Market": market,
-                    "Rate_Plan": rate,
-                    "Descuento": discount,
-                    "BW_Inicio": bw_i,
-                    "BW_Fin": bw_f,
-                    "TW_Inicio": tw_i,
-                    "TW_Fin": tw_f,
-                    "Archivo_Path": archivo_path,
-                    "Notas": notas
-                })
-
-            # Guardado local (backup)
-            df = pd.concat([df, pd.DataFrame(filas)], ignore_index=True)
-            df.to_csv("backup_promos.csv", index=False)
-
-            st.success("🎉 Promoción registrada correctamente")
-            st.rerun()

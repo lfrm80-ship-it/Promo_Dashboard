@@ -1,267 +1,295 @@
 import streamlit as st
 import pandas as pd
 import os
-import sqlite3
-from datetime import datetime, date
-from io import BytesIO
+import io
+from datetime import date
+import gspread
+from google.oauth2.service_account import Credentials
 
-# =====================================================
-# 1. CONFIGURACIÓN GENERAL DE LA PÁGINA
-# =====================================================
+# =============================
+# CONFIGURACIÓN GENERAL
+# =============================
 st.set_page_config(
-    page_title="HIC Master Record",
-    layout="wide",
-    page_icon="🏨"
+    page_title="Master Record Playa Mujeres",
+    layout="wide"
 )
 
-# Estilos CSS para corregir visibilidad y diseño corporativo
-st.markdown(
-    """
-    <style>
-    .main { background-color: #f5f7f9; }
-    .stButton>button {
-        width: 100%;
-        border-radius: 6px;
-        height: 3em;
-        background-color: #00338d;
-        color: white;
-        font-weight: 600;
-    }
-    [data-testid="stSidebar"] {
-        border-right: 1px solid #e0e0e0;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# =====================================================
-# 2. PARÁMETROS GENERALES Y BASE DE DATOS
-# =====================================================
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_FILE = os.path.join(BASE_DIR, "hic_master.db")
-SOPORTES_DIR = os.path.join(BASE_DIR, "soportes_promos")
-
-# Contraseña desde Secrets o por defecto
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
+SPREADSHEET_NAME = "MasterRecordPromos"
+SHEET_NAME = "promociones"
+MEDIA_DIR = "media"
+os.makedirs(MEDIA_DIR, exist_ok=True)
 
+# =============================
+# GOOGLE SHEETS
+# =============================
+def get_gsheet():
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=scopes
+    )
+    client = gspread.authorize(creds)
+    return client.open(SPREADSHEET_NAME).worksheet(SHEET_NAME)
+
+# =============================
+# SESSION STATE
+# =============================
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
+if "selected_idx" not in st.session_state:
+    st.session_state.selected_idx = None
 
-@st.cache_resource
-def get_connection():
-    return sqlite3.connect(DB_FILE, check_same_thread=False)
+# =============================
+# CONSTANTES
+# =============================
+PROPERTIES = [
+    "DREPM - Dreams Playa Mujeres",
+    "SECPM - Secrets Playa Mujeres"
+]
 
-conn = get_connection()
+MARKETS = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
 
-def inicializar_tabla():
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS promociones (
-            Hotel TEXT, Promo TEXT, Market TEXT, Rate_Plan TEXT,
-            Descuento INTEGER, BW_Inicio DATE, BW_Fin DATE,
-            TW_Inicio DATE, TW_Fin DATE, Notas TEXT
-        )
-    """)
-    conn.commit()
+OTAS = [
+    "Direct",
+    "Booking.com",
+    "Expedia",
+    "Hotelbeds",
+    "Jet2Holidays",
+    "Apple Vacations",
+    "Funjet",
+    "Classic Vacations",
+    "Other"
+]
 
-def cargar_datos():
-    inicializar_tabla()
-    df = pd.read_sql("SELECT * FROM promociones", conn)
-    for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
-    return df
-
-def guardar_datos(df_nuevo):
-    df_nuevo.to_sql("promociones", conn, if_exists="append", index=False)
-
-def generar_excel(df_export):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        df_export.to_excel(writer, index=False, sheet_name="Master HIC")
-    return output.getvalue()
-
-# Carga inicial de datos
-df = cargar_datos()
-
-# =====================================================
-# 3. SIDEBAR / NAVEGACIÓN
-# =====================================================
-with st.sidebar:
+# =============================
+# FUNCIONES
+# =============================
+def cargar_promos():
     try:
-        st.image("HIC.png", use_container_width=True)
-    except:
-        st.write("### Inclusive Collection")
+        sheet = get_gsheet()
+        df = pd.DataFrame(sheet.get_all_records())
+        for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
+        return df
+    except Exception as e:
+        st.error(f"Error cargando promociones: {e}")
+        return pd.DataFrame()
 
-    st.markdown("<h2 style='text-align:center; color:#00338d;'>Master Record</h2>", unsafe_allow_html=True)
+def guardar_promo(rows):
+    sheet = get_gsheet()
+    for r in rows:
+        sheet.append_row([
+            r["Hotel"], r["OTA"], r["Promo"], r["Market"],
+            r["Rate_Plan"], r["Descuento"],
+            r["BW_Inicio"], r["BW_Fin"],
+            r["TW_Inicio"], r["TW_Fin"],
+            r["Archivo_Path"], r["Notas"]
+        ])
+
+def eliminar_promo(idx):
+    sheet = get_gsheet()
+    sheet.delete_rows(idx + 2)
+
+def generar_excel(df):
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        df.to_excel(writer, index=False)
+    return buffer.getvalue()
+
+def calcular_estado(row):
+    hoy = date.today()
+    if pd.isna(row["TW_Inicio"]) or pd.isna(row["TW_Fin"]):
+        return "Expirada"
+    if row["TW_Inicio"] <= hoy <= row["TW_Fin"]:
+        return "Activa"
+    elif hoy < row["TW_Inicio"]:
+        return "Futura"
+    return "Expirada"
+
+# =============================
+# SIDEBAR
+# =============================
+with st.sidebar:
+    st.image("HIC.png", use_container_width=True)
     st.divider()
 
     menu = st.radio(
         "Navegación",
-        ["🔍 Vista rápida y Filtros", "➕ Registro y Modificación", "📈 Upsell FD", "🏨 World of Hyatt"]
+        ["🔍 Vista rápida"] + (["➕ Nueva promoción"] if st.session_state.is_admin else [])
     )
 
     st.divider()
+    st.caption("Acceso administrativo")
 
     if st.session_state.is_admin:
-        st.success("🔓 MODO ADMINISTRADOR")
-        if st.button("Cerrar Sesión"):
+        st.success("🟢 Modo ADMIN")
+        if st.button("Salir de Admin"):
             st.session_state.is_admin = False
+            st.session_state.selected_idx = None
             st.rerun()
     else:
-        pwd = st.text_input("Password", type="password")
-        if st.button("Login") and pwd == ADMIN_PASSWORD:
-            st.session_state.is_admin = True
-            st.rerun()
+        with st.expander("🔒 Entrar como Admin"):
+            pwd = st.text_input("Contraseña", type="password")
+            if st.button("Entrar"):
+                if pwd == ADMIN_PASSWORD:
+                    st.session_state.is_admin = True
+                    st.rerun()
+                else:
+                    st.error("Contraseña incorrecta")
 
-# =====================================================
-# 4. MÓDULO 1 – VISTA RÁPIDA (CON MEJORAS)
-# =====================================================
-if menu == "🔍 Vista rápida y Filtros":
-    st.title("🔎 Consulta Integral de Promociones")
+# =============================
+# HEADER
+# =============================
+st.markdown("## 📊 Master Record Playa Mujeres")
+if not st.session_state.is_admin:
+    st.caption("Modo lectura")
+
+df = cargar_promos()
+
+# =============================
+# VISTA RÁPIDA
+# =============================
+if menu == "🔍 Vista rápida":
 
     if df.empty:
         st.info("No hay promociones registradas.")
     else:
-        today = date.today()
+        df = df.copy()
+        df["Estado"] = df.apply(calcular_estado, axis=1)
 
-        def estatus_func(row):
-            if pd.isna(row["BW_Inicio"]) or pd.isna(row["TW_Fin"]): return "Sin Fecha"
-            if row["BW_Inicio"] <= today <= row["TW_Fin"]: return "Vigente"
-            elif today < row["BW_Inicio"]: return "Iniciada"
-            return "Expirada"
+        estados_ui = {
+            "🟢 Activa": "Activa",
+            "🟠 Futura": "Futura",
+            "🔴 Expirada": "Expirada"
+        }
 
-        df_view = df.copy()
-        df_view["Estatus"] = df_view.apply(estatus_func, axis=1)
+        default_ui = ["🟢 Activa"] if not st.session_state.is_admin else list(estados_ui)
+        filtro_estado_ui = st.multiselect("Estado", list(estados_ui), default=default_ui)
+        filtro_estado = [estados_ui[e] for e in filtro_estado_ui]
 
-        f1, f2, f3, f4 = st.columns([1, 1, 1, 2])
-        h_sel = f1.multiselect("Hotel", ["DREPM", "SECPM"])
-        m_sel = f2.multiselect("Mercado", sorted(df_view["Market"].dropna().unique()))
-        e_sel = f3.multiselect("Estatus", ["Vigente", "Iniciada", "Expirada"], default=["Vigente"])
-        t_busq = f4.text_input("Buscador Global")
+        df_view = df[df["Estado"].isin(filtro_estado)]
 
-        df_f = df_view.copy()
-        if h_sel: df_f = df_f[df_f["Hotel"].isin(h_sel)]
-        if m_sel: df_f = df_f[df_f["Market"].isin(m_sel)]
-        if e_sel: df_f = df_f[df_f["Estatus"].isin(e_sel)]
-        if t_busq:
-            df_f = df_f[df_f.astype(str).apply(lambda r: r.str.contains(t_busq, case=False).any(), axis=1)]
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            search = st.text_input("Buscar promoción…")
+        with col2:
+            st.download_button(
+                "📥 Descargar Excel",
+                data=generar_excel(df_view),
+                file_name=f"MasterRecord_{date.today()}.xlsx",
+                use_container_width=True
+            )
 
-        # Botón de Excel para todo el equipo
-        if not df_f.empty:
-            c_info, c_btn = st.columns([3, 1])
-            with c_info:
-                st.write(f"Resultados: **{len(df_f)}** promociones.")
-            with c_btn:
-                st.download_button(
-                    "🟢 Descargar Excel",
-                    generar_excel(df_f),
-                    file_name=f"HIC_Reporte_{today}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+        if search:
+            df_view = df_view[
+                df_view.astype(str)
+                .apply(lambda x: x.str.contains(search, case=False, na=False))
+                .any(axis=1)
+            ]
 
-        st.dataframe(df_f, use_container_width=True, hide_index=True)
+        st.dataframe(df_view, use_container_width=True, hide_index=True)
 
-        # MEJORA: Testigos bajo demanda (Expander)
+        if not df_view.empty:
+            st.divider()
+            idx = st.selectbox(
+                "Selecciona promoción",
+                df_view.index,
+                format_func=lambda i: df_view.loc[i, "Promo"]
+            )
+            st.session_state.selected_idx = idx
+
+            archivo = df_view.loc[idx, "Archivo_Path"]
+            if archivo and os.path.exists(archivo):
+                if st.button("👁 Ver archivo"):
+                    ext = archivo.split(".")[-1].lower()
+                    if ext in ["png", "jpg", "jpeg"]:
+                        st.image(archivo, use_container_width=True)
+                    else:
+                        with open(archivo, "rb") as f:
+                            st.download_button(
+                                "📎 Descargar archivo",
+                                f,
+                                file_name=os.path.basename(archivo)
+                            )
+
+        if st.session_state.is_admin and st.session_state.selected_idx is not None:
+            st.divider()
+            if st.checkbox("Confirmar eliminación"):
+                if st.button("🗑 Eliminar promoción", type="primary"):
+                    eliminar_promo(st.session_state.selected_idx)
+                    st.success("Promoción eliminada")
+                    st.rerun()
+
+# =============================
+# NUEVA PROMOCIÓN
+# =============================
+elif menu == "➕ Nueva promoción":
+
+    with st.form("new_promo", clear_on_submit=True):
+
+        col1, col2 = st.columns(2)
+        with col1:
+            promo = st.text_input("Promoción *")
+            hotels = st.multiselect("Hotel *", PROPERTIES)
+            ota = st.selectbox("OTA *", OTAS)
+            market = st.selectbox("Market", MARKETS)
+
+        with col2:
+            rate = st.text_input("Rate Plan *")
+            discount = st.number_input("Descuento (%)", 0, 100)
+
         st.divider()
-        with st.expander("👁️ Ver Testigos / Soportes de Promociones"):
-            if os.path.exists(SOPORTES_DIR):
-                archivos = os.listdir(SOPORTES_DIR)
-                if archivos:
-                    cols_img = st.columns(3) 
-                    for i, f in enumerate(archivos):
-                        ruta = os.path.join(SOPORTES_DIR, f)
-                        ext = f.lower().split(".")[-1]
-                        with cols_img[i % 3]: 
-                            if ext in ["png", "jpg", "jpeg"]:
-                                st.image(ruta, caption=f, use_container_width=True)
-                            else:
-                                with open(ruta, "rb") as file_data:
-                                    st.download_button(f"Descargar {f}", file_data, file_name=f, key=f"btn_{i}")
-                else:
-                    st.info("No hay archivos cargados.")
+        c3, c4, c5, c6 = st.columns(4)
+        with c3:
+            bw_i = st.date_input("BW Inicio")
+        with c4:
+            bw_f = st.date_input("BW Fin")
+        with c5:
+            tw_i = st.date_input("TW Inicio")
+        with c6:
+            tw_f = st.date_input("TW Fin")
 
-# =====================================================
-# 5. MÓDULO 2 – REGISTRO Y MODIFICACIÓN
-# =====================================================
-elif menu == "➕ Registro y Modificación":
-    st.title("🛠️ Centro de Control de Promociones")
-    if not st.session_state.is_admin:
-        st.error("Acceso restringido a administradores.")
-    else:
-        with st.form("registro_promo", clear_on_submit=True):
-            st.subheader("Datos de la Promoción")
-            c1, c2, c3 = st.columns([3, 2, 2])
-            p_nom = c1.text_input("Promo")
-            p_htl = c2.multiselect("Hotel", ["DREPM", "SECPM"])
-            p_mkt = c3.selectbox("Mercado", ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"])
+        archivo = st.file_uploader(
+            "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
+            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
+        )
 
-            c4, c5 = st.columns(2)
-            p_cod = c4.text_input("Rate Plan")
-            p_des = c5.number_input("Descuento %", 0, 100, 0)
+        notas = st.text_area("Notas / Restricciones")
+        submit = st.form_submit_button("✅ Registrar promoción")
 
-            st.markdown("### Fechas")
-            bw1, bw2, tw1, tw2 = st.columns(4)
-            bw_i, bw_f = bw1.date_input("BW Inicio"), bw2.date_input("BW Fin")
-            tw_i, tw_f = tw1.date_input("TW Inicio"), tw2.date_input("TW Fin")
+        if submit:
+            if not promo or not hotels or not rate:
+                st.error("Completa los campos obligatorios")
+                st.stop()
+            if bw_f < bw_i or tw_f < tw_i:
+                st.error("Fechas inválidas")
+                st.stop()
 
-            archivo = st.file_uploader("Soporte", type=["png", "jpg", "pdf", "xlsx"])
-            notas = st.text_area("Notas")
+            archivo_path = ""
+            if archivo:
+                archivo_path = os.path.join(MEDIA_DIR, archivo.name)
+                with open(archivo_path, "wb") as f:
+                    f.write(archivo.getbuffer())
 
-            if st.form_submit_button("✅ Guardar Promoción"):
-                nuevos = pd.DataFrame([{
-                    "Hotel": h, "Promo": p_nom, "Market": p_mkt, "Rate_Plan": p_cod,
-                    "Descuento": p_des, "BW_Inicio": bw_i, "BW_Fin": bw_f,
-                    "TW_Inicio": tw_i, "TW_Fin": tw_f, "Notas": notas
-                } for h in p_htl])
-                guardar_datos(nuevos)
-                if archivo:
-                    os.makedirs(SOPORTES_DIR, exist_ok=True)
-                    with open(os.path.join(SOPORTES_DIR, archivo.name), "wb") as f_out:
-                        f_out.write(archivo.getbuffer())
-                st.success("Guardado exitoso.")
-                st.rerun()
+            rows = []
+            for h in hotels:
+                rows.append({
+                    "Hotel": h,
+                    "OTA": ota,
+                    "Promo": promo,
+                    "Market": market,
+                    "Rate_Plan": rate,
+                    "Descuento": discount,
+                    "BW_Inicio": bw_i,
+                    "BW_Fin": bw_f,
+                    "TW_Inicio": tw_i,
+                    "TW_Fin": tw_f,
+                    "Archivo_Path": archivo_path,
+                    "Notas": notas
+                })
 
-# =====================================================
-# 6. MÓDULO 3 – UPSELL FD
-# =====================================================
-elif menu == "📈 Upsell FD":
-    st.title("📈 Calculadora de Upsell Front Desk")
-    CATS = {"JS Garden View": 0, "JS Pool View": 45, "JS Ocean View": 90, "JS Swim Out": 150}
-    c_de = st.selectbox("De", list(CATS))
-    c_a = st.selectbox("A", [k for k in CATS if CATS[k] > CATS[c_de]])
-    nts = st.number_input("Noches", 1, 30, 1)
-    if st.button("Calcular"):
-        st.success(f"Upgrade total: ${(CATS[c_a] - CATS[c_de]) * nts:,.2f} USD")
-
-# =====================================================
-# 7. MÓDULO 4 – WORLD OF HYATT (LÓGICA COMPLETA)
-# =====================================================
-elif menu == "🏨 World of Hyatt":
-    st.title("🏨 World of Hyatt – Operational Guide")
-    woh = {
-        "Member": {"nights": 0, "bonus": 0, "late": "Subject to availability", "priority": "Standard"},
-        "Discoverist": {"nights": 10, "bonus": 10, "late": "2:00 PM", "priority": "Enhanced"},
-        "Explorist": {"nights": 30, "bonus": 20, "late": "2:00 PM", "priority": "High"},
-        "Globalist": {"nights": 60, "bonus": 30, "late": "4:00 PM", "priority": "Premium"}
-    }
-    estatus_woh = st.radio("Tier", list(woh.keys()), horizontal=True)
-    b = woh[estatus_woh]
-    
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Nights", f"{b['nights']}")
-    c2.metric("Bonus", f"{b['bonus']}%")
-    c3.metric("Late C/O", b['late'])
-    c4.metric("Priority", b['priority'])
-
-    st.divider()
-    st.markdown("### 🔢 Points Calculator")
-    rate = st.number_input("Rate (USD)", value=300)
-    nights_woh = st.number_input("Noches ", value=3)
-    base_p = rate * nights_woh * 5
-    total_p = base_p * (1 + b["bonus"] / 100)
-    
-    r1, r2, r3 = st.columns(3)
-    r1.metric("Base Points", f"{int(base_p):,}")
-    r2.metric("Bonus Points", f"+{int(total_p - base_p):,}")
-    r3.metric("Total", f"{int(total_p):,}")
+            guardar_promo(rows)
+            st.success("🎉 Promoción registrada")
+            st.rerun()

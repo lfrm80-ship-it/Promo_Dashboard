@@ -66,20 +66,28 @@ OTAS = [
 # =============================
 # FUNCIONES
 # =============================
+def date_to_str(d):
+    """Convierte date a string ISO (YYYY-MM-DD) para JSON"""
+    if d is None or pd.isna(d):
+        return ""
+    return d.isoformat()
+
+
 def cargar_promos():
     try:
         df = pd.read_csv(CSV_URL)
     except Exception:
         df = pd.DataFrame(columns=[
-            "Hotel","OTA","WOH","Promo","Market","Rate_Plan",
-            "Descuento","BW_Inicio","BW_Fin",
-            "TW_Inicio","TW_Fin","Archivo_Path","Notas"
+            "Hotel", "OTA", "Promo", "Market", "Rate_Plan",
+            "Descuento", "BW_Inicio", "BW_Fin",
+            "TW_Inicio", "TW_Fin", "Archivo_Path", "Notas"
         ])
 
-    for c in ["BW_Inicio","BW_Fin","TW_Inicio","TW_Fin"]:
+    for c in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
         df[c] = pd.to_datetime(df[c], errors="coerce").dt.date
 
     return df
+
 
 def calcular_estado(row):
     hoy = date.today()
@@ -90,6 +98,7 @@ def calcular_estado(row):
     if hoy < row["TW_Inicio"]:
         return "Futura"
     return "Expirada"
+
 
 def generar_excel(df):
     buffer = io.BytesIO()

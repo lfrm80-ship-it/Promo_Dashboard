@@ -71,18 +71,85 @@ df = cargar_df()
 # VISTA RÁPIDA
 # =============================
 if menu == "Vista rápida":
+
     if df.empty:
-        st.info("Sin promociones")
+        st.info("No hay promociones registradas.")
     else:
+        df = df.copy()
+
+        # ---------- CALCULAR ESTADO ----------
         df["Estado"] = df.apply(estado, axis=1)
-        view = df if st.session_state.is_admin else df[df["Estado"]=="Activa"]
 
-        st.dataframe(view, use_container_width=True, hide_index=True)
+        # ---------- FILTROS ----------
+        col_f1, col_f2, col_f3 = st.columns(3)
 
-        st.markdown("### 📎 Testigos")
-        for _, r in view.iterrows():
-            if isinstance(r.get("Archivo_Path"), str) and r["Archivo_Path"]:
-                st.link_button("📄 Ver / Descargar", r["Archivo_Path"])
+        with col_f1:
+            filtro_estado = st.multiselect(
+                "Estado",
+                ["Activa", "Futura", "Expirada"],
+                default=["Activa"]
+            )
+
+        with col_f2:
+            filtro_ota = st.multiselect(
+                "OTA",
+                sorted(df["OTA"].dropna().unique())
+            )
+
+        with col_f3:
+            filtro_market = st.multiselect(
+                "Market",
+                sorted(df["Market"].dropna().unique())
+            )
+
+        df_view = df.copy()
+
+        if filtro_estado:
+            df_view = df_view[df_view["Estado"].isin(filtro_estado)]
+
+        if filtro_ota:
+            df_view = df_view[df_view["OTA"].isin(filtro_ota)]
+
+        if filtro_market:
+            df_view = df_view[df_view["Market"].isin(filtro_market)]
+
+        if not st.session_state.is_admin:
+            df_view = df_view[df_view["Estado"] == "Activa"]
+
+        if df_view.empty:
+            st.warning("No hay promociones con los filtros seleccionados.")
+        else:
+            # ---------- TABLA ----------
+            st.dataframe(
+                df_view,
+                use_container_width=True,
+                hide_index=True
+            )
+
+            # ---------- DESCARGA EXCEL ----------
+            st.download_button(
+                "📥 Descargar Excel",
+                data=generar_excel(df_view),
+                file_name=f"MasterRecord_{date.today()}.xlsx"
+            )
+
+            # ---------- TESTIGOS ----------
+            st.divider()
+            st.markdown("### 📎 Testigos / Material adjunto")
+
+            for idx, row in df_view.iterrows():
+                if isinstance(row.get("Archivo_Path"), str) and row["Archivo_Path"]:
+                    cols_t = st.columns([4, 1])
+                    with cols_t[0]:
+                        st.markdown(
+                            f"**{row['Promo']}**  \n{row['Hotel']} · {row['OTA']}"
+                        )
+                    with cols_t[1]:
+                        st.link_button(
+                            "👁 Ver / Descargar",
+                            row["Archivo_Path"],
+                            key=f"file_{idx}"
+                        )
 
 # =============================
 # NUEVA PROMOCIÓN

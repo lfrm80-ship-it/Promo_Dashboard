@@ -3,8 +3,6 @@ import pandas as pd
 import os
 import io
 from datetime import date
-import gspread
-from google.oauth2.service_account import Credentials
 
 # =============================
 # CONFIGURACIÓN GENERAL
@@ -15,30 +13,24 @@ st.set_page_config(
 )
 
 ADMIN_PASSWORD = st.secrets.get("admin_password", "admin")
-SPREADSHEET_NAME = "MasterRecordPromos"
-SHEET_NAME = "promociones"
+SPREADSHEET_URL = st.secrets["gsheets_url"]
 MEDIA_DIR = "media"
 os.makedirs(MEDIA_DIR, exist_ok=True)
 
 # =============================
-# GOOGLE SHEETS
+# GOOGLE SHEETS (NATIVO)
 # =============================
-def get_gsheet():
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    creds = Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"],
-        scopes=scopes
-    )
-    client = gspread.authorize(creds)
-    return client.open(SPREADSHEET_NAME).worksheet(SHEET_NAME)
+conn = st.experimental_connection(
+    "gsheets",
+    type="gsheets",
+    url=SPREADSHEET_URL
+)
 
 # =============================
 # SESSION STATE
 # =============================
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
-if "selected_idx" not in st.session_state:
-    st.session_state.selected_idx = None
 
 # =============================
 # CONSTANTES
@@ -66,35 +58,16 @@ OTAS = [
 # FUNCIONES
 # =============================
 def cargar_promos():
-    sheet = get_gsheet()
-    df = pd.DataFrame(sheet.get_all_records())
+    df = conn.read(worksheet="promociones", ttl=0)
     for col in ["BW_Inicio", "BW_Fin", "TW_Inicio", "TW_Fin"]:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
     return df
 
 def guardar_promo(rows):
-    sheet = get_gsheet()
-    for r in rows:
-        sheet.append_row([
-            r["Hotel"],
-            r["OTA"],
-            r["WOH"],
-            r["Promo"],
-            r["Market"],
-            r["Rate_Plan"],
-            r["Descuento"],
-            r["BW_Inicio"],
-            r["BW_Fin"],
-            r["TW_Inicio"],
-            r["TW_Fin"],
-            r["Archivo_Path"],
-            r["Notas"]
-        ])
-
-def eliminar_promo(idx):
-    sheet = get_gsheet()
-    sheet.delete_rows(idx + 2)
+    df = cargar_promos()
+    df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+    conn.update(worksheet="promociones", data=df)
 
 def generar_excel(df):
     buffer = io.BytesIO()
@@ -125,8 +98,6 @@ with st.sidebar:
     )
 
     st.divider()
-    st.caption("Acceso administrativo")
-
     if st.session_state.is_admin:
         st.success("🟢 Modo ADMIN")
         if st.button("Salir de Admin"):
@@ -156,9 +127,20 @@ if menu == "🔍 Vista rápida":
     else:
         df["Estado"] = df.apply(calcular_estado, axis=1)
 
-        df_view = df[df["Estado"].isin(
-            ["Activa"] if not st.session_state.is_admin else ["Activa", "Futura", "Expirada"]
-        )]
+        # 🔹 FILTROS
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            filtro_woh = st.selectbox("WOH", ["All", "Yes", "No"])
+        with col_f2:
+            filtro_estado = st.multiselect(
+                "Estado",
+                ["Activa", "Futura", "Expirada"],
+                default=["Activa"] if not st.session_state.is_admin else ["Activa", "Futura", "Expirada"]
+            )
+
+        df_view = df[df["Estado"].isin(filtro_estado)]
+        if filtro_woh != "All":
+            df_view = df_view[df_view["WOH"] == filtro_woh]
 
         search = st.text_input("Buscar promoción")
         if search:
@@ -181,7 +163,7 @@ if menu == "🔍 Vista rápida":
 # =============================
 elif menu == "➕ Nueva promoción":
 
-    with st.form("new_promo"):
+    with st.form("new_promo", clear_on_submit=True):
 
         promo = st.text_input("Promoción *")
         hotels = st.multiselect("Hotel *", PROPERTIES)
@@ -230,5 +212,5 @@ elif menu == "➕ Nueva promoción":
                 })
 
             guardar_promo(rows)
-            st.success("✅ Promoción registrada")
+            st.success("✅ Promoción registrada correctamente")
             st.rerun()

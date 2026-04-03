@@ -274,12 +274,12 @@ elif menu == "➕ Nueva promoción":
         # =============================
         left, right = st.columns([1, 1.6])
 
-        # IZQUIERDA
+        # ---------- IZQUIERDA ----------
         with left:
             ota = st.selectbox("OTA *", OTAS)
             market = st.selectbox("Market", MARKETS)
 
-        # DERECHA
+        # ---------- DERECHA ----------
         with right:
             bw1, bw2, tw1, tw2 = st.columns(4)
 
@@ -333,6 +333,7 @@ elif menu == "➕ Nueva promoción":
                 st.error("La URL de Apps Script no está configurada correctamente.")
                 st.stop()
 
+            # Guardar archivo
             archivo_path = ""
             if archivo:
                 archivo_path = os.path.join(MEDIA_DIR, archivo.name)
@@ -342,3 +343,31 @@ elif menu == "➕ Nueva promoción":
             headers = {"Content-Type": "application/json"}
 
             for h in hotels:
+                payload = {
+                    "Hotel": h,
+                    "OTA": ota,
+                    "Promo": promo,
+                    "Market": market,
+                    "Rate_Plan": rate,
+                    "Descuento": discount,
+                    "BW_Inicio": date_to_str(bw_i),
+                    "BW_Fin": date_to_str(bw_f),
+                    "TW_Inicio": date_to_str(tw_i),
+                    "TW_Fin": date_to_str(tw_f),
+                    "Archivo_Path": archivo_path,
+                    "Notas": notas
+                }
+
+                r = requests.post(
+                    WEB_APP_URL,
+                    data=json.dumps(payload),
+                    headers=headers,
+                    timeout=10
+                )
+
+                if r.status_code != 200:
+                    st.error("Error escribiendo en Google Sheets.")
+                    st.stop()
+
+            st.success("🎉 Promoción guardada correctamente")
+            st.rerun()

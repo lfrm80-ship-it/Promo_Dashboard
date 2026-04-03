@@ -177,6 +177,8 @@ if menu == "Vista rápida":
                 file_name=f"MasterRecord_{date.today()}.xlsx"
             )
 
+            st.write("DEBUG columnas:", df_view.columns.tolist())
+st.write("DEBUG primera fila:", df_view.iloc[0].to_dict() if not df_view.empty else "No rows")
             # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
             st.divider()
             st.markdown("### Testigos / Material adjunto")

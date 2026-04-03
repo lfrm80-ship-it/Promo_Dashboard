@@ -172,118 +172,58 @@ elif menu == "➕ Nueva promoción":
 
         st.divider()
 
-        # ---------- OTA / MARKET + FECHAS ----------
-        left, right = st.columns([1, 1.6])
+        # ---------- OTA / MARKET + FECHAS (HEADER ALIGN PRO) ----------
+left, right = st.columns([1.1, 2.6])
 
-        with left:
-            ota = st.selectbox("OTA *", OTAS, key="ota_sel")
-            market = st.selectbox("Market", MARKETS, key="market_sel")
+# ===== LADO IZQUIERDO: CONTEXTO =====
+with left:
+    ota = st.selectbox("OTA *", OTAS, key="ota_sel")
+    market = st.selectbox("Market", MARKETS, key="market_sel")
 
-        with right:
-            bw1, bw2, tw1, tw2 = st.columns(4)
+# ===== LADO DERECHO: FECHAS =====
+with right:
+    # Header superior (labels)
+    h1, h2, h3, h4 = st.columns(4)
+    with h1:
+        st.caption("BW IN")
+    with h2:
+        st.caption("BW FIN")
+    with h3:
+        st.caption("TW IN")
+    with h4:
+        st.caption("TW FIN")
 
-            with bw1:
-                st.caption("BW Init")
-                bw_i = st.date_input(
-                    "BW Init",
-                    value=None,
-                    label_visibility="collapsed",
-                    key="bw_start"
-                )
+    # Inputs alineados
+    i1, i2, i3, i4 = st.columns(4)
 
-            with bw2:
-                st.caption("BW End")
-                bw_f = st.date_input(
-                    "BW End",
-                    value=None,
-                    label_visibility="collapsed",
-                    key="bw_end"
-                )
-
-            with tw1:
-                st.caption("TW Init")
-                tw_i = st.date_input(
-                    "TW Init",
-                    value=None,
-                    label_visibility="collapsed",
-                    key="tw_start"
-                )
-
-            with tw2:
-                st.caption("TW End")
-                tw_f = st.date_input(
-                    "TW End",
-                    value=None,
-                    label_visibility="collapsed",
-                    key="tw_end"
-                )
-
-        st.divider()
-
-        archivo = st.file_uploader(
-            "Adjuntar archivo (PNG, JPG, PDF, XLS, XLSX)",
-            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"],
-            key="file_upload"
+    with i1:
+        bw_i = st.date_input(
+            "",
+            value=None,
+            label_visibility="collapsed",
+            key="bw_start"
         )
 
-        notas = st.text_area("Notas / Restricciones", key="notes")
+    with i2:
+        bw_f = st.date_input(
+            "",
+            value=None,
+            label_visibility="collapsed",
+            key="bw_end"
+        )
 
-        # ✅ SUBMIT BUTTON (ahora sí reconocido)
-        submit = st.form_submit_button("✅ Registrar promoción")
+    with i3:
+        tw_i = st.date_input(
+            "",
+            value=None,
+            label_visibility="collapsed",
+            key="tw_start"
+        )
 
-        # ---------- GUARDADO ----------
-        if submit:
-
-            if not promo or not hotels or not rate:
-                st.error("Completa los campos obligatorios.")
-                st.stop()
-
-            if bw_i and bw_f and bw_f < bw_i:
-                st.error("BW Fin no puede ser menor que BW Inicio.")
-                st.stop()
-
-            if tw_i and tw_f and tw_f < tw_i:
-                st.error("TW Fin no puede ser menor que TW Inicio.")
-                st.stop()
-
-            if not WEB_APP_URL.startswith("https://"):
-                st.error("La URL de Apps Script no está configurada correctamente.")
-                st.stop()
-
-            archivo_path = ""
-            if archivo:
-                archivo_path = os.path.join(MEDIA_DIR, archivo.name)
-                with open(archivo_path, "wb") as f:
-                    f.write(archivo.getbuffer())
-
-            headers = {"Content-Type": "application/json"}
-
-            for h in hotels:
-                payload = {
-                    "Hotel": h,
-                    "OTA": ota,
-                    "Promo": promo,
-                    "Market": market,
-                    "Rate_Plan": rate,
-                    "Descuento": discount,
-                    "BW_Inicio": date_to_str(bw_i),
-                    "BW_Fin": date_to_str(bw_f),
-                    "TW_Inicio": date_to_str(tw_i),
-                    "TW_Fin": date_to_str(tw_f),
-                    "Archivo_Path": archivo_path,
-                    "Notas": notas
-                }
-
-                r = requests.post(
-                    WEB_APP_URL,
-                    data=json.dumps(payload),
-                    headers=headers,
-                    timeout=10
-                )
-
-                if r.status_code != 200:
-                    st.error("Error escribiendo en Google Sheets.")
-                    st.stop()
-
-            st.success("🎉 Promoción guardada correctamente")
-            st.rerun()
+    with i4:
+        tw_f = st.date_input(
+            "",
+            value=None,
+            label_visibility="collapsed",
+            key="tw_end"
+        )

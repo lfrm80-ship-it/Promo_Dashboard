@@ -183,7 +183,7 @@ if menu == "Nueva promoción":
 
     with st.form("new_promo", clear_on_submit=True):
 
-        # -------- PROMO / HOTEL / RATE --------
+        # -------- PROMOCIÓN / HOTEL / RATE --------
         c1, c2 = st.columns(2)
 
         with c1:
@@ -196,13 +196,24 @@ if menu == "Nueva promoción":
 
         st.divider()
 
-        # -------- OTA / MARKET + FECHAS (PRO) --------
+        # -------- OTA / MARKET + FECHAS (LAYOUT PRO) --------
         left, right = st.columns([1.1, 2.6])
 
+        # ✅ OTA (CANAL)
         with left:
-            ota = st.selectbox("OTA *", ["Direct", "Booking", "Expedia"])
-            market = st.selectbox("Market", ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"])
+            ota = st.selectbox(
+                "OTA *",
+                ["Direct", "Booking.com", "Expedia", "Hotelbeds",
+                 "Apple Vacations", "Funjet", "Classic Vacations"]
+            )
 
+            # ✅ MARKET (SOLO MERCADOS)
+            market = st.selectbox(
+                "Market",
+                ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
+            )
+
+        # ---------- FECHAS ----------
         with right:
             h1, h2, h3, h4 = st.columns(4)
             with h1: st.caption("BW IN")
@@ -211,10 +222,14 @@ if menu == "Nueva promoción":
             with h4: st.caption("TW FIN")
 
             i1, i2, i3, i4 = st.columns(4)
-            with i1: bw_i = st.date_input("", value=None, label_visibility="collapsed", key="bw_i")
-            with i2: bw_f = st.date_input("", value=None, label_visibility="collapsed", key="bw_f")
-            with i3: tw_i = st.date_input("", value=None, label_visibility="collapsed", key="tw_i")
-            with i4: tw_f = st.date_input("", value=None, label_visibility="collapsed", key="tw_f")
+            with i1:
+                bw_i = st.date_input("", value=None, label_visibility="collapsed", key="bw_i")
+            with i2:
+                bw_f = st.date_input("", value=None, label_visibility="collapsed", key="bw_f")
+            with i3:
+                tw_i = st.date_input("", value=None, label_visibility="collapsed", key="tw_i")
+            with i4:
+                tw_f = st.date_input("", value=None, label_visibility="collapsed", key="tw_f")
 
         st.divider()
 
@@ -225,16 +240,17 @@ if menu == "Nueva promoción":
 
         notas = st.text_area("Notas / Restricciones")
 
-        # ✅ EL SUBMIT ES LO ÚLTIMO (CRÍTICO)
+        # ✅ SUBMIT (ÚLTIMO ELEMENTO)
         submit = st.form_submit_button("✅ Registrar promoción")
 
         if submit:
+
             for h in hotels:
                 payload = {
                     "Hotel": h,
-                    "OTA": ota,
+                    "OTA": ota,                  # ✅ canal
                     "Promo": promo,
-                    "Market": market,
+                    "Market": market,            # ✅ solo mercado
                     "Rate_Plan": rate,
                     "Descuento": discount,
                     "BW_Inicio": str(bw_i or ""),

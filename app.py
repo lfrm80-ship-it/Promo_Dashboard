@@ -115,7 +115,7 @@ if menu == "Vista rápida":
             filtro_estado = st.multiselect(
                 "Estado",
                 ["Activa", "Futura", "Expirada"],
-                default=["Activa"]
+               default=["Activa", "Futura", "Expirada"]
             )
 
         with c2:

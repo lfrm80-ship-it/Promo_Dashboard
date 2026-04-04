@@ -321,43 +321,6 @@ if menu == "World of Hyatt":
     st.markdown("## 🌟 World of Hyatt")
     st.markdown("---")
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("### Niveles de Membresía")
-        st.markdown("""
-| Nivel | Noches requeridas |
-|-------|------------------|
-| 🔵 Member | 0 noches |
-| 🟤 Discoverist | 10 noches |
-| 🔘 Explorist | 30 noches |
-| 🟡 Globalist | 60 noches |
-""")
-
-    with col2:
-        st.markdown("### Beneficios Globalist")
-        st.markdown("""
-- ✅ Upgrade a suite (sujeto a disponibilidad)
-- ✅ Late check-out a las 4:00 PM
-- ✅ Early check-in sujeto a disponibilidad
-- ✅ Desayuno de cortesía (propiedades select)
-- ✅ Puntos de bonificación (30% extra)
-- ✅ Club lounge access
-- ✅ Guest of Honor (transferir estatus)
-""")
-
-    st.markdown("---")
-    st.markdown("### 💎 Puntos y Redenciones")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.metric("Puntos por dólar (Member)", "5 pts")
-    with c2:
-        st.metric("Puntos por dólar (Globalist)", "6.5 pts")
-    with c3:
-        st.metric("Noches gratis desde", "3,500 pts")
-
-    st.markdown("---")
-
     # ---- CALCULADORA WOH ----
     st.markdown("### 🧮 Calculadora de Puntos WOH")
 
@@ -377,7 +340,6 @@ if menu == "World of Hyatt":
             "Globalist (6.5 pts/$)"
         ])
 
-    # Puntos por dólar según nivel
     pts_map = {
         "Member (5 pts/$)": 5,
         "Discoverist (5 pts/$)": 5,
@@ -388,21 +350,57 @@ if menu == "World of Hyatt":
 
     gasto_total = noches * tarifa
     puntos_base = gasto_total * pts_por_dolar
-    puntos_bonus = puntos_base * 0.15  # bonus Inclusive Collection
+    puntos_bonus = puntos_base * 0.15
     puntos_total = int(puntos_base + puntos_bonus)
+    noches_gratis = puntos_total // 3500
 
     st.markdown("---")
     r1, r2, r3, r4 = st.columns(4)
-
     with r1:
         st.metric("💰 Gasto total", f"${gasto_total:,.0f} USD")
     with r2:
         st.metric("⭐ Puntos base", f"{int(puntos_base):,}")
     with r3:
-        st.metric("🎁 Bonus Inclusive Collection (15%)", f"{int(puntos_bonus):,}")
+        st.metric("🎁 Bonus Inclusive (15%)", f"{int(puntos_bonus):,}")
     with r4:
-        st.metric("🏆 Total de puntos", f"{puntos_total:,}")
+        st.metric("🏆 Total puntos", f"{puntos_total:,}")
 
-    noches_gratis = puntos_total // 3500
     st.success(f"🌙 Con {puntos_total:,} puntos puedes canjear aproximadamente **{noches_gratis} noche(s) gratis** en propiedades Category 1.")
+
+    st.markdown("---")
+    st.markdown("### 📊 Tabla de Niveles")
+
+    niveles_data = {
+        "Nivel": ["🔵 Member", "🟤 Discoverist", "🔘 Explorist", "🟡 Globalist"],
+        "Noches requeridas": ["0", "10", "30", "60"],
+        "Pts por dólar": ["5", "5", "6", "6.5"],
+        "Pts acumulados en tu estadía": [
+            f"{int(gasto_total * 5 * 1.15):,}",
+            f"{int(gasto_total * 5 * 1.15):,}",
+            f"{int(gasto_total * 6 * 1.15):,}",
+            f"{int(gasto_total * 6.5 * 1.15):,}"
+        ],
+        "Beneficios clave": [
+            "Acceso básico",
+            "Late checkout 2PM",
+            "Suite upgrades, lounge access",
+            "Suite upgrades, desayuno, late checkout 4PM"
+        ]
+    }
+
+    import pandas as pd
+    df_woh = pd.DataFrame(niveles_data)
+    st.dataframe(df_woh, use_container_width=True, hide_index=True)
+
+    st.markdown("### 💎 Beneficios Globalist")
+    st.markdown("""
+- ✅ Upgrade a suite (sujeto a disponibilidad)
+- ✅ Late check-out a las 4:00 PM
+- ✅ Early check-in sujeto a disponibilidad
+- ✅ Desayuno de cortesía (propiedades select)
+- ✅ Puntos de bonificación (30% extra)
+- ✅ Club lounge access
+- ✅ Guest of Honor (transferir estatus)
+""")
+
     st.info("Para más información visita [world.hyatt.com](https://world.hyatt.com)", icon="🌐")

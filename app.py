@@ -357,15 +357,6 @@ if menu == "World of Hyatt":
         st.metric("Noches gratis desde", "3,500 pts")
 
     st.markdown("---")
-    st.markdown("### 🏨 Propiedades Participantes en Playa Mujeres")
-    st.markdown("""
-| Hotel | Marca | Categoría |
-|-------|-------|-----------|
-| Dreams Playa Mujeres | Dreams Resorts & Spas | Inclusive Collection |
-| Secrets Playa Mujeres | Secrets Resorts & Spas | Inclusive Collection |
-""")
-
-    st.markdown("---")
 
     # ---- CALCULADORA WOH ----
     st.markdown("### 🧮 Calculadora de Puntos WOH")

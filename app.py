@@ -274,7 +274,7 @@ if menu == "Nueva promoción":
             for h in hotels:
                 payload = {
                     "Hotel": h,
-                    "OTA": "",          # ← fix: columna OTA para alinear Sheet
+                    "OTA": "",
                     "Promo": promo,
                     "Market": market,
                     "Rate_Plan": rate,
@@ -291,7 +291,7 @@ if menu == "Nueva promoción":
                     payload["FileType"] = file_type
                     payload["FileContent"] = file_content
 
-               r = requests.post(
+                r = requests.post(
                     WEB_APP_URL,
                     json=payload,
                     headers={"Content-Type": "application/json"}

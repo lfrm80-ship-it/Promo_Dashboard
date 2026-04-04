@@ -258,8 +258,7 @@ if menu == "Nueva promoción":
 
         submit = st.form_submit_button("Registrar promoción")
 
-       if submit:
-
+        if submit:
             file_name = None
             file_type = None
             file_content = None

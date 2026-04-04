@@ -83,7 +83,7 @@ with st.sidebar:
 
     menu = st.radio(
         "Navegación",
-        ["Vista rápida", "Nueva promoción", "Upsell", "WOH"]
+        ["Vista rápida", "Nueva promoción", "Upsell", "World of Hyatt"]
     )
 
     with st.expander("Admin"):

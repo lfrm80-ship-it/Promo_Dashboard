@@ -259,6 +259,7 @@ if menu == "Nueva promoción":
         submit = st.form_submit_button("Registrar promoción")
 
         if submit:
+
             file_name = None
             file_type = None
             file_content = None
@@ -273,6 +274,7 @@ if menu == "Nueva promoción":
             for h in hotels:
                 payload = {
                     "Hotel": h,
+                    "OTA": "",          # ← fix: columna OTA para alinear Sheet
                     "Promo": promo,
                     "Market": market,
                     "Rate_Plan": rate,
@@ -298,3 +300,5 @@ if menu == "Nueva promoción":
                 if r.status_code != 200:
                     st.error("Error al guardar promoción")
                     st.stop()
+
+            st.success("¡Promoción registrada correctamente!")

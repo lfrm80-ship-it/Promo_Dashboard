@@ -191,6 +191,7 @@ if menu == "Vista rápida":
             st.markdown("### Testigos / Material adjunto")
 
             if "Archivo_Path" in df_view.columns:
+                st.write(df_view[["Promo", "Archivo_Path"]])
                 for idx, row in df_view.iterrows():
                     link = row["Archivo_Path"]
 

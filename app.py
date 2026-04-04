@@ -186,42 +186,39 @@ if menu == "Vista rápida":
             # ✅ DEBUG TEMPORAL
             #st.write("DEBUG columnas reales:", df_view.columns.tolist())
 
-            # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
-           st.divider()
-st.markdown("### Testigos / Material adjunto")
+           # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
+            st.divider()
+            st.markdown("### Testigos / Material adjunto")
 
-if "Archivo_Path" in df_view.columns:
-    for idx, row in df_view.iterrows():
-        link = row["Archivo_Path"]
+            if "Archivo_Path" in df_view.columns:
+                for idx, row in df_view.iterrows():
+                    link = row["Archivo_Path"]
 
-        if pd.isna(link) or str(link).strip() == "":
-            continue
+                    if pd.isna(link) or str(link).strip() == "":
+                        continue
 
-        st.markdown(
-            f"**{row['Promo']}**  \n"
-            f"{row['Hotel']} · {row['Market']}"
-        )
+                    st.markdown(
+                        f"**{row['Promo']}**  \n"
+                        f"{row['Hotel']} · {row['Market']}"
+                    )
 
-        link = str(link)
+                    link = str(link)
 
-        if link.lower().endswith((".png", ".jpg", ".jpeg")):
-            st.image(link, use_container_width=True)
+                    if link.lower().endswith((".png", ".jpg", ".jpeg")):
+                        st.image(link, use_container_width=True)
 
-        elif link.lower().endswith(".pdf"):
-            st.markdown(
-                f"""
-                <iframe src="{link}" width="100%" height="500"></iframe>
-                """,
-                unsafe_allow_html=True
-            )
+                    elif link.lower().endswith(".pdf"):
+                        st.markdown(
+                            f'<iframe src="{link}" width="100%" height="600"></iframe>',
+                            unsafe_allow_html=True
+                        )
 
-        else:
-            st.link_button(
-                "⬇️ Descargar archivo",
-                link,
-                key=f"file_{idx}"
-            )
-
+                    else:
+                        st.link_button(
+                            "⬇️ Descargar archivo",
+                            link,
+                            key=f"file_{idx}"
+                        )
 # =========================================================
 # NUEVA PROMOCIÓN
 # =========================================================

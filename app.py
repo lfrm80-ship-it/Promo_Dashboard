@@ -347,7 +347,6 @@ if menu == "World of Hyatt":
         "Globalist (6.5 pts/$)": 6.5
     }
     pts_por_dolar = pts_map[nivel]
-
     gasto_total = noches * tarifa
     puntos_base = gasto_total * pts_por_dolar
     puntos_bonus = puntos_base * 0.15
@@ -368,30 +367,58 @@ if menu == "World of Hyatt":
     st.success(f"🌙 Con {puntos_total:,} puntos puedes canjear aproximadamente **{noches_gratis} noche(s) gratis** en propiedades Category 1.")
 
     st.markdown("---")
-    st.markdown("### 📊 Tabla de Niveles")
+    st.markdown("### 📊 Tu nivel actual")
 
-    niveles_data = {
-        "Nivel": ["🔵 Member", "🟤 Discoverist", "🔘 Explorist", "🟡 Globalist"],
-        "Noches requeridas": ["0", "10", "30", "60"],
-        "Pts por dólar": ["5", "5", "6", "6.5"],
-        "Pts acumulados en tu estadía": [
-            f"{int(gasto_total * 5 * 1.15):,}",
-            f"{int(gasto_total * 5 * 1.15):,}",
-            f"{int(gasto_total * 6 * 1.15):,}",
-            f"{int(gasto_total * 6.5 * 1.15):,}"
-        ],
-        "Beneficios clave": [
-            "Acceso básico",
-            "Late checkout 2PM",
-            "Suite upgrades, lounge access",
-            "Suite upgrades, desayuno, late checkout 4PM"
-        ]
-    }
+    niveles = [
+        {"nivel": "🔵 Member",     "noches": "0",  "pts": 5,   "beneficios": "Acceso básico"},
+        {"nivel": "🟤 Discoverist","noches": "10", "pts": 5,   "beneficios": "Late checkout 2PM"},
+        {"nivel": "🔘 Explorist",  "noches": "30", "pts": 6,   "beneficios": "Suite upgrades, lounge access"},
+        {"nivel": "🟡 Globalist",  "noches": "60", "pts": 6.5, "beneficios": "Suite upgrades, desayuno, late checkout 4PM"},
+    ]
 
-    import pandas as pd
-    df_woh = pd.DataFrame(niveles_data)
-    st.dataframe(df_woh, use_container_width=True, hide_index=True)
+    nivel_actual = nivel.split(" ")[0]
 
+    for n in niveles:
+        nombre = n["nivel"].split(" ")[1]
+        pts_estadia = int(gasto_total * n["pts"] * 1.15)
+        es_actual = nombre == nivel_actual
+
+        if es_actual:
+            st.markdown(
+                f"""
+                <div style="background:#1a3c5e;border-left:6px solid #f0c040;
+                border-radius:10px;padding:16px 20px;margin-bottom:10px;">
+                <span style="font-size:1.2em;font-weight:bold;color:#f0c040;">
+                {n["nivel"]} ← Tu nivel actual</span><br>
+                <span style="color:#cce0ff;">
+                📅 Noches requeridas: {n["noches"]} &nbsp;|&nbsp;
+                ⭐ {n["pts"]} pts/$ &nbsp;|&nbsp;
+                🏆 {pts_estadia:,} pts en tu estadía &nbsp;|&nbsp;
+                ✅ {n["beneficios"]}
+                </span>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                f"""
+                <div style="background:#1e1e2e;border-left:6px solid #444;
+                border-radius:10px;padding:12px 20px;margin-bottom:10px;opacity:0.75;">
+                <span style="font-size:1em;font-weight:bold;color:#aaa;">
+                {n["nivel"]}</span><br>
+                <span style="color:#888;">
+                📅 Noches requeridas: {n["noches"]} &nbsp;|&nbsp;
+                ⭐ {n["pts"]} pts/$ &nbsp;|&nbsp;
+                🏆 {pts_estadia:,} pts en tu estadía &nbsp;|&nbsp;
+                ✅ {n["beneficios"]}
+                </span>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    st.markdown("---")
     st.markdown("### 💎 Beneficios Globalist")
     st.markdown("""
 - ✅ Upgrade a suite (sujeto a disponibilidad)

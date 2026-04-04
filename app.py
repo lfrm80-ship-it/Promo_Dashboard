@@ -48,10 +48,16 @@ def cargar_df():
 def estado(row):
     if pd.isna(row["TW_Inicio"]) or pd.isna(row["TW_Fin"]):
         return "Expirada"
-    if row["TW_Inicio"] <= date.today() <= row["TW_Fin"]:
-        return "Activa"
-    return "Futura"
 
+    hoy = date.today()
+
+    if row["TW_Inicio"] <= hoy <= row["TW_Fin"]:
+        return "Activa"
+
+    if hoy < row["TW_Inicio"]:
+        return "Futura"
+
+    return "Expirada"
 
 def generar_excel(df):
     buffer = io.BytesIO()

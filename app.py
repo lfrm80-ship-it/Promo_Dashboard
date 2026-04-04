@@ -171,15 +171,14 @@ if menu == "Vista rápida":
             )
 
             # ---------- EXCEL ----------
-st.download_button(
-    "Descargar Excel",
-    data=generar_excel(df_view[columnas]),
-    file_name=f"MasterRecord_{date.today()}.xlsx"
-)
+            st.download_button(
+                "Descargar Excel",
+                data=generar_excel(df_view[columnas]),
+                file_name=f"MasterRecord_{date.today()}.xlsx"
+            )
 
-# ✅ DEBUG TEMPORAL
-st.write("DEBUG columnas reales:", df_view.columns.tolist())
-
+            # ✅ DEBUG TEMPORAL
+            st.write("DEBUG columnas reales:", df_view.columns.tolist())
 
             # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
             st.divider()

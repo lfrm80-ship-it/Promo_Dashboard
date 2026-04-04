@@ -366,68 +366,23 @@ if menu == "World of Hyatt":
 
     st.success(f"🌙 Con {puntos_total:,} puntos puedes canjear aproximadamente **{noches_gratis} noche(s) gratis** en propiedades Category 1.")
 
+    # ---- VALOR POR DÓLAR ----
     st.markdown("---")
-    st.markdown("### 📊 Tu nivel actual")
+    st.markdown("### 💡 ¿Cuánto vale cada dólar gastado?")
 
-    niveles = [
-        {"nivel": "🔵 Member",     "noches": "0",  "pts": 5,   "beneficios": "Acceso básico"},
-        {"nivel": "🟤 Discoverist","noches": "10", "pts": 5,   "beneficios": "Late checkout 2PM"},
-        {"nivel": "🔘 Explorist",  "noches": "30", "pts": 6,   "beneficios": "Suite upgrades, lounge access"},
-        {"nivel": "🟡 Globalist",  "noches": "60", "pts": 6.5, "beneficios": "Suite upgrades, desayuno, late checkout 4PM"},
-    ]
+    v1, v2, v3, v4 = st.columns(4)
 
-    nivel_actual = nivel.split(" ")[0]
+    with v1:
+        st.markdown("""
+            <div style="background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;">
+            <div style="font-size:2em;">🔵</div>
+            <div style="color:#aaa;font-size:0.85em;margin-top:4px;">Member</div>
+            <div style="color:white;font-size:2em;font-weight:bold;">5 pts</div>
+            <div style="color:#aaa;font-size:0.8em;">por cada $1 USD</div>
+            </div>""", unsafe_allow_html=True)
 
-    for n in niveles:
-        nombre = n["nivel"].split(" ")[1]
-        pts_estadia = int(gasto_total * n["pts"] * 1.15)
-        es_actual = nombre == nivel_actual
-
-        if es_actual:
-            st.markdown(
-                f"""
-                <div style="background:#1a3c5e;border-left:6px solid #f0c040;
-                border-radius:10px;padding:16px 20px;margin-bottom:10px;">
-                <span style="font-size:1.2em;font-weight:bold;color:#f0c040;">
-                {n["nivel"]} ← Tu nivel actual</span><br>
-                <span style="color:#cce0ff;">
-                📅 Noches requeridas: {n["noches"]} &nbsp;|&nbsp;
-                ⭐ {n["pts"]} pts/$ &nbsp;|&nbsp;
-                🏆 {pts_estadia:,} pts en tu estadía &nbsp;|&nbsp;
-                ✅ {n["beneficios"]}
-                </span>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        else:
-            st.markdown(
-                f"""
-                <div style="background:#1e1e2e;border-left:6px solid #444;
-                border-radius:10px;padding:12px 20px;margin-bottom:10px;opacity:0.75;">
-                <span style="font-size:1em;font-weight:bold;color:#aaa;">
-                {n["nivel"]}</span><br>
-                <span style="color:#888;">
-                📅 Noches requeridas: {n["noches"]} &nbsp;|&nbsp;
-                ⭐ {n["pts"]} pts/$ &nbsp;|&nbsp;
-                🏆 {pts_estadia:,} pts en tu estadía &nbsp;|&nbsp;
-                ✅ {n["beneficios"]}
-                </span>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    st.markdown("---")
-    st.markdown("### 💎 Beneficios Globalist")
-    st.markdown("""
-- ✅ Upgrade a suite (sujeto a disponibilidad)
-- ✅ Late check-out a las 4:00 PM
-- ✅ Early check-in sujeto a disponibilidad
-- ✅ Desayuno de cortesía (propiedades select)
-- ✅ Puntos de bonificación (30% extra)
-- ✅ Club lounge access
-- ✅ Guest of Honor (transferir estatus)
-""")
-
-    st.info("Para más información visita [world.hyatt.com](https://world.hyatt.com)", icon="🌐")
+    with v2:
+        st.markdown("""
+            <div style="background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;">
+            <div style="font-size:2em;">🟤</div>
+            <div style="color:#aaa;font-size:0.85em;margin-top:4px;">Discoverist</div>

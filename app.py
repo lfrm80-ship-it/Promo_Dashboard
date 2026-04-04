@@ -280,7 +280,12 @@ if menu == "Nueva promoción":
                         archivo.getvalue()
                     ).decode()
 
-                r = requests.post(WEB_APP_URL, data=json.dumps(payload))
+               r = requests.post(
+    WEB_APP_URL,
+    json=payload,
+    headers={"Content-Type": "application/json"}
+)
+
 
                 if r.status_code != 200:
                     st.error("Error al guardar promoción")

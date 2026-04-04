@@ -467,16 +467,71 @@ if menu == "World of Hyatt":
                 f"</div>",
                 unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.markdown("### 💎 Beneficios Globalist")
-    st.markdown(
-        "- ✅ Upgrade a suite (sujeto a disponibilidad)\n"
-        "- ✅ Late check-out a las 4:00 PM\n"
-        "- ✅ Early check-in sujeto a disponibilidad\n"
-        "- ✅ Desayuno de cortesía (propiedades select)\n"
-        "- ✅ Puntos de bonificación (30% extra)\n"
-        "- ✅ Club lounge access\n"
-        "- ✅ Guest of Honor (transferir estatus)"
-    )
+   # =========================================================
+# BENEFICIOS GLOBALIST — reemplaza el bloque st.markdown("### 💎 Beneficios Globalist")
+# =========================================================
 
-    st.info("Para más información visita [world.hyatt.com](https://world.hyatt.com)", icon="🌐")
+st.markdown("---")
+st.markdown("### 💎 Beneficios Globalist")
+
+beneficios = [
+    {"titulo": "Suite garantizada",    "cat": "Upgrade",      "desc": "Sujeto a disponibilidad al momento del check-in"},
+    {"titulo": "4:00 PM garantizado",  "cat": "Check-out",    "desc": "Late check-out sin costo adicional"},
+    {"titulo": "Early access",         "cat": "Check-in",     "desc": "Sujeto a disponibilidad"},
+    {"titulo": "Desayuno incluido",    "cat": "Desayuno",     "desc": "En propiedades Hyatt select"},
+    {"titulo": "+30% bonus",           "cat": "Puntos",       "desc": "Sobre puntos base ganados"},
+    {"titulo": "Acceso incluido",      "cat": "Club lounge",  "desc": "Donde aplique la propiedad"},
+    {"titulo": "Transferir estatus",   "cat": "Guest of Honor","desc": "Comparte beneficios con un acompañante"},
+]
+
+cols = st.columns(4)
+for i, b in enumerate(beneficios):
+    with cols[i % 4]:
+        st.markdown(
+            f"""
+            <div style="
+                background: #1e1e2e;
+                border-radius: 12px;
+                border: 0.5px solid #333;
+                padding: 1rem;
+                margin-bottom: 12px;
+                height: 110px;
+            ">
+                <div style="font-size:12px; color:#888; margin-bottom:5px;">{b['cat']}</div>
+                <div style="font-size:15px; font-weight:500; color:white; margin-bottom:4px;">{b['titulo']}</div>
+                <div style="font-size:12px; color:#aaa; line-height:1.4;">{b['desc']}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+st.markdown(
+    """
+    <div style="
+        background: #0d2137;
+        border-radius: 12px;
+        border: 2px solid #3a8fd4;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 4px;
+    ">
+        <div>
+            <div style="font-size:12px; color:#aaa; margin-bottom:2px;">Nivel máximo</div>
+            <div style="font-size:15px; font-weight:500; color:white;">Globalist — 60 noches calificadas / año</div>
+        </div>
+        <div style="
+            font-size:12px;
+            padding: 4px 14px;
+            border-radius: 8px;
+            background: #1a3c5e;
+            color: #6ab0e8;
+            white-space: nowrap;
+        ">Elite tier</div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+st.info("Para más información visita [world.hyatt.com](https://world.hyatt.com)", icon="🌐")

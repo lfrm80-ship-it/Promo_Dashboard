@@ -83,7 +83,7 @@ with st.sidebar:
 
     menu = st.radio(
         "Navegación",
-        ["Vista rápida", "Nueva promoción"]
+        ["Vista rápida", "Nueva promoción", "Upsell", "WOH"]
     )
 
     with st.expander("Admin"):
@@ -305,3 +305,18 @@ if menu == "Nueva promoción":
                     st.stop()
 
             st.success("¡Promoción registrada correctamente!")
+
+# =========================================================
+# UPSELL
+# =========================================================
+if menu == "Upsell":
+    st.markdown("## Upsell")
+    st.info("Sección en construcción 🚧")
+
+
+# =========================================================
+# WORLD OF HYATT
+# =========================================================
+if menu == "World of Hyatt":
+    st.markdown("## World of Hyatt")
+    st.info("Sección en construcción 🚧")

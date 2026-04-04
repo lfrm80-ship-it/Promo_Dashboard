@@ -297,6 +297,9 @@ if menu == "Nueva promoción":
                     headers={"Content-Type": "application/json"}
                 )
 
+                st.write("Status:", r.status_code)
+                st.write("Respuesta:", r.text)
+
                 if r.status_code != 200:
                     st.error("Error al guardar promoción")
                     st.stop()

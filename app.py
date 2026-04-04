@@ -59,6 +59,7 @@ def estado(row):
 
     return "Expirada"
 
+
 def generar_excel(df):
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -183,10 +184,7 @@ if menu == "Vista rápida":
                 file_name=f"MasterRecord_{date.today()}.xlsx"
             )
 
-            # ✅ DEBUG TEMPORAL
-            #st.write("DEBUG columnas reales:", df_view.columns.tolist())
-
-           # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
+            # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
             st.divider()
             st.markdown("### Testigos / Material adjunto")
 
@@ -219,6 +217,8 @@ if menu == "Vista rápida":
                             link,
                             key=f"file_{idx}"
                         )
+
+
 # =========================================================
 # NUEVA PROMOCIÓN
 # =========================================================
@@ -229,48 +229,32 @@ if menu == "Nueva promoción":
         col1, col2 = st.columns(2)
 
         with col1:
-            promo = st.text_input("Promoción *", key="promo")
-            hotels = st.multiselect(
-                "Hotel *",
-                ["DREPM", "SECPM"],
-                key="hotels"
-            )
+            promo = st.text_input("Promoción *")
+            hotels = st.multiselect("Hotel *", ["DREPM", "SECPM"])
 
         with col2:
-            rate = st.text_input("Rate Plan *", key="rate")
-            discount = st.number_input(
-                "Descuento (%)",
-                0, 100, step=1,
-                key="discount"
-            )
+            rate = st.text_input("Rate Plan *")
+            discount = st.number_input("Descuento (%)", 0, 100, step=1)
 
         market = st.selectbox(
             "Market *",
-            ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"],
-            key="market"
+            ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
         )
 
         st.markdown("### Booking & Travel Window")
 
-        labels = st.columns(4)
-        labels[0].caption("BW IN")
-        labels[1].caption("BW FIN")
-        labels[2].caption("TW IN")
-        labels[3].caption("TW FIN")
-
-        inputs = st.columns(4)
-        bw_i = inputs[0].date_input("", key="bw_i")
-        bw_f = inputs[1].date_input("", key="bw_f")
-        tw_i = inputs[2].date_input("", key="tw_i")
-        tw_f = inputs[3].date_input("", key="tw_f")
+        bw_i, bw_f, tw_i, tw_f = st.columns(4)
+        bw_i = bw_i.date_input("BW IN")
+        bw_f = bw_f.date_input("BW FIN")
+        tw_i = tw_i.date_input("TW IN")
+        tw_f = tw_f.date_input("TW FIN")
 
         archivo = st.file_uploader(
             "Archivo (PNG, JPG, PDF, XLS, XLSX)",
-            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"],
-            key="archivo"
+            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
         )
 
-        notas = st.text_area("Notas / Restricciones", key="notas")
+        notas = st.text_area("Notas / Restricciones")
 
         submit = st.form_submit_button("Registrar promoción")
 
@@ -282,10 +266,10 @@ if menu == "Nueva promoción":
                     "Market": market,
                     "Rate_Plan": rate,
                     "Descuento": discount,
-                    "BW_Inicio": str(bw_i or ""),
-                    "BW_Fin": str(bw_f or ""),
-                    "TW_Inicio": str(tw_i or ""),
-                    "TW_Fin": str(tw_f or ""),
+                    "BW_Inicio": str(bw_i),
+                    "BW_Fin": str(bw_f),
+                    "TW_Inicio": str(tw_i),
+                    "TW_Fin": str(tw_f),
                     "Notas": notas
                 }
 
@@ -296,10 +280,7 @@ if menu == "Nueva promoción":
                         archivo.getvalue()
                     ).decode()
 
-                r = requests.post(
-                    WEB_APP_URL,
-                    data=json.dumps(payload)
-                )
+                r = requests.post(WEB_APP_URL, data=json.dumps(payload))
 
                 if r.status_code != 200:
                     st.error("Error al guardar promoción")

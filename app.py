@@ -187,7 +187,7 @@ if menu == "Vista rápida":
             #st.write("DEBUG columnas reales:", df_view.columns.tolist())
 
             # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
-            st.divider()
+           st.divider()
 st.markdown("### Testigos / Material adjunto")
 
 if "Archivo_Path" in df_view.columns:
@@ -210,9 +210,7 @@ if "Archivo_Path" in df_view.columns:
         elif link.lower().endswith(".pdf"):
             st.markdown(
                 f"""
-                <iframe src="{link}"
-                width="100%" height="600"
-                style="border:1px solid #ddd;"></iframe>
+                <iframe src="{link}" width="100%" height="500"></iframe>
                 """,
                 unsafe_allow_html=True
             )
@@ -223,7 +221,6 @@ if "Archivo_Path" in df_view.columns:
                 link,
                 key=f"file_{idx}"
             )
-
 
 # =========================================================
 # NUEVA PROMOCIÓN

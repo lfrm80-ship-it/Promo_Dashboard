@@ -188,23 +188,41 @@ if menu == "Vista rápida":
 
             # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
             st.divider()
-            st.markdown("### Testigos / Material adjunto")
+st.markdown("### Testigos / Material adjunto")
 
-            if "Archivo_Path" in df_view.columns:
-                st.write(df_view[["Promo", "Archivo_Path"]])
-                for idx, row in df_view.iterrows():
-                    link = row["Archivo_Path"]
+if "Archivo_Path" in df_view.columns:
+    for idx, row in df_view.iterrows():
+        link = row["Archivo_Path"]
 
-                    if pd.notna(link) and str(link).strip() != "":
-                        st.markdown(
-                            f"**{row['Promo']}**  \n"
-                            f"{row['Hotel']} · {row['Market']}"
-                        )
-                        st.link_button(
-                            "📎 Ver / Descargar archivo",
-                            str(link),
-                            key=f"file_{idx}"
-                        )
+        if pd.isna(link) or str(link).strip() == "":
+            continue
+
+        st.markdown(
+            f"**{row['Promo']}**  \n"
+            f"{row['Hotel']} · {row['Market']}"
+        )
+
+        link = str(link)
+
+        if link.lower().endswith((".png", ".jpg", ".jpeg")):
+            st.image(link, use_container_width=True)
+
+        elif link.lower().endswith(".pdf"):
+            st.markdown(
+                f"""
+                <iframe src="{link}"
+                width="100%" height="600"
+                style="border:1px solid #ddd;"></iframe>
+                """,
+                unsafe_allow_html=True
+            )
+
+        else:
+            st.link_button(
+                "⬇️ Descargar archivo",
+                link,
+                key=f"file_{idx}"
+            )
 
 
 # =========================================================

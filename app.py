@@ -314,224 +314,289 @@ if menu == "Upsell":
     st.info("Sección en construcción 🚧")
 
 
-# =========================================================
-# WORLD OF HYATT
-# =========================================================
+# ==========================================================
+# WORLD OF HYATT — versión mejorada
+# ==========================================================
 if menu == "World of Hyatt":
     st.markdown("## 🌟 World of Hyatt")
     st.markdown("---")
 
-    # ---- CALCULADORA WOH ----
-    st.markdown("### 🧮 Calculadora de Puntos WOH")
+    # ---- TABS ----
+    tab1, tab2, tab3, tab4 = st.tabs(["Calculadora", "Valor por dólar", "Niveles", "Beneficios"])
 
-    calc1, calc2, calc3 = st.columns(3)
+    # ==========================================================
+    # TAB 1: CALCULADORA
+    # ==========================================================
+    with tab1:
+        st.markdown("### 🧮 Calculadora de Puntos WOH")
 
-    with calc1:
-        noches = st.number_input("Número de noches", min_value=1, max_value=30, value=7, step=1)
+        calc1, calc2, calc3 = st.columns(3)
+        with calc1:
+            noches = st.number_input("Número de noches", min_value=1, max_value=30, value=7, step=1, help="Cantidad de noches de tu estadía")
+        with calc2:
+            tarifa = st.number_input("Tarifa por noche (USD)", min_value=100, max_value=5000, value=500, step=50, help="Precio promedio por noche")
+        with calc3:
+            nivel = st.selectbox("Nivel de membresía", [
+                "Member (5 pts/$)",
+                "Discoverist (5 pts/$)",
+                "Explorist (6 pts/$)",
+                "Globalist (6.5 pts/$)"
+            ])
 
-    with calc2:
-        tarifa = st.number_input("Tarifa por noche (USD)", min_value=100, max_value=5000, value=500, step=50)
+        pts_map = {"Member (5 pts/$)": 5, "Discoverist (5 pts/$)": 5, "Explorist (6 pts/$)": 6, "Globalist (6.5 pts/$)": 6.5}
+        pts_por_dolar = pts_map[nivel]
+        gasto_total = noches * tarifa
+        puntos_base = gasto_total * pts_por_dolar
+        puntos_bonus = puntos_base * 0.15
+        puntos_total = int(puntos_base + puntos_bonus)
+        noches_gratis = puntos_total // 3500
 
-    with calc3:
-        nivel = st.selectbox("Nivel de membresía", [
-            "Member (5 pts/$)",
-            "Discoverist (5 pts/$)",
-            "Explorist (6 pts/$)",
-            "Globalist (6.5 pts/$)"
-        ])
+        # ---- METRICAS ----
+        r1, r2, r3, r4 = st.columns(4)
+        r1.metric("💰 Gasto total", f"${gasto_total:,.0f}")
+        r2.metric("⭐ Puntos base", f"{int(puntos_base):,}")
+        r3.metric("🎁 Bonus 15%", f"{int(puntos_bonus):,}")
+        r4.metric("🏆 Total puntos", f"{puntos_total:,}")
 
-    pts_map = {
-        "Member (5 pts/$)": 5,
-        "Discoverist (5 pts/$)": 5,
-        "Explorist (6 pts/$)": 6,
-        "Globalist (6.5 pts/$)": 6.5
-    }
-    pts_por_dolar = pts_map[nivel]
-    gasto_total = noches * tarifa
-    puntos_base = gasto_total * pts_por_dolar
-    puntos_bonus = puntos_base * 0.15
-    puntos_total = int(puntos_base + puntos_bonus)
-    noches_gratis = puntos_total // 3500
+        st.success(f"🌙 Con {puntos_total:,} puntos puedes canjear aprox. **{noches_gratis} noche(s)** en Category 1.")
 
+        # ---- PROGRESO ----
+        st.progress(min(noches/60, 1.0), text=f"Avance hacia Globalist: {noches}/60 noches")
+
+    # ==========================================================
+    # TAB 2: VALOR POR DÓLAR
+    # ==========================================================
+    with tab2:
+        st.markdown("### 💡 ¿Cuánto vale cada dólar gastado?")
+
+        v1, v2, v3, v4 = st.columns(4)
+        niveles_display = [
+            {"icon":"🔵","nombre":"Member","pts":"5","color":"white"},
+            {"icon":"🟤","nombre":"Discoverist","pts":"5","color":"white"},
+            {"icon":"🔘","nombre":"Explorist","pts":"6","color":"#4fc3f7"},
+            {"icon":"🟡","nombre":"Globalist","pts":"6.5","color":"#f0c040"},
+        ]
+
+        for i, n in enumerate(niveles_display):
+            with [v1,v2,v3,v4][i]:
+                st.markdown(
+                    f"""
+                    <div style='background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;'>
+                        <div style='font-size:2em;'>{n['icon']}</div>
+                        <div style='color:#aaa;font-size:0.85em;margin-top:4px;'>{n['nombre']}</div>
+                        <div style='color:{n['color']};font-size:2em;font-weight:bold;'>{n['pts']} pts</div>
+                        <div style='color:#aaa;font-size:0.8em;'>por cada $1 USD</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div style='background:#0d2137;border-radius:12px;padding:16px 24px;text-align:center;'>"
+            f"<span style='color:#aaa;'>Con tu nivel </span>"
+            f"<span style='color:#f0c040;font-weight:bold;'>{nivel.split('(')[0].strip()}</span>"
+            f"<span style='color:#aaa;'>, cada </span>"
+            f"<span style='color:white;font-weight:bold;'>$1 USD</span>"
+            f"<span style='color:#aaa;'> genera </span>"
+            f"<span style='color:#4fc3f7;font-size:1.3em;font-weight:bold;'>{pts_por_dolar} pts</span>"
+            f"<span style='color:#aaa;'> + </span>"
+            f"<span style='color:#81c995;font-weight:bold;'>15% bonus Inclusive</span>"
+            f"<span style='color:#aaa;'> = </span>"
+            f"<span style='color:white;font-size:1.3em;font-weight:bold;'>{pts_por_dolar * 1.15:.2f} pts reales</span>"
+            f"</div>",
+            unsafe_allow_html=True)
+
+    # ==========================================================
+    # TAB 3: NIVELES
+    # ==========================================================
+    with tab3:
+        st.markdown("### 📊 Tu nivel actual")
+
+        niveles = [
+            {"nivel": "🔵 Member",      "noches": "0",  "pts": 5,   "beneficios": "Acceso básico"},
+            {"nivel": "🟤 Discoverist", "noches": "10", "pts": 5,   "beneficios": "Late checkout 2PM"},
+            {"nivel": "🔘 Explorist",   "noches": "30", "pts": 6,   "beneficios": "Suite upgrades, lounge access"},
+            {"nivel": "🟡 Globalist",   "noches": "60", "pts": 6.5, "beneficios": "Suite upgrades, desayuno, late checkout 4PM"},
+        ]
+
+        nivel_actual = nivel.split(" ")[0]
+
+        for n in niveles:
+            nombre = n["nivel"].split(" ")[1]
+            pts_estadia = int(gasto_total * n["pts"] * 1.15)
+            es_actual = nombre == nivel_actual
+
+            if es_actual:
+                st.markdown(
+                    f"<div style='background:#1a3c5e;border-left:6px solid #f0c040;border-radius:10px;padding:16px 20px;margin-bottom:10px;'>"
+                    f"<span style='font-size:1.2em;font-weight:bold;color:#f0c040;'>{n['nivel']} ← Tu nivel actual</span><br>"
+                    f"<span style='color:#cce0ff;'>📅 Noches requeridas: {n['noches']} | ⭐ {n['pts']} pts/$ | 🏆 {pts_estadia:,} pts en tu estadía | ✅ {n['beneficios']}</span>"
+                    f"</div>",
+                    unsafe_allow_html=True)
+            else:
+                st.markdown(
+                    f"<div style='background:#1e1e2e;border-left:6px solid #444;border-radius:10px;padding:12px 20px;margin-bottom:10px;opacity:0.75;'>"
+                    f"<span style='font-size:1em;font-weight:bold;color:#aaa;'>{n['nivel']}</span><br>"
+                    f"<span style='color:#888;'>📅 Noches requeridas: {n['noches']} | ⭐ {n['pts']} pts/$ | 🏆 {pts_estadia:,} pts en tu estadía | ✅ {n['beneficios']}</span>"
+                    f"</div>",
+                    unsafe_allow_html=True)
+
+    # ==========================================================
+    # TAB 4: BENEFICIOS
+    # ==========================================================
+    with tab4:
+        st.markdown("### 💎 Beneficios Globalist")
+
+        beneficios = [
+            {"titulo": "Suite garantizada",    "cat": "Upgrade",      "desc": "Sujeto a disponibilidad al momento del check-in"},
+            {"titulo": "4:00 PM garantizado",  "cat": "Check-out",    "desc": "Late check-out sin costo adicional"},
+            {"titulo": "Early access",         "cat": "Check-in",     "desc": "Sujeto a disponibilidad"},
+            {"titulo": "Desayuno incluido",    "cat": "Desayuno",     "desc": "En propiedades Hyatt select"},
+            {"titulo": "+30% bonus",           "cat": "Puntos",       "desc": "Sobre puntos base ganados"},
+            {"titulo": "Acceso incluido",      "cat": "Club lounge",  "desc": "Donde aplique la propiedad"},
+            {"titulo": "TransferirAquí tienes el **código completo de la sección World of Hyatt (WOH)** ya optimizado con las mejoras de estilo, tabs y visualización. Lo puedes copiar y pegar directamente en tu app:
+
+```python
+# ==========================================================
+# WORLD OF HYATT — versión mejorada
+# ==========================================================
+if menu == "World of Hyatt":
+    st.markdown("## 🌟 World of Hyatt")
     st.markdown("---")
-    r1, r2, r3, r4 = st.columns(4)
-    with r1:
-        st.metric("💰 Gasto total", f"${gasto_total:,.0f} USD")
-    with r2:
-        st.metric("⭐ Puntos base", f"{int(puntos_base):,}")
-    with r3:
-        st.metric("🎁 Bonus Inclusive (15%)", f"{int(puntos_bonus):,}")
-    with r4:
-        st.metric("🏆 Total puntos", f"{puntos_total:,}")
 
-    st.success(f"🌙 Con {puntos_total:,} puntos puedes canjear aproximadamente **{noches_gratis} noche(s) gratis** en propiedades Category 1.")
+    # ---- TABS ----
+    tab1, tab2, tab3, tab4 = st.tabs(["Calculadora", "Valor por dólar", "Niveles", "Beneficios"])
 
-    # ---- VALOR POR DÓLAR ----
-    st.markdown("---")
-    st.markdown("### 💡 ¿Cuánto vale cada dólar gastado?")
+    # ==========================================================
+    # TAB 1: CALCULADORA
+    # ==========================================================
+    with tab1:
+        st.markdown("### 🧮 Calculadora de Puntos WOH")
 
-    v1, v2, v3, v4 = st.columns(4)
+        calc1, calc2, calc3 = st.columns(3)
+        with calc1:
+            noches = st.number_input("Número de noches", min_value=1, max_value=30, value=7, step=1, help="Cantidad de noches de tu estadía")
+        with calc2:
+            tarifa = st.number_input("Tarifa por noche (USD)", min_value=100, max_value=5000, value=500, step=50, help="Precio promedio por noche")
+        with calc3:
+            nivel = st.selectbox("Nivel de membresía", [
+                "Member (5 pts/$)",
+                "Discoverist (5 pts/$)",
+                "Explorist (6 pts/$)",
+                "Globalist (6.5 pts/$)"
+            ])
 
-    with v1:
+        pts_map = {"Member (5 pts/$)": 5, "Discoverist (5 pts/$)": 5, "Explorist (6 pts/$)": 6, "Globalist (6.5 pts/$)": 6.5}
+        pts_por_dolar = pts_map[nivel]
+        gasto_total = noches * tarifa
+        puntos_base = gasto_total * pts_por_dolar
+        puntos_bonus = puntos_base * 0.15
+        puntos_total = int(puntos_base + puntos_bonus)
+        noches_gratis = puntos_total // 3500
+
+        # ---- METRICAS ----
+        r1, r2, r3, r4 = st.columns(4)
+        r1.metric("💰 Gasto total", f"${gasto_total:,.0f}")
+        r2.metric("⭐ Puntos base", f"{int(puntos_base):,}")
+        r3.metric("🎁 Bonus 15%", f"{int(puntos_bonus):,}")
+        r4.metric("🏆 Total puntos", f"{puntos_total:,}")
+
+        st.success(f"🌙 Con {puntos_total:,} puntos puedes canjear aprox. **{noches_gratis} noche(s)** en Category 1.")
+
+        # ---- PROGRESO ----
+        st.progress(min(noches/60, 1.0), text=f"Avance hacia Globalist: {noches}/60 noches")
+
+    # ==========================================================
+    # TAB 2: VALOR POR DÓLAR
+    # ==========================================================
+    with tab2:
+        st.markdown("### 💡 ¿Cuánto vale cada dólar gastado?")
+
+        v1, v2, v3, v4 = st.columns(4)
+        niveles_display = [
+            {"icon":"🔵","nombre":"Member","pts":"5","color":"white"},
+            {"icon":"🟤","nombre":"Discoverist","pts":"5","color":"white"},
+            {"icon":"🔘","nombre":"Explorist","pts":"6","color":"#4fc3f7"},
+            {"icon":"🟡","nombre":"Globalist","pts":"6.5","color":"#f0c040"},
+        ]
+
+        for i, n in enumerate(niveles_display):
+            with [v1,v2,v3,v4][i]:
+                st.markdown(
+                    f"""
+                    <div style='background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;'>
+                        <div style='font-size:2em;'>{n['icon']}</div>
+                        <div style='color:#aaa;font-size:0.85em;margin-top:4px;'>{n['nombre']}</div>
+                        <div style='color:{n['color']};font-size:2em;font-weight:bold;'>{n['pts']} pts</div>
+                        <div style='color:#aaa;font-size:0.8em;'>por cada $1 USD</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(
-            "<div style='background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;'>"
-            "<div style='font-size:2em;'>🔵</div>"
-            "<div style='color:#aaa;font-size:0.85em;margin-top:4px;'>Member</div>"
-            "<div style='color:white;font-size:2em;font-weight:bold;'>5 pts</div>"
-            "<div style='color:#aaa;font-size:0.8em;'>por cada $1 USD</div>"
-            "</div>",
+            f"<div style='background:#0d2137;border-radius:12px;padding:16px 24px;text-align:center;'>"
+            f"<span style='color:#aaa;'>Con tu nivel </span>"
+            f"<span style='color:#f0c040;font-weight:bold;'>{nivel.split('(')[0].strip()}</span>"
+            f"<span style='color:#aaa;'>, cada </span>"
+            f"<span style='color:white;font-weight:bold;'>$1 USD</span>"
+            f"<span style='color:#aaa;'> genera </span>"
+            f"<span style='color:#4fc3f7;font-size:1.3em;font-weight:bold;'>{pts_por_dolar} pts</span>"
+            f"<span style='color:#aaa;'> + </span>"
+            f"<span style='color:#81c995;font-weight:bold;'>15% bonus Inclusive</span>"
+            f"<span style='color:#aaa;'> = </span>"
+            f"<span style='color:white;font-size:1.3em;font-weight:bold;'>{pts_por_dolar * 1.15:.2f} pts reales</span>"
+            f"</div>",
             unsafe_allow_html=True)
 
-    with v2:
-        st.markdown(
-            "<div style='background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;'>"
-            "<div style='font-size:2em;'>🟤</div>"
-            "<div style='color:#aaa;font-size:0.85em;margin-top:4px;'>Discoverist</div>"
-            "<div style='color:white;font-size:2em;font-weight:bold;'>5 pts</div>"
-            "<div style='color:#aaa;font-size:0.8em;'>por cada $1 USD</div>"
-            "</div>",
-            unsafe_allow_html=True)
+    # ==========================================================
+    # TAB 3: NIVELES
+    # ==========================================================
+    with tab3:
+        st.markdown("### 📊 Tu nivel actual")
 
-    with v3:
-        st.markdown(
-            "<div style='background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;'>"
-            "<div style='font-size:2em;'>🔘</div>"
-            "<div style='color:#aaa;font-size:0.85em;margin-top:4px;'>Explorist</div>"
-            "<div style='color:#4fc3f7;font-size:2em;font-weight:bold;'>6 pts</div>"
-            "<div style='color:#aaa;font-size:0.8em;'>por cada $1 USD</div>"
-            "</div>",
-            unsafe_allow_html=True)
+        niveles = [
+            {"nivel": "🔵 Member",      "noches": "0",  "pts": 5,   "beneficios": "Acceso básico"},
+            {"nivel": "🟤 Discoverist", "noches": "10", "pts": 5,   "beneficios": "Late checkout 2PM"},
+            {"nivel": "🔘 Explorist",   "noches": "30", "pts": 6,   "beneficios": "Suite upgrades, lounge access"},
+            {"nivel": "🟡 Globalist",   "noches": "60", "pts": 6.5, "beneficios": "Suite upgrades, desayuno, late checkout 4PM"},
+        ]
 
-    with v4:
-        st.markdown(
-            "<div style='background:#1a3c5e;border:2px solid #f0c040;border-radius:12px;padding:20px;text-align:center;'>"
-            "<div style='font-size:2em;'>🟡</div>"
-            "<div style='color:#f0c040;font-size:0.85em;margin-top:4px;'>Globalist</div>"
-            "<div style='color:#f0c040;font-size:2em;font-weight:bold;'>6.5 pts</div>"
-            "<div style='color:#cce0ff;font-size:0.8em;'>por cada $1 USD</div>"
-            "</div>",
-            unsafe_allow_html=True)
+        nivel_actual = nivel.split(" ")[0]
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown(
-        f"<div style='background:#0d2137;border-radius:12px;padding:16px 24px;text-align:center;'>"
-        f"<span style='color:#aaa;'>Con tu nivel </span>"
-        f"<span style='color:#f0c040;font-weight:bold;'>{nivel.split('(')[0].strip()}</span>"
-        f"<span style='color:#aaa;'>, cada </span>"
-        f"<span style='color:white;font-weight:bold;'>$1 USD</span>"
-        f"<span style='color:#aaa;'> gastado te genera </span>"
-        f"<span style='color:#4fc3f7;font-size:1.3em;font-weight:bold;'>{pts_por_dolar} pts</span>"
-        f"<span style='color:#aaa;'> + </span>"
-        f"<span style='color:#81c995;font-weight:bold;'>15% bonus Inclusive Collection</span>"
-        f"<span style='color:#aaa;'> = </span>"
-        f"<span style='color:white;font-size:1.3em;font-weight:bold;'>{pts_por_dolar * 1.15:.2f} pts reales</span>"
-        f"</div>",
-        unsafe_allow_html=True)
+        for n in niveles:
+            nombre = n["nivel"].split(" ")[1]
+            pts_estadia = int(gasto_total * n["pts"] * 1.15)
+            es_actual = nombre == nivel_actual
 
-    # ---- TABLA DE NIVELES ----
-    st.markdown("---")
-    st.markdown("### 📊 Tu nivel actual")
+            if es_actual:
+                st.markdown(
+                    f"<div style='background:#1a3c5e;border-left:6px solid #f0c040;border-radius:10px;padding:16px 20px;margin-bottom:10px;'>"
+                    f"<span style='font-size:1.2em;font-weight:bold;color:#f0c040;'>{n['nivel']} ← Tu nivel actual</span><br>"
+                    f"<span style='color:#cce0ff;'>📅 Noches requeridas: {n['noches']} | ⭐ {n['pts']} pts/$ | 🏆 {pts_estadia:,} pts en tu estadía | ✅ {n['beneficios']}</span>"
+                    f"</div>",
+                    unsafe_allow_html=True)
+            else:
+                st.markdown(
+                    f"<div style='background:#1e1e2e;border-left:6px solid #444;border-radius:10px;padding:12px 20px;margin-bottom:10px;opacity:0.75;'>"
+                    f"<span style='font-size:1em;font-weight:bold;color:#aaa;'>{n['nivel']}</span><br>"
+                    f"<span style='color:#888;'>📅 Noches requeridas: {n['noches']} | ⭐ {n['pts']} pts/$ | 🏆 {pts_estadia:,} pts en tu estadía | ✅ {n['beneficios']}</span>"
+                    f"</div>",
+                    unsafe_allow_html=True)
 
-    niveles = [
-        {"nivel": "🔵 Member",      "noches": "0",  "pts": 5,   "beneficios": "Acceso básico"},
-        {"nivel": "🟤 Discoverist", "noches": "10", "pts": 5,   "beneficios": "Late checkout 2PM"},
-        {"nivel": "🔘 Explorist",   "noches": "30", "pts": 6,   "beneficios": "Suite upgrades, lounge access"},
-        {"nivel": "🟡 Globalist",   "noches": "60", "pts": 6.5, "beneficios": "Suite upgrades, desayuno, late checkout 4PM"},
-    ]
+    # ==========================================================
+    # TAB 4: BENEFICIOS
+    # ==========================================================
+    with tab4:
+        st.markdown("### 💎 Beneficios Globalist")
 
-    nivel_actual = nivel.split(" ")[0]
-
-    for n in niveles:
-        nombre = n["nivel"].split(" ")[1]
-        pts_estadia = int(gasto_total * n["pts"] * 1.15)
-        es_actual = nombre == nivel_actual
-
-        if es_actual:
-            st.markdown(
-                f"<div style='background:#1a3c5e;border-left:6px solid #f0c040;border-radius:10px;padding:16px 20px;margin-bottom:10px;'>"
-                f"<span style='font-size:1.2em;font-weight:bold;color:#f0c040;'>{n['nivel']} ← Tu nivel actual</span><br>"
-                f"<span style='color:#cce0ff;'>📅 Noches requeridas: {n['noches']} &nbsp;|&nbsp; "
-                f"⭐ {n['pts']} pts/$ &nbsp;|&nbsp; "
-                f"🏆 {pts_estadia:,} pts en tu estadía &nbsp;|&nbsp; "
-                f"✅ {n['beneficios']}</span>"
-                f"</div>",
-                unsafe_allow_html=True)
-        else:
-            st.markdown(
-                f"<div style='background:#1e1e2e;border-left:6px solid #444;border-radius:10px;padding:12px 20px;margin-bottom:10px;opacity:0.75;'>"
-                f"<span style='font-size:1em;font-weight:bold;color:#aaa;'>{n['nivel']}</span><br>"
-                f"<span style='color:#888;'>📅 Noches requeridas: {n['noches']} &nbsp;|&nbsp; "
-                f"⭐ {n['pts']} pts/$ &nbsp;|&nbsp; "
-                f"🏆 {pts_estadia:,} pts en tu estadía &nbsp;|&nbsp; "
-                f"✅ {n['beneficios']}</span>"
-                f"</div>",
-                unsafe_allow_html=True)
-
-   # =========================================================
-# BENEFICIOS GLOBALIST — reemplaza el bloque st.markdown("### 💎 Beneficios Globalist")
-# =========================================================
-
-st.markdown("---")
-st.markdown("### 💎 Beneficios Globalist")
-
-beneficios = [
-    {"titulo": "Suite garantizada",    "cat": "Upgrade",      "desc": "Sujeto a disponibilidad al momento del check-in"},
-    {"titulo": "4:00 PM garantizado",  "cat": "Check-out",    "desc": "Late check-out sin costo adicional"},
-    {"titulo": "Early access",         "cat": "Check-in",     "desc": "Sujeto a disponibilidad"},
-    {"titulo": "Desayuno incluido",    "cat": "Desayuno",     "desc": "En propiedades Hyatt select"},
-    {"titulo": "+30% bonus",           "cat": "Puntos",       "desc": "Sobre puntos base ganados"},
-    {"titulo": "Acceso incluido",      "cat": "Club lounge",  "desc": "Donde aplique la propiedad"},
-    {"titulo": "Transferir estatus",   "cat": "Guest of Honor","desc": "Comparte beneficios con un acompañante"},
-]
-
-cols = st.columns(4)
-for i, b in enumerate(beneficios):
-    with cols[i % 4]:
-        st.markdown(
-            f"""
-            <div style="
-                background: #1e1e2e;
-                border-radius: 12px;
-                border: 0.5px solid #333;
-                padding: 1rem;
-                margin-bottom: 12px;
-                height: 110px;
-            ">
-                <div style="font-size:12px; color:#888; margin-bottom:5px;">{b['cat']}</div>
-                <div style="font-size:15px; font-weight:500; color:white; margin-bottom:4px;">{b['titulo']}</div>
-                <div style="font-size:12px; color:#aaa; line-height:1.4;">{b['desc']}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-st.markdown(
-    """
-    <div style="
-        background: #0d2137;
-        border-radius: 12px;
-        border: 2px solid #3a8fd4;
-        padding: 1rem 1.25rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 4px;
-    ">
-        <div>
-            <div style="font-size:12px; color:#aaa; margin-bottom:2px;">Nivel máximo</div>
-            <div style="font-size:15px; font-weight:500; color:white;">Globalist — 60 noches calificadas / año</div>
-        </div>
-        <div style="
-            font-size:12px;
-            padding: 4px 14px;
-            border-radius: 8px;
-            background: #1a3c5e;
-            color: #6ab0e8;
-            white-space: nowrap;
-        ">Elite tier</div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-st.info("Para más información visita [world.hyatt.com](https://world.hyatt.com)", icon="🌐")
+        beneficios = [
+            {"titulo": "Suite garantizada",    "cat": "Upgrade",      "desc": "Sujeto a disponibilidad al momento del check-in"},
+            {"titulo": "4:00 PM garantizado",  "cat": "Check-out",    "desc": "Late check-out sin costo adicional"},
+            {"titulo": "Early access",         "cat": "Check-in",     "desc": "Sujeto a disponibilidad"},
+            {"titulo": "Desayuno incluido",    "cat": "Desayuno",     "desc": "En propiedades Hyatt select"},
+            {"titulo": "+30% bonus",           "cat": "Puntos",       "desc": "Sobre puntos base ganados"},
+            {"titulo": "Acceso incluido",      "cat": "Club lounge",  "desc": "Donde aplique la propiedad"},
+            {"titulo": "Transferir estatus",   "cat": "Guest of Honor","desc":

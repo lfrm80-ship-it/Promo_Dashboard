@@ -258,7 +258,19 @@ if menu == "Nueva promoción":
 
         submit = st.form_submit_button("Registrar promoción")
 
-        if submit:
+       if submit:
+
+            file_name = None
+            file_type = None
+            file_content = None
+
+            if archivo is not None:
+                file_name = archivo.name
+                file_type = archivo.type
+                file_content = base64.b64encode(
+                    archivo.getvalue()
+                ).decode()
+
             for h in hotels:
                 payload = {
                     "Hotel": h,
@@ -273,12 +285,10 @@ if menu == "Nueva promoción":
                     "Notas": notas
                 }
 
-                if archivo:
-                    payload["FileName"] = archivo.name
-                    payload["FileType"] = archivo.type
-                    payload["FileContent"] = base64.b64encode(
-                        archivo.getvalue()
-                    ).decode()
+                if file_content:
+                    payload["FileName"] = file_name
+                    payload["FileType"] = file_type
+                    payload["FileContent"] = file_content
 
                 r = requests.post(
                     WEB_APP_URL,

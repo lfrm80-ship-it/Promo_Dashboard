@@ -291,7 +291,7 @@ if menu == "Nueva promoción":
                     payload["FileType"] = file_type
                     payload["FileContent"] = file_content
 
-                r = requests.post(
+               r = requests.post(
                     WEB_APP_URL,
                     json=payload,
                     headers={"Content-Type": "application/json"}

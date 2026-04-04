@@ -184,7 +184,7 @@ if menu == "Vista rápida":
             )
 
             # ✅ DEBUG TEMPORAL
-            st.write("DEBUG columnas reales:", df_view.columns.tolist())
+            #st.write("DEBUG columnas reales:", df_view.columns.tolist())
 
             # ---------- TESTIGOS / MATERIAL ADJUNTO ----------
             st.divider()

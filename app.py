@@ -373,16 +373,110 @@ if menu == "World of Hyatt":
     v1, v2, v3, v4 = st.columns(4)
 
     with v1:
-        st.markdown("""
-            <div style="background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;">
-            <div style="font-size:2em;">🔵</div>
-            <div style="color:#aaa;font-size:0.85em;margin-top:4px;">Member</div>
-            <div style="color:white;font-size:2em;font-weight:bold;">5 pts</div>
-            <div style="color:#aaa;font-size:0.8em;">por cada $1 USD</div>
-            </div>""", unsafe_allow_html=True)
+        st.markdown(
+            "<div style='background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;'>"
+            "<div style='font-size:2em;'>🔵</div>"
+            "<div style='color:#aaa;font-size:0.85em;margin-top:4px;'>Member</div>"
+            "<div style='color:white;font-size:2em;font-weight:bold;'>5 pts</div>"
+            "<div style='color:#aaa;font-size:0.8em;'>por cada $1 USD</div>"
+            "</div>",
+            unsafe_allow_html=True)
 
     with v2:
-        st.markdown("""
-            <div style="background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;">
-            <div style="font-size:2em;">🟤</div>
-            <div style="color:#aaa;font-size:0.85em;margin-top:4px;">Discoverist</div>
+        st.markdown(
+            "<div style='background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;'>"
+            "<div style='font-size:2em;'>🟤</div>"
+            "<div style='color:#aaa;font-size:0.85em;margin-top:4px;'>Discoverist</div>"
+            "<div style='color:white;font-size:2em;font-weight:bold;'>5 pts</div>"
+            "<div style='color:#aaa;font-size:0.8em;'>por cada $1 USD</div>"
+            "</div>",
+            unsafe_allow_html=True)
+
+    with v3:
+        st.markdown(
+            "<div style='background:#1e1e2e;border-radius:12px;padding:20px;text-align:center;'>"
+            "<div style='font-size:2em;'>🔘</div>"
+            "<div style='color:#aaa;font-size:0.85em;margin-top:4px;'>Explorist</div>"
+            "<div style='color:#4fc3f7;font-size:2em;font-weight:bold;'>6 pts</div>"
+            "<div style='color:#aaa;font-size:0.8em;'>por cada $1 USD</div>"
+            "</div>",
+            unsafe_allow_html=True)
+
+    with v4:
+        st.markdown(
+            "<div style='background:#1a3c5e;border:2px solid #f0c040;border-radius:12px;padding:20px;text-align:center;'>"
+            "<div style='font-size:2em;'>🟡</div>"
+            "<div style='color:#f0c040;font-size:0.85em;margin-top:4px;'>Globalist</div>"
+            "<div style='color:#f0c040;font-size:2em;font-weight:bold;'>6.5 pts</div>"
+            "<div style='color:#cce0ff;font-size:0.8em;'>por cada $1 USD</div>"
+            "</div>",
+            unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='background:#0d2137;border-radius:12px;padding:16px 24px;text-align:center;'>"
+        f"<span style='color:#aaa;'>Con tu nivel </span>"
+        f"<span style='color:#f0c040;font-weight:bold;'>{nivel.split('(')[0].strip()}</span>"
+        f"<span style='color:#aaa;'>, cada </span>"
+        f"<span style='color:white;font-weight:bold;'>$1 USD</span>"
+        f"<span style='color:#aaa;'> gastado te genera </span>"
+        f"<span style='color:#4fc3f7;font-size:1.3em;font-weight:bold;'>{pts_por_dolar} pts</span>"
+        f"<span style='color:#aaa;'> + </span>"
+        f"<span style='color:#81c995;font-weight:bold;'>15% bonus Inclusive Collection</span>"
+        f"<span style='color:#aaa;'> = </span>"
+        f"<span style='color:white;font-size:1.3em;font-weight:bold;'>{pts_por_dolar * 1.15:.2f} pts reales</span>"
+        f"</div>",
+        unsafe_allow_html=True)
+
+    # ---- TABLA DE NIVELES ----
+    st.markdown("---")
+    st.markdown("### 📊 Tu nivel actual")
+
+    niveles = [
+        {"nivel": "🔵 Member",      "noches": "0",  "pts": 5,   "beneficios": "Acceso básico"},
+        {"nivel": "🟤 Discoverist", "noches": "10", "pts": 5,   "beneficios": "Late checkout 2PM"},
+        {"nivel": "🔘 Explorist",   "noches": "30", "pts": 6,   "beneficios": "Suite upgrades, lounge access"},
+        {"nivel": "🟡 Globalist",   "noches": "60", "pts": 6.5, "beneficios": "Suite upgrades, desayuno, late checkout 4PM"},
+    ]
+
+    nivel_actual = nivel.split(" ")[0]
+
+    for n in niveles:
+        nombre = n["nivel"].split(" ")[1]
+        pts_estadia = int(gasto_total * n["pts"] * 1.15)
+        es_actual = nombre == nivel_actual
+
+        if es_actual:
+            st.markdown(
+                f"<div style='background:#1a3c5e;border-left:6px solid #f0c040;border-radius:10px;padding:16px 20px;margin-bottom:10px;'>"
+                f"<span style='font-size:1.2em;font-weight:bold;color:#f0c040;'>{n['nivel']} ← Tu nivel actual</span><br>"
+                f"<span style='color:#cce0ff;'>📅 Noches requeridas: {n['noches']} &nbsp;|&nbsp; "
+                f"⭐ {n['pts']} pts/$ &nbsp;|&nbsp; "
+                f"🏆 {pts_estadia:,} pts en tu estadía &nbsp;|&nbsp; "
+                f"✅ {n['beneficios']}</span>"
+                f"</div>",
+                unsafe_allow_html=True)
+        else:
+            st.markdown(
+                f"<div style='background:#1e1e2e;border-left:6px solid #444;border-radius:10px;padding:12px 20px;margin-bottom:10px;opacity:0.75;'>"
+                f"<span style='font-size:1em;font-weight:bold;color:#aaa;'>{n['nivel']}</span><br>"
+                f"<span style='color:#888;'>📅 Noches requeridas: {n['noches']} &nbsp;|&nbsp; "
+                f"⭐ {n['pts']} pts/$ &nbsp;|&nbsp; "
+                f"🏆 {pts_estadia:,} pts en tu estadía &nbsp;|&nbsp; "
+                f"✅ {n['beneficios']}</span>"
+                f"</div>",
+                unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("### 💎 Beneficios Globalist")
+    st.markdown(
+        "- ✅ Upgrade a suite (sujeto a disponibilidad)\n"
+        "- ✅ Late check-out a las 4:00 PM\n"
+        "- ✅ Early check-in sujeto a disponibilidad\n"
+        "- ✅ Desayuno de cortesía (propiedades select)\n"
+        "- ✅ Puntos de bonificación (30% extra)\n"
+        "- ✅ Club lounge access\n"
+        "- ✅ Guest of Honor (transferir estatus)"
+    )
+
+    st.info("Para más información visita [world.hyatt.com](https://world.hyatt.com)", icon="🌐")

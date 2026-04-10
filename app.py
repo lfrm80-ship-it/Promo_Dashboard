@@ -388,7 +388,7 @@ if menu == "World of Hyatt":
         )
 
 # =====================================================
-# TAB 2: VALOR POR DÓLAR — MEGA PRO (FIXED)
+# TAB 2: VALOR POR DÓLAR — MEGA PRO (FIX DEFINITIVO)
 # =====================================================
 with tab2:
     st.markdown("### 💡 Valor real por cada dólar gastado")
@@ -408,6 +408,7 @@ with tab2:
 
     for i, n in enumerate(niveles_valor):
         pts_reales = n["pts"] * 1.15
+
         with cols[i]:
             st.markdown(
                 f"""
@@ -463,7 +464,6 @@ with tab2:
         "Las noches con puntos no tienen blackout dates "
         "en habitaciones estándar (sujetas a disponibilidad)."
     )
-
 # =====================================================
 # TAB 3: NIVELES — MEGA PRO GAMIFIED
 # =====================================================

@@ -465,7 +465,7 @@ if menu == "World of Hyatt":
         )
 
     # =====================================================
-    # TAB 3: NIVELES — MEGA PRO GAMIFIED (FIX FINAL)
+    # TAB 3: NIVELES — PRO (FIX LIMPIO)
     # =====================================================
     with tab3:
         st.markdown("### 🏆 Progreso de Nivel World of Hyatt")
@@ -491,21 +491,20 @@ if menu == "World of Hyatt":
                 "emoji": "🔘",
                 "req": 30,
                 "pts": 6,
-                "beneficio": "Upgrades & lounge access"
+                "beneficio": "Upgrades y lounge access"
             },
             {
                 "nombre": "Globalist",
                 "emoji": "🟡",
                 "req": 60,
                 "pts": 6.5,
-                "beneficio": "Suites, desayuno y 4 PM checkout"
+                "beneficio": "Suites, desayuno y check-out 4 PM"
             },
         ]
 
         nivel_actual = nivel.split(" ")[0]
 
         for n in niveles:
-            progreso = min(noches / n["req"], 1.0) if n["req"] > 0 else 1.0
             pts_estadia = int(gasto_total * n["pts"] * 1.15)
             es_actual = n["nombre"] == nivel_actual
 
@@ -514,11 +513,11 @@ if menu == "World of Hyatt":
                 <div style="
                     background:{'#1a3c5e' if es_actual else '#1e1e2e'};
                     border-left:6px solid {'#f0c040' if es_actual else '#444'};
-                    border-radius:14px;
-                    padding:16px 22px;
-                    margin-bottom:14px;
+                    border-radius:12px;
+                    padding:16px 20px;
+                    margin-bottom:12px;
                 ">
-                    <div style="font-size:16px;font-weight:600;color:white;">
+                    <div style="font-size:15px;font-weight:600;color:white;">
                         {n['emoji']} {n['nombre']}
                         {" ← Tu nivel actual" if es_actual else ""}
                     </div>

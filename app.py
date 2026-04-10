@@ -388,40 +388,127 @@ if menu == "World of Hyatt":
         )
 
     # =====================================================
-    # TAB 2: VALOR POR DÓLAR
-    # =====================================================
-    with tab2:
-        st.markdown("### 💡 Valor real por cada $1 USD")
+# TAB 2: VALOR POR DÓLAR — MEGA PRO
+# =====================================================
+with tab2:
+    st.markdown("### 💡 Valor real por cada dólar gastado")
+    st.caption("Cálculo basado en earning oficial World of Hyatt + bonus promedio Inclusive (+15%)")
+
+    niveles_valor = [
+        {"nivel": "Member", "pts": 5.0, "color": "#9aa5b1"},
+        {"nivel": "Discoverist", "pts": 5.0, "color": "#9aa5b1"},
+        {"nivel": "Explorist", "pts": 6.0, "color": "#4fc3f7"},
+        {"nivel": "Globalist", "pts": 6.5, "color": "#f0c040"},
+    ]
+
+    cols = st.columns(4)
+
+    for i, n in enumerate(niveles_valor):
+        pts_reales = n["pts"] * 1.15
+        with cols[i]:
+            st.markdown(
+                f"""
+                <div style="
+                    background:#1e1e2e;
+                    border-radius:14px;
+                    padding:1.25rem;
+                    border:1px solid #333;
+                    text-align:center;
+                    height:160px;
+                ">
+                    <div style="font-size:13px;color:#aaa;">
+                        {n['nivel']}
+                    </div>
+                    <div style="font-size:36px;font-weight:600;color:{n['color']};">
+                        {pts_reales:.2f}
+                    </div>
+                    <div style="font-size:12px;color:#aaa;">
+                        pts reales / USD
+                    </div>
+                    <div style="margin-top:6px;font-size:11px;color:#666;">
+                        Base {n['pts']} + 15% bonus
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ----- MENSAJE EJECUTIVO -----
+    st.markdown(
+        f"""
+        <div style="
+            background:#0d2137;
+            border-radius:12px;
+            padding:18px 22px;
+            border-left:6px solid #4fc3f7;
+        ">
+            <div style="font-size:14px;color:#d0e4ff;">
+                💰 <strong>Lectura ejecutiva:</strong><br>
+                Un huésped <strong>{nivel.split('(')[0].strip()}</strong> obtiene
+                <strong>{pts_por_dolar * 1.15:.2f} puntos reales</strong> por cada dólar gastado.<br>
+                Subir de nivel incrementa el valor por noche <strong>sin pagar más</strong>.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.info(
+        "Las noches con puntos no tienen blackout dates en habitaciones estándar "
+        "(sujetas a disponibilidad)."
+    )
+
+
+# =====================================================
+# TAB 3: NIVELES — MEGA PRO GAMIFIED
+# =====================================================
+with tab3:
+    st.markdown("### 🏆 Progreso de Nivel World of Hyatt")
+    st.caption("Calificación anual basada en noches elegibles")
+
+    niveles = [
+        {
+            "nombre": "Member",
+            "emoji": "🔵",
+            "req": 0,
+            "pts": 5,
+            "beneficio": "Acceso básico al programa"
+        },
+        {
+            "nombre": "Discoverist",
+            "emoji": "🟤",
+            "req": 10,
+            "pts": 5,
+            "beneficio": "Late check-out 2 PM"
+        },
+        {
+            "nombre": "Explorist",
+            "emoji": "🔘",
+            "req": 30,
+            "pts": 6,
+            "beneficio": "Upgrades & lounge access"
+        },
+        {
+            "nombre": "Globalist",
+            "emoji": "🟡",
+            "req": 60,
+            "pts": 6.5,
+            "beneficio": "Suites, desayuno y 4 PM checkout"
+        },
+    ]
+
+    nivel_actual = nivel.split(" ")[0]
+
+    for n in niveles:
+        progreso = min(noches / n["req"], 1.0) if n["req"] > 0 else 1.0
+        pts_estadia = int(gasto_total * n["pts"] * 1.15)
+        es_actual = n["nombre"] == nivel_actual
 
         st.markdown(
             f"""
-            - **Puntos base:** {pts_por_dolar} pts  
-            - **Bonus promedio Inclusive:** +15%  
-            - **Total efectivo:** **{pts_por_dolar * 1.15:.2f} pts / USD**
-            """
-        )
-
-        st.info(
-            "Las noches con puntos no tienen blackout dates "
-            "en habitaciones estándar (sujetas a disponibilidad)."
-        )
-
-    # =====================================================
-    # TAB 3: NIVELES
-    # =====================================================
-    with tab3:
-        st.markdown("### 📊 Niveles World of Hyatt")
-
-        niveles = [
-            ("Member", 0),
-            ("Discoverist", 10),
-            ("Explorist", 30),
-            ("Globalist", 60)
-        ]
-
-        for n, req in niveles:
-            progreso = min(noches / req, 1.0) if req else 0
-            st.progress(progreso, text=f"{n} — {req} noches requeridas")
+            <div style="
 
     # =====================================================
     # TAB 4: BENEFICIOS GLOBALIST (OFICIAL)

@@ -309,30 +309,29 @@ if menu == "Upsell":
 
 
 # =========================================================
-# WORLD OF HYATT — CALCULADORA + VALOR POR DÓLAR
-# Fuente: world.hyatt.com (Free Nights & Upgrades)
+# WORLD OF HYATT — PRO
+# Calculadora + Valor por Dólar
 # =========================================================
 if menu == "World of Hyatt":
 
     st.markdown("## 🌟 World of Hyatt")
-    st.markdown("---")
+    st.markdown("Optimiza el valor de cada estadía usando puntos Hyatt")
+    st.divider()
 
-    # ✅ SOLO DOS TABS ÚTILES
-    tab1, tab2 = st.tabs(
-        ["Calculadora", "Valor por dólar"]
-    )
+    tab1, tab2 = st.tabs(["🧮 Calculadora", "💡 Valor por dólar"])
 
     # =====================================================
-    # TAB 1: CALCULADORA REAL DE NOCHES
+    # TAB 1: CALCULADORA PRO
     # =====================================================
     with tab1:
-        st.markdown("### 🧮 Calculadora de Puntos Hyatt")
+        st.subheader("🧮 Calculadora de Puntos Hyatt")
+        st.caption("Estimación basada en earning oficial World of Hyatt + bonus promedio Inclusive (+15%)")
 
         c1, c2, c3 = st.columns(3)
 
         with c1:
             noches = st.number_input("Noches de la estadía", 1, 30, 5)
-            tarifa = st.number_input("Tarifa por noche (USD)", 100, 5000, 500, step=50)
+            tarifa = st.number_input("Tarifa promedio por noche (USD)", 100, 5000, 500, step=50)
 
         with c2:
             nivel = st.selectbox(
@@ -349,7 +348,7 @@ if menu == "World of Hyatt":
             categoria = st.selectbox("Categoría del hotel", [1,2,3,4,5,6,7,8])
             temporada = st.selectbox("Temporada", ["Off-Peak", "Standard", "Peak"])
 
-        # ----- PUNTOS POR DÓLAR -----
+        # ---- CONFIG ----
         pts_map = {
             "Member (5 pts/$)": 5,
             "Discoverist (5 pts/$)": 5,
@@ -358,7 +357,6 @@ if menu == "World of Hyatt":
         }
         pts_por_dolar = pts_map[nivel]
 
-        # ----- TABLA OFICIAL HYATT (Standard Room) -----
         puntos_por_categoria = {
             1: {"Off-Peak":3500,  "Standard":5000,  "Peak":6500},
             2: {"Off-Peak":6500,  "Standard":8000,  "Peak":9500},
@@ -370,40 +368,57 @@ if menu == "World of Hyatt":
             8: {"Off-Peak":35000, "Standard":40000, "Peak":45000},
         }
 
+        # ---- CÁLCULOS ----
         gasto_total = noches * tarifa
         puntos_base = gasto_total * pts_por_dolar
-        puntos_con_bonus = int(puntos_base * 1.15)
+        puntos_totales = int(puntos_base * 1.15)
 
         pts_noche = puntos_por_categoria[categoria][temporada]
-        noches_posibles = puntos_con_bonus // pts_noche
+        noches_posibles = puntos_totales // pts_noche
 
+        # ---- RESULTADOS ----
         r1, r2, r3, r4 = st.columns(4)
         r1.metric("💰 Gasto total", f"${gasto_total:,.0f}")
         r2.metric("⭐ Puntos base", f"{int(puntos_base):,}")
-        r3.metric("🎁 +15% Bonus", f"{int(puntos_con_bonus - puntos_base):,}")
-        r4.metric("🏆 Total puntos", f"{puntos_con_bonus:,}")
+        r3.metric("🎁 Bonus 15%", f"{int(puntos_totales - puntos_base):,}")
+        r4.metric("🏆 Total puntos", f"{puntos_totales:,}")
 
         st.success(
-            f"Con **{puntos_con_bonus:,} puntos** puedes canjear "
+            f"Con **{puntos_totales:,} puntos** puedes canjear "
             f"**{noches_posibles} noche(s)** en un hotel "
             f"**Categoría {categoria} ({temporada})**."
         )
 
     # =====================================================
-    # TAB 2: VALOR POR DÓLAR
+    # TAB 2: VALOR POR DÓLAR — PRO
     # =====================================================
     with tab2:
-        st.markdown("### 💡 Valor real por cada $1 USD")
+        st.subheader("💡 Valor real por cada $1 USD")
+        st.caption("Comparación clara del retorno según nivel Hyatt")
 
-        st.markdown(
-            f"""
-            - **Puntos base:** {pts_por_dolar} pts  
-            - **Bonus promedio Inclusive:** +15%  
-            - **Total efectivo:** **{pts_por_dolar * 1.15:.2f} pts / USD**
-            """
-        )
+        niveles_valor = [
+            ("Member", 5.0),
+            ("Discoverist", 5.0),
+            ("Explorist", 6.0),
+            ("Globalist", 6.5),
+        ]
+
+        for nombre, pts in niveles_valor:
+            pts_reales = pts * 1.15
+            col1, col2 = st.columns([2,1])
+
+            with col1:
+                st.write(f"### {nombre}")
+                st.write(f"Puntos base por dólar: **{pts}**")
+                st.write("Bonus promedio Inclusive: **+15%**")
+
+            with col2:
+                st.metric("Pts reales / USD", f"{pts_reales:.2f}")
+
+            st.divider()
 
         st.info(
-            "Las noches con puntos no tienen blackout dates "
-            "en habitaciones estándar (sujetas a disponibilidad)."
+            f"💼 **Lectura ejecutiva:** con nivel **{nivel.split('(')[0].strip()}**, "
+            f"cada $1 USD genera aprox. **{pts_por_dolar * 1.15:.2f} puntos reales**. "
+            "Subir de nivel incrementa el retorno sin aumentar el gasto."
         )

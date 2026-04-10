@@ -309,7 +309,7 @@ if menu == "Upsell":
 
 
 # =========================================================
-# WORLD OF HYATT — ACTUALIZADO A INFO OFICIAL
+# WORLD OF HYATT — CALCULADORA + VALOR POR DÓLAR
 # Fuente: world.hyatt.com (Free Nights & Upgrades)
 # =========================================================
 if menu == "World of Hyatt":
@@ -317,8 +317,9 @@ if menu == "World of Hyatt":
     st.markdown("## 🌟 World of Hyatt")
     st.markdown("---")
 
-    tab1, tab2, tab3, tab4 = st.tabs(
-        ["Calculadora", "Valor por dólar", "Niveles", "Beneficios"]
+    # ✅ SOLO DOS TABS ÚTILES
+    tab1, tab2 = st.tabs(
+        ["Calculadora", "Valor por dólar"]
     )
 
     # =====================================================
@@ -384,6 +385,25 @@ if menu == "World of Hyatt":
 
         st.success(
             f"Con **{puntos_con_bonus:,} puntos** puedes canjear "
-            f"**{noches_posibles} noche(s)** en un hotel **Categoría {categoria} ({temporada})**."
+            f"**{noches_posibles} noche(s)** en un hotel "
+            f"**Categoría {categoria} ({temporada})**."
         )
 
+    # =====================================================
+    # TAB 2: VALOR POR DÓLAR
+    # =====================================================
+    with tab2:
+        st.markdown("### 💡 Valor real por cada $1 USD")
+
+        st.markdown(
+            f"""
+            - **Puntos base:** {pts_por_dolar} pts  
+            - **Bonus promedio Inclusive:** +15%  
+            - **Total efectivo:** **{pts_por_dolar * 1.15:.2f} pts / USD**
+            """
+        )
+
+        st.info(
+            "Las noches con puntos no tienen blackout dates "
+            "en habitaciones estándar (sujetas a disponibilidad)."
+        )

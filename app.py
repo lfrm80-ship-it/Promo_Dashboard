@@ -387,12 +387,15 @@ if menu == "World of Hyatt":
             f"**{noches_posibles} noche(s)** en un hotel **Categoría {categoria} ({temporada})**."
         )
 
-    # =====================================================
-# TAB 2: VALOR POR DÓLAR — MEGA PRO
+# =====================================================
+# TAB 2: VALOR POR DÓLAR — MEGA PRO (FIXED)
 # =====================================================
 with tab2:
     st.markdown("### 💡 Valor real por cada dólar gastado")
-    st.caption("Cálculo basado en earning oficial World of Hyatt + bonus promedio Inclusive (+15%)")
+    st.caption(
+        "Cálculo basado en earning oficial World of Hyatt "
+        "+ bonus promedio Inclusive (+15%)"
+    )
 
     niveles_valor = [
         {"nivel": "Member", "pts": 5.0, "color": "#9aa5b1"},
@@ -435,7 +438,6 @@ with tab2:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ----- MENSAJE EJECUTIVO -----
     st.markdown(
         f"""
         <div style="
@@ -447,8 +449,10 @@ with tab2:
             <div style="font-size:14px;color:#d0e4ff;">
                 💰 <strong>Lectura ejecutiva:</strong><br>
                 Un huésped <strong>{nivel.split('(')[0].strip()}</strong> obtiene
-                <strong>{pts_por_dolar * 1.15:.2f} puntos reales</strong> por cada dólar gastado.<br>
-                Subir de nivel incrementa el valor por noche <strong>sin pagar más</strong>.
+                <strong>{pts_por_dolar * 1.15:.2f} puntos reales</strong>
+                por cada dólar gastado.<br>
+                Subir de nivel incrementa el valor por noche
+                <strong>sin pagar más</strong>.
             </div>
         </div>
         """,
@@ -456,10 +460,9 @@ with tab2:
     )
 
     st.info(
-        "Las noches con puntos no tienen blackout dates en habitaciones estándar "
-        "(sujetas a disponibilidad)."
+        "Las noches con puntos no tienen blackout dates "
+        "en habitaciones estándar (sujetas a disponibilidad)."
     )
-
 
 # =====================================================
 # TAB 3: NIVELES — MEGA PRO GAMIFIED

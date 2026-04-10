@@ -465,10 +465,10 @@ if menu == "World of Hyatt":
         )
 
     # =====================================================
-    # TAB 3: NIVELES — PRO (FIX LIMPIO)
+    # TAB 3: NIVELES — PRO (ESTABLE, SIN HTML)
     # =====================================================
     with tab3:
-        st.markdown("### 🏆 Progreso de Nivel World of Hyatt")
+        st.subheader("🏆 Progreso de Nivel World of Hyatt")
         st.caption("Calificación anual basada en noches elegibles")
 
         niveles = [
@@ -498,7 +498,7 @@ if menu == "World of Hyatt":
                 "emoji": "🟡",
                 "req": 60,
                 "pts": 6.5,
-                "beneficio": "Suites, desayuno y check-out 4 PM"
+                "beneficio": "Suites, desayuno y check‑out 4 PM"
             },
         ]
 
@@ -508,28 +508,16 @@ if menu == "World of Hyatt":
             pts_estadia = int(gasto_total * n["pts"] * 1.15)
             es_actual = n["nombre"] == nivel_actual
 
-            st.markdown(
-                f"""
-                <div style="
-                    background:{'#1a3c5e' if es_actual else '#1e1e2e'};
-                    border-left:6px solid {'#f0c040' if es_actual else '#444'};
-                    border-radius:12px;
-                    padding:16px 20px;
-                    margin-bottom:12px;
-                ">
-                    <div style="font-size:15px;font-weight:600;color:white;">
-                        {n['emoji']} {n['nombre']}
-                        {" ← Tu nivel actual" if es_actual else ""}
-                    </div>
-                    <div style="font-size:12px;color:#ccc;margin-top:4px;">
-                        🎯 {n['req']} noches calificadas · ⭐ {n['pts']} pts/USD
-                    </div>
-                    <div style="font-size:12px;color:#aaa;margin-top:6px;">
-                        🏆 En esta estadía ganarías aprox.
-                        <strong>{pts_estadia:,} puntos</strong><br>
-                        💎 {n['beneficio']}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            with st.container():
+                if es_actual:
+                    st.success(f"{n['emoji']} {n['nombre']} — Tu nivel actual")
+                else:
+                    st.markdown(f"### {n['emoji']} {n['nombre']}")
+
+                c1, c2, c3 = st.columns(3)
+                c1.metric("🎯 Noches requeridas", n["req"])
+                c2.metric("⭐ Puntos / USD", n["pts"])
+                c3.metric("🏆 Puntos en esta estadía", f"{pts_estadia:,}")
+
+                st.write(f"💎 **Beneficio clave:** {n['beneficio']}")
+                st.divider()

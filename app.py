@@ -309,7 +309,8 @@ if menu == "Upsell":
 
 
 # =========================================================
-# WORLD OF HYATT ✅ CORREGIDO
+# WORLD OF HYATT — ACTUALIZADO A INFO OFICIAL
+# Fuente: world.hyatt.com (Free Nights & Upgrades)
 # =========================================================
 if menu == "World of Hyatt":
 
@@ -320,55 +321,127 @@ if menu == "World of Hyatt":
         ["Calculadora", "Valor por dólar", "Niveles", "Beneficios"]
     )
 
-    # ---------- TAB 1 ----------
+    # =====================================================
+    # TAB 1: CALCULADORA REAL DE NOCHES
+    # =====================================================
     with tab1:
-        st.markdown("### 🧮 Calculadora de Puntos WOH")
+        st.markdown("### 🧮 Calculadora de Puntos Hyatt")
 
-        calc1, calc2, calc3 = st.columns(3)
-        with calc1:
-            noches = st.number_input("Número de noches", 1, 30, 7)
-        with calc2:
+        c1, c2, c3 = st.columns(3)
+
+        with c1:
+            noches = st.number_input("Noches de la estadía", 1, 30, 5)
             tarifa = st.number_input("Tarifa por noche (USD)", 100, 5000, 500, step=50)
-        with calc3:
-            nivel = st.selectbox("Nivel de membresía", [
-                "Member (5 pts/$)",
-                "Discoverist (5 pts/$)",
-                "Explorist (6 pts/$)",
-                "Globalist (6.5 pts/$)"
-            ])
 
+        with c2:
+            nivel = st.selectbox(
+                "Nivel de membresía",
+                [
+                    "Member (5 pts/$)",
+                    "Discoverist (5 pts/$)",
+                    "Explorist (6 pts/$)",
+                    "Globalist (6.5 pts/$)"
+                ]
+            )
+
+        with c3:
+            categoria = st.selectbox("Categoría del hotel", [1,2,3,4,5,6,7,8])
+            temporada = st.selectbox("Temporada", ["Off-Peak", "Standard", "Peak"])
+
+        # ----- PUNTOS POR DÓLAR -----
         pts_map = {
             "Member (5 pts/$)": 5,
             "Discoverist (5 pts/$)": 5,
             "Explorist (6 pts/$)": 6,
             "Globalist (6.5 pts/$)": 6.5
         }
+        pts_por_dolar = pts_map[nivel]
 
-        pts = pts_map[nivel]
+        # ----- TABLA OFICIAL HYATT (Standard Room) -----
+        puntos_por_categoria = {
+            1: {"Off-Peak":3500,  "Standard":5000,  "Peak":6500},
+            2: {"Off-Peak":6500,  "Standard":8000,  "Peak":9500},
+            3: {"Off-Peak":9000,  "Standard":12000, "Peak":15000},
+            4: {"Off-Peak":12000, "Standard":15000, "Peak":18000},
+            5: {"Off-Peak":17000, "Standard":20000, "Peak":23000},
+            6: {"Off-Peak":21000, "Standard":25000, "Peak":29000},
+            7: {"Off-Peak":25000, "Standard":30000, "Peak":35000},
+            8: {"Off-Peak":35000, "Standard":40000, "Peak":45000},
+        }
+
         gasto_total = noches * tarifa
-        puntos_totales = int(gasto_total * pts * 1.15)
+        puntos_base = gasto_total * pts_por_dolar
+        puntos_con_bonus = int(puntos_base * 1.15)
 
-        st.metric("Gasto total", f"${gasto_total:,.0f}")
-        st.metric("Puntos totales", f"{puntos_totales:,}")
-        st.success(f"Aprox. {puntos_totales // 3500} noche(s) gratis")
+        pts_noche = puntos_por_categoria[categoria][temporada]
+        noches_posibles = puntos_con_bonus // pts_noche
 
-    # ---------- TAB 2 ----------
+        r1, r2, r3, r4 = st.columns(4)
+        r1.metric("💰 Gasto total", f"${gasto_total:,.0f}")
+        r2.metric("⭐ Puntos base", f"{int(puntos_base):,}")
+        r3.metric("🎁 +15% Bonus", f"{int(puntos_con_bonus - puntos_base):,}")
+        r4.metric("🏆 Total puntos", f"{puntos_con_bonus:,}")
+
+        st.success(
+            f"Con **{puntos_con_bonus:,} puntos** puedes canjear "
+            f"**{noches_posibles} noche(s)** en un hotel **Categoría {categoria} ({temporada})**."
+        )
+
+    # =====================================================
+    # TAB 2: VALOR POR DÓLAR
+    # =====================================================
     with tab2:
-        st.markdown("### 💡 Valor por dólar")
-        st.info(f"Cada $1 USD genera **{pts * 1.15:.2f} puntos reales**")
+        st.markdown("### 💡 Valor real por cada $1 USD")
 
-    # ---------- TAB 3 ----------
+        st.markdown(
+            f"""
+            - **Puntos base:** {pts_por_dolar} pts  
+            - **Bonus promedio Inclusive:** +15%  
+            - **Total efectivo:** **{pts_por_dolar * 1.15:.2f} pts / USD**
+            """
+        )
+
+        st.info(
+            "Las noches con puntos no tienen blackout dates "
+            "en habitaciones estándar (sujetas a disponibilidad)."
+        )
+
+    # =====================================================
+    # TAB 3: NIVELES
+    # =====================================================
     with tab3:
-        st.markdown("### 📊 Progreso de nivel")
-        st.progress(min(noches / 60, 1.0))
+        st.markdown("### 📊 Niveles World of Hyatt")
 
-    # ✅ ---------- TAB 4 (FIX REAL) ----------
+        niveles = [
+            ("Member", 0),
+            ("Discoverist", 10),
+            ("Explorist", 30),
+            ("Globalist", 60)
+        ]
+
+        for n, req in niveles:
+            progreso = min(noches / req, 1.0) if req else 0
+            st.progress(progreso, text=f"{n} — {req} noches requeridas")
+
+    # =====================================================
+    # TAB 4: BENEFICIOS GLOBALIST (OFICIAL)
+    # =====================================================
     with tab4:
         st.markdown("### 💎 Beneficios Globalist")
-        st.markdown(
-            "- Suite upgrades\n"
-            "- Desayuno incluido\n"
-            "- Late check-out 4 PM\n"
-            "- Guest of Honor\n"
-            "- +30% bonus puntos"
+
+        beneficios = [
+            "✅ Upgrades a suite estándar (sujeto a disponibilidad)",
+            "✅ Desayuno completo o acceso a Club Lounge",
+            "✅ Late check-out garantizado a las 4:00 PM",
+            "✅ Resort fees exentos en noches con puntos",
+            "✅ Guest of Honor (comparte beneficios)",
+            "✅ Bonificación de puntos en estancias elegibles"
+        ]
+
+        for b in beneficios:
+            st.markdown(f"- {b}")
+
+        st.info(
+            "Información basada en el programa oficial World of Hyatt – "
+            "Free Nights & Upgrades."
         )

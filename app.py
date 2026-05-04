@@ -304,8 +304,177 @@ if menu == "Nueva promoción":
 # UPSELL
 # =========================================================
 if menu == "Upsell":
-    st.markdown("## Upsell")
-    st.info("Sección en construcción 🚧")
+
+    st.markdown("## 💰 Calculadora de Upsell")
+    st.markdown("Optimiza el revenue sugiriendo upgrades de habitación")
+    st.divider()
+
+    # =====================================================
+    # INPUTS PRINCIPALES
+    # =====================================================
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        hotel = st.selectbox("Hotel *", ["DREPM (Familia)", "SECPM (Solo Adultos)"])
+
+    with col2:
+        noches = st.number_input("Noches de estadía *", 1, 30, 1)
+
+    with col3:
+        tarifa_actual = st.number_input("Tarifa Actual (USD/noche) *", 50, 5000, 200, step=10)
+
+    with col4:
+        hab_reservada = st.selectbox("Habitación Reservada *", ["Single", "Double", "Suite", "Grand Suite"])
+
+    st.divider()
+
+    # =====================================================
+    # CONFIGURACIÓN POR HOTEL
+    # =====================================================
+    if "DREPM" in hotel:
+        st.subheader("🏨 DREPM - Resort Familiar")
+        st.caption("Incluye opciones con Children / Extra Pax")
+
+        col1, col2, col3, col4, col5 = st.columns(5)
+
+        with col1:
+            single = st.number_input("Single (USD/noche)", 100, 2000, 150, step=10, key="drepm_single")
+
+        with col2:
+            double = st.number_input("Double (USD/noche)", 120, 2500, 200, step=10, key="drepm_double")
+
+        with col3:
+            xtra_pax = st.number_input("Extra Pax (USD/noche)", 50, 1000, 80, step=10, key="drepm_xtra")
+
+        with col4:
+            children = st.number_input("Children (USD/noche)", 30, 800, 60, step=10, key="drepm_children")
+
+        with col5:
+            suite = st.number_input("Suite (USD/noche)", 200, 3000, 350, step=10, key="drepm_suite")
+
+        col1b, col2b, col3b = st.columns(3)
+
+        with col1b:
+            grand_suite = st.number_input("Grand Suite (USD/noche)", 250, 4000, 500, step=10, key="drepm_grand")
+
+        tarifas = {
+            "Single": single,
+            "Double": double,
+            "Suite": suite,
+            "Grand Suite": grand_suite,
+            "Extra Pax": xtra_pax,
+            "Children": children
+        }
+
+    else:
+        st.subheader("🌆 SECPM - Resort Adultos")
+        st.caption("Solo para huéspedes adultos - Sin Children")
+
+        col1, col2, col3, col4, col5 = st.columns(5)
+
+        with col1:
+            single = st.number_input("Single (USD/noche)", 100, 2000, 180, step=10, key="secpm_single")
+
+        with col2:
+            double = st.number_input("Double (USD/noche)", 120, 2500, 250, step=10, key="secpm_double")
+
+        with col3:
+            xtra_pax = st.number_input("Extra Pax (USD/noche)", 50, 1000, 120, step=10, key="secpm_xtra")
+
+        with col4:
+            suite = st.number_input("Suite (USD/noche)", 200, 3000, 400, step=10, key="secpm_suite")
+
+        with col5:
+            grand_suite = st.number_input("Grand Suite (USD/noche)", 250, 4000, 600, step=10, key="secpm_grand")
+
+        tarifas = {
+            "Single": single,
+            "Double": double,
+            "Suite": suite,
+            "Grand Suite": grand_suite,
+            "Extra Pax": xtra_pax
+        }
+
+    st.divider()
+
+    # =====================================================
+    # CÁLCULOS
+    # =====================================================
+    tarifa_reservada = tarifas[hab_reservada]
+    inversion_actual = tarifa_actual * noches
+
+    st.markdown("### 📊 Análisis de Opciones de Upsell")
+
+    # Crear dataframe de opciones
+    opciones = []
+
+    for categoria, tarifa in tarifas.items():
+        if categoria == hab_reservada:
+            continue
+
+        diferencial = tarifa - tarifa_actual
+        inversion_nueva = tarifa * noches
+        revenue_adicional = diferencial * noches
+
+        opciones.append({
+            "Categoría": categoria,
+            "Tarifa/Noche": f"${tarifa:,.0f}",
+            "Diferencial": f"${diferencial:+,.0f}",
+            "Inversión Total": f"${inversion_nueva:,.0f}",
+            "Revenue Adicional": f"${revenue_adicional:+,.0f}"
+        })
+
+    df_opciones = pd.DataFrame(opciones)
+
+    # Mostrar tabla
+    st.dataframe(df_opciones, use_container_width=True, hide_index=True)
+
+    # =====================================================
+    # RESUMEN Y RECOMENDACIONES
+    # =====================================================
+    st.divider()
+    st.markdown("### 🎯 Resumen de la Reserva")
+
+    m1, m2, m3, m4 = st.columns(4)
+
+    m1.metric("Habitación Actual", hab_reservada)
+    m2.metric("Tarifa/Noche", f"${tarifa_actual:,.0f}")
+    m3.metric("Noches", f"{noches} noche(s)")
+    m4.metric("Inversión Total", f"${inversion_actual:,.0f}")
+
+    # Opción de mayor revenue
+    st.divider()
+    st.markdown("### 💡 Mejor Oportunidad de Upsell")
+
+    opciones_positivas = [
+        (cat, tarif, (tarif - tarifa_actual) * noches)
+        for cat, tarif in tarifas.items()
+        if tarif > tarifa_actual and cat != hab_reservada
+    ]
+
+    if opciones_positivas:
+        opciones_positivas.sort(key=lambda x: x[2], reverse=True)
+        mejor_cat, mejor_tarif, mejor_revenue = opciones_positivas[0]
+
+        col_rec1, col_rec2, col_rec3 = st.columns(3)
+
+        with col_rec1:
+            st.metric("🏆 Categoría Recomendada", mejor_cat)
+
+        with col_rec2:
+            st.metric("📈 Revenue Adicional", f"${mejor_revenue:,.0f}")
+
+        with col_rec3:
+            incremento_pct = ((mejor_tarif - tarifa_actual) / tarifa_actual) * 100
+            st.metric("% Incremento", f"{incremento_pct:+.1f}%")
+
+        st.success(
+            f"✅ **Sugerencia:** Ofrecer upgrade a **{mejor_cat}** "
+            f"por **${mejor_tarif:,.0f}/noche** generaría **${mejor_revenue:,.0f}** "
+            f"adicionales en esta estadía."
+        )
+    else:
+        st.info("💬 No hay opciones de upgrade disponibles para esta tarifa.")
 
 
 # =========================================================

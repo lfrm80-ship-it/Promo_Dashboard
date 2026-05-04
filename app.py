@@ -244,8 +244,8 @@ if menu == "Nueva promoción":
         tw_f = tw_f.date_input("TW FIN")
 
         archivo = st.file_uploader(
-            "Archivo (PNG, JPG, PDF, XLS, XLSX)",
-            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx"]
+            "Archivo (PNG, JPG, PDF, XLS, XLSX, DOC, DOCX)",
+            ["png", "jpg", "jpeg", "pdf", "xls", "xlsx", "doc", "docx"]
         )
 
         notas = st.text_area("Notas / Restricciones")

@@ -336,10 +336,12 @@ if menu == "Resultados":
                 )
 
             with col_f2:
+                # Siempre mostrar todos los markets disponibles
+                markets_disponibles = ["USA", "CAN", "MEX", "LATAM", "EUR", "Worldwide"]
                 filtro_market = st.multiselect(
                     "Market",
-                    sorted(df_expiradas["Market"].dropna().unique()),
-                    default=sorted(df_expiradas["Market"].dropna().unique())
+                    markets_disponibles,
+                    default=markets_disponibles
                 )
 
             with col_f3:

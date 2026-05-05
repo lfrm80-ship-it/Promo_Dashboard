@@ -327,10 +327,12 @@ if menu == "Resultados":
             col_f1, col_f2, col_f3 = st.columns(3)
 
             with col_f1:
+                # Siempre mostrar DREPM y SECPM, incluso si no existen en datos
+                hoteles_disponibles = ["DREPM", "SECPM"]
                 filtro_hotel = st.multiselect(
                     "Hotel",
-                    sorted(df_expiradas["Hotel"].dropna().unique()),
-                    default=sorted(df_expiradas["Hotel"].dropna().unique())
+                    hoteles_disponibles,
+                    default=hoteles_disponibles
                 )
 
             with col_f2:

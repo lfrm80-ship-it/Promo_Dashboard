@@ -321,114 +321,159 @@ if menu == "Resultados":
         if df_expiradas.empty:
             st.info("No hay promociones expiradas. Las promoclones deben haber terminado para registrar resultados.")
         else:
-            # Selector de promo expirada
-            st.markdown("### Selecciona una promoción expirada")
+            # ========== FILTROS ==========
+            st.markdown("### 🔍 Filtros de Búsqueda")
 
-            promo_options = df_expiradas.apply(
-                lambda row: f"{row['Promo']} - {row['Hotel']} ({row['Market']})",
-                axis=1
-            ).values.tolist()
+            col_f1, col_f2, col_f3 = st.columns(3)
 
-            selected_promo = st.selectbox("Promoción", promo_options)
+            with col_f1:
+                filtro_hotel = st.multiselect(
+                    "Hotel",
+                    sorted(df_expiradas["Hotel"].dropna().unique()),
+                    default=sorted(df_expiradas["Hotel"].dropna().unique())
+                )
 
-            # Obtener índice y datos de la promoción seleccionada
-            promo_idx = df_expiradas[
-                df_expiradas.apply(
-                    lambda row: f"{row['Promo']} - {row['Hotel']} ({row['Market']})" == selected_promo,
+            with col_f2:
+                filtro_market = st.multiselect(
+                    "Market",
+                    sorted(df_expiradas["Market"].dropna().unique()),
+                    default=sorted(df_expiradas["Market"].dropna().unique())
+                )
+
+            with col_f3:
+                search = st.text_input(
+                    "Buscar Promoción",
+                    placeholder="Ej. Summer Sale"
+                )
+
+            # Aplicar filtros
+            df_filtered = df_expiradas.copy()
+
+            if filtro_hotel:
+                df_filtered = df_filtered[df_filtered["Hotel"].isin(filtro_hotel)]
+
+            if filtro_market:
+                df_filtered = df_filtered[df_filtered["Market"].isin(filtro_market)]
+
+            if search:
+                s = search.lower()
+                df_filtered = df_filtered[
+                    df_filtered["Promo"].str.lower().str.contains(s, na=False)
+                ]
+
+            st.divider()
+
+            if df_filtered.empty:
+                st.warning("No hay promociones expiradas con los filtros aplicados.")
+            else:
+                # Selector de promo expirada
+                st.markdown("### Selecciona una promoción expirada")
+
+                promo_options = df_filtered.apply(
+                    lambda row: f"{row['Promo']} - {row['Hotel']} ({row['Market']})",
                     axis=1
-                )
-            ].index[0]
+                ).values.tolist()
 
-            selected_row = df.loc[promo_idx]
+                selected_promo = st.selectbox("Promoción", promo_options, key="select_promo")
 
-            # Mostrar info de la promoción
-            col_info1, col_info2, col_info3, col_info4 = st.columns(4)
-            with col_info1:
-                st.metric("Promoción", selected_row["Promo"])
-            with col_info2:
-                st.metric("Hotel", selected_row["Hotel"])
-            with col_info3:
-                st.metric("Market", selected_row["Market"])
-            with col_info4:
-                st.metric("Travel Window", f"{selected_row['TW_Inicio']} a {selected_row['TW_Fin']}")
+                # Obtener índice y datos de la promoción seleccionada
+                promo_idx = df_filtered[
+                    df_filtered.apply(
+                        lambda row: f"{row['Promo']} - {row['Hotel']} ({row['Market']})" == selected_promo,
+                        axis=1
+                    )
+                ].index[0]
 
-            st.divider()
+                selected_row = df.loc[promo_idx]
 
-            # Formulario para agregar resultados
-            st.markdown("### 📝 Ingresa los Resultados")
+                # Mostrar info de la promoción
+                col_info1, col_info2, col_info3, col_info4 = st.columns(4)
+                with col_info1:
+                    st.metric("Promoción", selected_row["Promo"])
+                with col_info2:
+                    st.metric("Hotel", selected_row["Hotel"])
+                with col_info3:
+                    st.metric("Market", selected_row["Market"])
+                with col_info4:
+                    st.metric("Travel Window", f"{selected_row['TW_Inicio']} a {selected_row['TW_Fin']}")
 
-            col1, col2, col3 = st.columns(3)
+                st.divider()
 
-            with col1:
-                room_nights = st.number_input(
-                    "Room Nights (Total de noches vendidas)",
-                    min_value=0,
-                    value=0,
-                    step=1
-                )
+                # Formulario para agregar resultados
+                st.markdown("### 📝 Ingresa los Resultados")
 
-            with col2:
-                rooms_sold = st.number_input(
-                    "Habitaciones Vendidas",
-                    min_value=0,
-                    value=0,
-                    step=1
-                )
+                col1, col2, col3 = st.columns(3)
 
-            with col3:
-                revenue = st.number_input(
-                    "Revenue Total (USD)",
-                    min_value=0.0,
-                    value=0.0,
-                    step=100.0
-                )
+                with col1:
+                    room_nights = st.number_input(
+                        "Room Nights (Total de noches vendidas)",
+                        min_value=0,
+                        value=0,
+                        step=1
+                    )
 
-            notas_resultado = st.text_area(
-                "Notas / Observaciones (opcional)",
-                placeholder="Ej. Desempeño destacado, segmento clave, feedback importante..."
-            )
+                with col2:
+                    rooms_sold = st.number_input(
+                        "Habitaciones Vendidas",
+                        min_value=0,
+                        value=0,
+                        step=1
+                    )
 
-            st.divider()
+                with col3:
+                    revenue = st.number_input(
+                        "Revenue Total (USD)",
+                        min_value=0.0,
+                        value=0.0,
+                        step=100.0
+                    )
 
-            # Botón para registrar
-            if st.button("✅ Registrar Resultados", type="primary"):
-
-                payload = {
-                    "Promo": selected_row["Promo"],
-                    "Hotel": selected_row["Hotel"],
-                    "Market": selected_row["Market"],
-                    "Room_Nights": room_nights,
-                    "Rooms_Sold": rooms_sold,
-                    "Revenue": revenue,
-                    "Notas_Resultado": notas_resultado,
-                    "Fecha_Registro": str(date.today())
-                }
-
-                r = requests.post(
-                    WEB_APP_URL,
-                    json=payload,
-                    headers={"Content-Type": "application/json"}
+                notas_resultado = st.text_area(
+                    "Notas / Observaciones (opcional)",
+                    placeholder="Ej. Desempeño destacado, segmento clave, feedback importante..."
                 )
 
-                if r.status_code != 200:
-                    st.error("Error al guardar resultados. Intenta de nuevo.")
-                else:
-                    st.success("¡Resultados registrados correctamente!")
+                st.divider()
 
-            st.divider()
-            st.markdown("### 📈 Resumen de la Promoción")
+                # Botón para registrar
+                if st.button("✅ Registrar Resultados", type="primary"):
 
-            # Calcular métricas
-            if room_nights > 0 and rooms_sold > 0:
-                avg_noches_por_room = room_nights / rooms_sold
-                revenue_per_night = revenue / room_nights if room_nights > 0 else 0
-                revenue_per_room = revenue / rooms_sold if rooms_sold > 0 else 0
+                    payload = {
+                        "Promo": selected_row["Promo"],
+                        "Hotel": selected_row["Hotel"],
+                        "Market": selected_row["Market"],
+                        "Room_Nights": room_nights,
+                        "Rooms_Sold": rooms_sold,
+                        "Revenue": revenue,
+                        "Notas_Resultado": notas_resultado,
+                        "Fecha_Registro": str(date.today())
+                    }
 
-                m1, m2, m3, m4 = st.columns(4)
-                m1.metric("🌙 Prom. Noches/Habitación", f"{avg_noches_por_room:.1f}")
-                m2.metric("💰 Revenue/Noche", f"${revenue_per_night:,.0f}")
-                m3.metric("💵 Revenue/Habitación", f"${revenue_per_room:,.0f}")
-                m4.metric("📊 Total Revenue", f"${revenue:,.0f}")
+                    r = requests.post(
+                        WEB_APP_URL,
+                        json=payload,
+                        headers={"Content-Type": "application/json"}
+                    )
+
+                    if r.status_code != 200:
+                        st.error("Error al guardar resultados. Intenta de nuevo.")
+                    else:
+                        st.success("¡Resultados registrados correctamente!")
+
+                st.divider()
+                st.markdown("### 📈 Resumen de la Promoción")
+
+                # Calcular métricas
+                if room_nights > 0 and rooms_sold > 0:
+                    avg_noches_por_room = room_nights / rooms_sold
+                    revenue_per_night = revenue / room_nights if room_nights > 0 else 0
+                    revenue_per_room = revenue / rooms_sold if rooms_sold > 0 else 0
+
+                    m1, m2, m3, m4 = st.columns(4)
+                    m1.metric("🌙 Prom. Noches/Habitación", f"{avg_noches_por_room:.1f}")
+                    m2.metric("💰 Revenue/Noche", f"${revenue_per_night:,.0f}")
+                    m3.metric("💵 Revenue/Habitación", f"${revenue_per_room:,.0f}")
+                    m4.metric("📊 Total Revenue", f"${revenue:,.0f}")
 
 
 # =========================================================

@@ -83,7 +83,7 @@ with st.sidebar:
 
     menu = st.radio(
         "Navegación",
-        ["Vista rápida", "Nueva promoción", "Upsell", "World of Hyatt"]
+        ["Vista rápida", "Nueva promoción", "Resultados", "Upsell", "World of Hyatt"]
     )
 
     with st.expander("Admin"):
@@ -298,6 +298,137 @@ if menu == "Nueva promoción":
                     st.stop()
 
             st.success("¡Promoción registrada correctamente!")
+
+
+# =========================================================
+# RESULTADOS - ROOM NIGHTS & HABITACIONES VENDIDAS
+# =========================================================
+if menu == "Resultados":
+
+    st.markdown("## 📊 Registro de Resultados")
+    st.markdown("Agrega Room Nights y Habitaciones Vendidas para promoclones expiradas")
+    st.divider()
+
+    if df.empty:
+        st.info("No hay promociones registradas.")
+    else:
+        df = df.copy()
+        df["Estado"] = df.apply(estado, axis=1)
+
+        # Filtrar solo promoclones expiradas
+        df_expiradas = df[df["Estado"] == "Expirada"].copy()
+
+        if df_expiradas.empty:
+            st.info("No hay promociones expiradas. Las promoclones deben haber terminado para registrar resultados.")
+        else:
+            # Selector de promo expirada
+            st.markdown("### Selecciona una promoción expirada")
+
+            promo_options = df_expiradas.apply(
+                lambda row: f"{row['Promo']} - {row['Hotel']} ({row['Market']})",
+                axis=1
+            ).values.tolist()
+
+            selected_promo = st.selectbox("Promoción", promo_options)
+
+            # Obtener índice y datos de la promoción seleccionada
+            promo_idx = df_expiradas[
+                df_expiradas.apply(
+                    lambda row: f"{row['Promo']} - {row['Hotel']} ({row['Market']})" == selected_promo,
+                    axis=1
+                )
+            ].index[0]
+
+            selected_row = df.loc[promo_idx]
+
+            # Mostrar info de la promoción
+            col_info1, col_info2, col_info3, col_info4 = st.columns(4)
+            with col_info1:
+                st.metric("Promoción", selected_row["Promo"])
+            with col_info2:
+                st.metric("Hotel", selected_row["Hotel"])
+            with col_info3:
+                st.metric("Market", selected_row["Market"])
+            with col_info4:
+                st.metric("Travel Window", f"{selected_row['TW_Inicio']} a {selected_row['TW_Fin']}")
+
+            st.divider()
+
+            # Formulario para agregar resultados
+            st.markdown("### 📝 Ingresa los Resultados")
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                room_nights = st.number_input(
+                    "Room Nights (Total de noches vendidas)",
+                    min_value=0,
+                    value=0,
+                    step=1
+                )
+
+            with col2:
+                rooms_sold = st.number_input(
+                    "Habitaciones Vendidas",
+                    min_value=0,
+                    value=0,
+                    step=1
+                )
+
+            with col3:
+                revenue = st.number_input(
+                    "Revenue Total (USD)",
+                    min_value=0.0,
+                    value=0.0,
+                    step=100.0
+                )
+
+            notas_resultado = st.text_area(
+                "Notas / Observaciones (opcional)",
+                placeholder="Ej. Desempeño destacado, segmento clave, feedback importante..."
+            )
+
+            st.divider()
+
+            # Botón para registrar
+            if st.button("✅ Registrar Resultados", type="primary"):
+
+                payload = {
+                    "Promo": selected_row["Promo"],
+                    "Hotel": selected_row["Hotel"],
+                    "Market": selected_row["Market"],
+                    "Room_Nights": room_nights,
+                    "Rooms_Sold": rooms_sold,
+                    "Revenue": revenue,
+                    "Notas_Resultado": notas_resultado,
+                    "Fecha_Registro": str(date.today())
+                }
+
+                r = requests.post(
+                    WEB_APP_URL,
+                    json=payload,
+                    headers={"Content-Type": "application/json"}
+                )
+
+                if r.status_code != 200:
+                    st.error("Error al guardar resultados. Intenta de nuevo.")
+                else:
+                    st.success("¡Resultados registrados correctamente!")
+
+            st.divider()
+            st.markdown("### 📈 Resumen de la Promoción")
+
+            # Calcular métricas
+            if room_nights > 0 and rooms_sold > 0:
+                avg_noches_por_room = room_nights / rooms_sold
+                revenue_per_night = revenue / room_nights if room_nights > 0 else 0
+                revenue_per_room = revenue / rooms_sold if rooms_sold > 0 else 0
+
+                m1, m2, m3, m4 = st.columns(4)
+                m1.metric("🌙 Prom. Noches/Habitación", f"{avg_noches_por_room:.1f}")
+                m2.metric("💰 Revenue/Noche", f"${revenue_per_night:,.0f}")
+                m3.metric("💵 Revenue/Habitación", f"${revenue_per_room:,.0f}")
+                m4.metric("📊 Total Revenue", f"${revenue:,.0f}")
 
 
 # =========================================================
